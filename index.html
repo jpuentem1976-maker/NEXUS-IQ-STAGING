@@ -65,7 +65,7 @@ button{cursor:pointer;font-family:'Barlow',sans-serif;border:none;outline:none;t
 nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-items:center;padding:8px 18px;min-height:46px;gap:4px 5px;position:sticky;top:0;z-index:200;flex-wrap:wrap}
 .logo{font-family:var(--font-display,sans-serif);font-size:19px;color:#fff;letter-spacing:1.5px;margin-right:4px;white-space:nowrap;flex-shrink:0;font-weight:700}
 .logo-sub{font-size:9px;color:#BFD9F0;margin-right:auto;letter-spacing:.5px;text-transform:uppercase;border-left:1px solid #3D7FB8;padding-left:10px;margin-left:4px;white-space:nowrap;flex-shrink:0}
-.nav-btn{background:transparent;border:1px solid transparent;color:#D6E6F5;padding:7px 14px;border-radius:var(--r);font-weight:600;font-size:12px;white-space:nowrap;flex-shrink:0;line-height:1.3}
+.nav-btn{background:transparent;border:1px solid transparent;color:#D6E6F5;padding:8px 15px;border-radius:var(--r);font-weight:700;font-size:13.5px;white-space:nowrap;flex-shrink:0;line-height:1.3}
 .nav-btn:hover{color:#fff;background:rgba(255,255,255,.1)}
 .nav-btn.active{background:var(--bg3);border-color:var(--border);color:var(--accent)}
 /* BUTTONS */
@@ -444,6 +444,18 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
         <button class="btn btn-accent" style="flex:2" onclick="saveNewStation()"><svg class="ic"><use href="#ic-save"/></svg> Guardar y continuar</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ADMIN PASSWORD GATE -->
+<div id="admin-gate-screen" style="position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:999;padding:20px">
+  <div class="card card-accent" style="width:420px;max-width:100%;text-align:center">
+    <div style="font-size:32px;margin-bottom:10px;color:var(--accent)"><svg class="ic ic-xl"><use href="#ic-lock"/></svg></div>
+    <div style="font-family:var(--font-display,sans-serif);font-size:22px;color:var(--accent);letter-spacing:1px;margin-bottom:4px">ACCESO ADMINISTRADOR</div>
+    <div style="color:var(--muted);font-size:12px;margin-bottom:18px">Esta computadora (<strong id="admin-gate-station-name"></strong>) requiere la contraseña de Administrador para continuar.</div>
+    <input type="password" id="admin-gate-pass" placeholder="••••" style="text-align:center;font-size:18px;letter-spacing:4px" onkeydown="if(event.key==='Enter')tryAdminGateLogin()">
+    <div id="admin-gate-error" class="hidden" style="margin-top:8px;font-size:12px;color:var(--danger)"></div>
+    <button class="btn btn-accent" style="width:100%;margin-top:14px" onclick="tryAdminGateLogin()">INGRESAR <svg class="ic"><use href="#ic-arrow-right"/></svg></button>
   </div>
 </div>
 
@@ -2017,6 +2029,7 @@ const PASS_COMPRAS     = 'X304';
 const PASS_VENTAS      = 'K340';
 const PASS_COBRANZA    = '3310';
 const PASS_BANCOS      = '4140';
+const PASS_ADMIN       = '1976';
 const CFG_KEY = 'niq2_config';
 const OT_START_KEY = 'niq2_ot_start';
 const STATION_KEY = 'niq2_station_name';
@@ -2069,6 +2082,10 @@ async function loadStationConfig(){
       return false;
     }
     currentStation = rows[0];
+    if(currentStation.is_admin){
+      showAdminGate();
+      return false; // El nav se muestra solo tras ingresar la contraseña correcta (ver tryAdminGateLogin)
+    }
     applyStationPermissions();
     return true;
   }catch(e){
@@ -2078,6 +2095,28 @@ async function loadStationConfig(){
     applyStationPermissions();
     return true;
   }
+}
+
+function showAdminGate(){
+  document.getElementById('admin-gate-station-name').textContent = currentStation.station_name;
+  document.getElementById('admin-gate-error').classList.add('hidden');
+  document.getElementById('admin-gate-pass').value='';
+  document.getElementById('admin-gate-screen').style.display='flex';
+  setTimeout(()=>document.getElementById('admin-gate-pass')?.focus(),50);
+}
+
+function tryAdminGateLogin(){
+  const val = document.getElementById('admin-gate-pass').value;
+  const errEl = document.getElementById('admin-gate-error');
+  if(val !== PASS_ADMIN){
+    errEl.textContent = 'Contraseña incorrecta.';
+    errEl.classList.remove('hidden');
+    document.getElementById('admin-gate-pass').value='';
+    return;
+  }
+  document.getElementById('admin-gate-screen').style.display='none';
+  applyStationPermissions();
+  document.getElementById('main-nav').style.display='flex';
 }
 
 function applyStationPermissions(){
@@ -2092,6 +2131,17 @@ function applyStationPermissions(){
   if(adminBtn) adminBtn.classList.toggle('hidden', !currentStation.is_admin);
   const indicator = document.getElementById('station-indicator');
   if(indicator) indicator.innerHTML = '<svg class="ic"><use href="#ic-factory"/></svg> '+currentStation.station_name+(currentStation.is_admin?' (ADMIN)':'');
+  // Si la estación es Administrador, la contraseña maestra ya validada (tryAdminGateLogin)
+  // actúa como llave única: todos los módulos quedan abiertos sin pedir su contraseña individual.
+  if(currentStation.is_admin){
+    reportsAuth = engAuth = progAuth = almAuth = almPTAuth = comprasAuth = true;
+    venAuth = cobAuth = banAuth = true;
+    STATION_MODULES.forEach(m=>{
+      const lockMap = {reports:'reports-lock', engineering:'eng-lock', programming:'prog-lock', almacen:'alm-lock', 'almacen-pt':'alm-pt-lock', compras:'compras-lock', ventas:'ven-lock', cobranza:'cob-lock', bancos:'ban-lock'};
+      const lockId = lockMap[m.key];
+      if(lockId){ const lockEl=document.getElementById(lockId); if(lockEl) lockEl.innerHTML=icon('lock-open'); }
+    });
+  }
   // "Operador" es la página activa por defecto. Si esta estación no la tiene habilitada,
   // redirigir al primer módulo permitido para evitar una pantalla en blanco.
   if(!allowed.includes('operator') && allowed.length){
