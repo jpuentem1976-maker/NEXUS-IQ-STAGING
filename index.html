@@ -873,7 +873,7 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
       <div style="font-size:15px;font-weight:700">Catálogo de Materiales</div>
       <span id="materials-counter" style="background:rgba(0,212,255,.12);color:var(--accent);border:1px solid rgba(0,212,255,.25);border-radius:20px;padding:2px 10px;font-size:12px;font-family:'DM Mono',monospace;font-weight:700"></span>
-      <input type="text" id="mat-search" placeholder="<svg class="ic"><use href="#ic-search"/></svg> Buscar material o diámetro..." oninput="renderMaterials()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:260px">
+      <input type="text" id="mat-search" placeholder="Buscar material o diámetro..." oninput="renderMaterials()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:260px">
       <div style="margin-left:auto"><button class="btn btn-accent btn-sm" onclick="showMaterialForm(null)">+ Nuevo Material</button></div>
     </div>
     <div id="material-form-wrap"></div>
@@ -885,7 +885,7 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
       <div style="font-size:15px;font-weight:700">Catálogo de Productos</div>
       <span id="products-counter" style="background:rgba(0,212,255,.12);color:var(--accent);border:1px solid rgba(0,212,255,.25);border-radius:20px;padding:2px 10px;font-size:12px;font-family:'DM Mono',monospace;font-weight:700"></span>
-      <input type="text" id="products-search" placeholder="<svg class="ic"><use href="#ic-search"/></svg> Buscar por nombre, código o familia..." oninput="renderProducts()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:260px">
+      <input type="text" id="products-search" placeholder="Buscar por nombre, código o familia..." oninput="renderProducts()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:260px">
       <div style="margin-left:auto"><button class="btn btn-accent btn-sm" onclick="showProductForm(null)">+ Nuevo Producto</button></div>
     </div>
     <div class="ptabs" style="margin-bottom:14px">
@@ -943,7 +943,7 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
       <button class="btn btn-accent" onclick="showRecursoForm(null)">+ Nuevo Artículo</button>
     </div>
     <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
-      <input id="rec-search" type="text" placeholder="<svg class="ic"><use href="#ic-search"/></svg> Buscar artículo..." style="flex:1;min-width:200px" oninput="renderRecursos()">
+      <input id="rec-search" type="text" placeholder="Buscar artículo..." style="flex:1;min-width:200px" oninput="renderRecursos()">
       <span id="rec-counter" style="font-size:11px;color:var(--muted)"></span>
     </div>
     <div id="rec-form-wrap"></div>
@@ -1044,7 +1044,7 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
     <div style="font-size:15px;font-weight:700;margin-bottom:6px"><svg class="ic"><use href="#ic-doc-tab"/></svg> Información de OT</div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Costos y tiempos reales por O.T. — doble click en una fila para ver el detalle completo.</div>
     <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
-      <input type="text" id="info-ot-search" placeholder="<svg class="ic"><use href="#ic-search"/></svg> Buscar OT o producto..." oninput="renderInfoOT()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:240px">
+      <input type="text" id="info-ot-search" placeholder="Buscar OT o producto..." oninput="renderInfoOT()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:240px">
     </div>
     <div id="info-ot-list"></div>
   </div>
@@ -1056,7 +1056,7 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
     <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
       <div class="field" style="margin:0"><label>Desde</label><input type="date" id="scrap-rep-from" onchange="renderScrapReport()"></div>
       <div class="field" style="margin:0"><label>Hasta</label><input type="date" id="scrap-rep-to" onchange="renderScrapReport()"></div>
-      <input type="text" id="scrap-rep-search" placeholder="<svg class="ic"><use href="#ic-search"/></svg> Buscar OT o producto..." oninput="renderScrapReport()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:220px;align-self:flex-end">
+      <input type="text" id="scrap-rep-search" placeholder="Buscar OT o producto..." oninput="renderScrapReport()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:220px;align-self:flex-end">
     </div>
     <div id="scrap-rep-banner" style="margin-bottom:14px"></div>
     <div id="scrap-rep-list"></div>
@@ -1459,7 +1459,7 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
   <div id="alm-general" class="subpage active">
     <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
       <button class="btn btn-accent btn-sm" onclick="showMpStockForm(null)">+ Nueva Entrada</button>
-      <input type="text" id="alm-search" placeholder="<svg class="ic"><use href="#ic-search"/></svg> Buscar material o diámetro..." oninput="renderAlmGeneral()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:240px">
+      <input type="text" id="alm-search" placeholder="Buscar material o diámetro..." oninput="renderAlmGeneral()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:240px">
       <select id="alm-filter-status" onchange="renderAlmGeneral()" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:12px">
         <option value="">Todos los estados</option>
         <option value="disponible">Disponible</option>
@@ -1661,7 +1661,7 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
   <!-- ALMACÉN GENERAL PT -->
   <div id="pt-general" class="subpage">
     <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
-      <input type="text" id="pt-general-search" placeholder="<svg class="ic"><use href="#ic-search"/></svg> Buscar producto u OT..." oninput="renderPTGeneral()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:240px">
+      <input type="text" id="pt-general-search" placeholder="Buscar producto u OT..." oninput="renderPTGeneral()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:240px">
     </div>
     <div id="pt-general-banner" style="margin-bottom:14px"></div>
     <div id="pt-general-list"></div>
@@ -1713,7 +1713,7 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
   <!-- PROVEEDORES -->
   <div id="cmp-proveedores" class="subpage">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
-      <input type="text" id="cmp-sup-search" placeholder="<svg class="ic"><use href="#ic-search"/></svg> Buscar por nombre, código o RFC..." oninput="renderComprasSuppliers()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:300px">
+      <input type="text" id="cmp-sup-search" placeholder="Buscar por nombre, código o RFC..." oninput="renderComprasSuppliers()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:300px">
       <button class="btn btn-accent btn-sm" onclick="showComSupplierForm()">+ Nuevo Proveedor</button>
     </div>
     <div id="cmp-suppliers-form"></div>
@@ -1723,7 +1723,7 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
   <!-- REQUISICIONES ACTIVAS -->
   <div id="cmp-requisiciones" class="subpage active">
     <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
-      <input type="text" id="cmp-search" placeholder="<svg class="ic"><use href="#ic-search"/></svg> Buscar por producto, material o N° requisición..." oninput="renderComprasRequisiciones()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:340px">
+      <input type="text" id="cmp-search" placeholder="Buscar por producto, material o N° requisición..." oninput="renderComprasRequisiciones()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:340px">
       <select id="cmp-status-filter" onchange="renderComprasRequisiciones()" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:12px">
         <option value="">Todos los estados</option>
         <option value="pendiente">Pendiente</option>
@@ -1761,7 +1761,7 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
   <!-- CLIENTES -->
   <div id="ven-clientes" class="subpage active">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
-      <input type="text" id="ven-cli-search" placeholder="<svg class="ic"><use href="#ic-search"/></svg> Buscar por nombre, código o RFC..." oninput="renderVentasClientes()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:300px">
+      <input type="text" id="ven-cli-search" placeholder="Buscar por nombre, código o RFC..." oninput="renderVentasClientes()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:300px">
       <button class="btn btn-accent btn-sm" onclick="showVenClientForm()">+ Nuevo Cliente</button>
     </div>
     <div id="ven-client-form-wrap"></div>
@@ -1772,7 +1772,7 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
   <div id="ven-facturas" class="subpage">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <input type="text" id="ven-inv-search" placeholder="<svg class="ic"><use href="#ic-search"/></svg> Buscar por folio o cliente..." oninput="renderVentasFacturas()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:260px">
+        <input type="text" id="ven-inv-search" placeholder="Buscar por folio o cliente..." oninput="renderVentasFacturas()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:260px">
         <select id="ven-inv-status-filter" onchange="renderVentasFacturas()" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:12px">
           <option value="">Todos los estados</option>
           <option value="pendiente">Pendiente</option>
@@ -1824,7 +1824,7 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
   <!-- PROVEEDORES SOLO LECTURA -->
   <div id="cob-suppliers" class="subpage">
     <div style="margin-bottom:10px;font-size:11px;color:var(--muted)">Catálogo administrado en el módulo de Compras. Aquí solo consulta.</div>
-    <input type="text" id="cob-sup-search" placeholder="<svg class="ic"><use href="#ic-search"/></svg> Buscar proveedor..." oninput="renderCobSuppliers()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:300px;margin-bottom:14px">
+    <input type="text" id="cob-sup-search" placeholder="Buscar proveedor..." oninput="renderCobSuppliers()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:300px;margin-bottom:14px">
     <div id="cob-suppliers-list"></div>
   </div>
 </div>
@@ -2047,6 +2047,12 @@ const STATION_MODULES = [
   {key:'ventas',        label:'Ventas',             navId:'nb-ventas'},
   {key:'cobranza',      label:'Cobranza y Pagos',   navId:'nb-cobranza'},
   {key:'bancos',        label:'Bancos',             navId:'nb-bancos'},
+  // Módulos contemplados para futuras sesiones — aún sin página/botón real, solo aparecen
+  // en el catálogo de selección de estación marcados como "Próximamente" y no son seleccionables.
+  {key:'produccion',    label:'Producción',         navId:null, comingSoon:true},
+  {key:'calidad',       label:'Calidad',            navId:null, comingSoon:true},
+  {key:'mantenimiento', label:'Mantenimiento',      navId:null, comingSoon:true},
+  {key:'supervision',   label:'Supervisión',        navId:null, comingSoon:true},
 ];
 
 let currentStation = null;     // {station_name, modules, is_admin}
@@ -2090,8 +2096,9 @@ async function loadStationConfig(){
     return true;
   }catch(e){
     console.error('Error cargando configuración de estación:', e);
-    // Si falla la consulta, dejamos pasar con todos los módulos visibles para no bloquear el trabajo
-    currentStation = {station_name:name, modules:STATION_MODULES.map(m=>m.key), is_admin:false};
+    // Si falla la consulta, dejamos pasar con todos los módulos REALES visibles para no bloquear el trabajo
+    // (los módulos "comingSoon" no tienen botón en el nav, así que se excluyen de este fallback)
+    currentStation = {station_name:name, modules:STATION_MODULES.filter(m=>!m.comingSoon).map(m=>m.key), is_admin:false};
     applyStationPermissions();
     return true;
   }
@@ -2121,7 +2128,7 @@ function tryAdminGateLogin(){
 
 function applyStationPermissions(){
   if(!currentStation) return;
-  const allowed = currentStation.is_admin ? STATION_MODULES.map(m=>m.key) : (currentStation.modules||[]);
+  const allowed = currentStation.is_admin ? STATION_MODULES.filter(m=>!m.comingSoon).map(m=>m.key) : (currentStation.modules||[]);
   STATION_MODULES.forEach(m=>{
     const btn = document.getElementById(m.navId);
     if(!btn) return;
@@ -2202,10 +2209,16 @@ function startStationModuleSelect(){
   document.getElementById('station-step-modules').classList.remove('hidden');
   const checklist = document.getElementById('station-module-checklist');
   checklist.innerHTML = STATION_MODULES.map(m=>
-    '<label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer">'
-    +'<input type="checkbox" class="station-mod-check" value="'+m.key+'" style="width:auto">'
-    +'<span style="font-size:13px">'+m.label+'</span>'
-    +'</label>'
+    m.comingSoon
+    ? '<label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);opacity:.55;cursor:not-allowed">'
+      +'<input type="checkbox" disabled style="width:auto">'
+      +'<span style="font-size:13px">'+m.label+'</span>'
+      +'<span class="tag" style="margin-left:auto;font-size:9px">PRÓXIMAMENTE</span>'
+      +'</label>'
+    : '<label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer">'
+      +'<input type="checkbox" class="station-mod-check" value="'+m.key+'" style="width:auto">'
+      +'<span style="font-size:13px">'+m.label+'</span>'
+      +'</label>'
   ).join('');
 }
 
@@ -2247,9 +2260,10 @@ async function openStationAdmin(){
   const rowsHtml = rows.map(r=>{
     const checks = STATION_MODULES.map(m=>{
       const checked = (r.modules||[]).includes(m.key) ? 'checked' : '';
-      return '<label style="display:flex;align-items:center;gap:5px;font-size:11px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;cursor:pointer">'
-        +'<input type="checkbox" class="stadmin-mod" value="'+m.key+'" '+checked+' style="width:auto" '+(r.is_admin?'disabled':'')+'>'
-        +m.label+'</label>';
+      const disabled = (r.is_admin || m.comingSoon) ? 'disabled' : '';
+      return '<label style="display:flex;align-items:center;gap:5px;font-size:11px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;cursor:pointer;'+(m.comingSoon?'opacity:.55':'')+'">'
+        +'<input type="checkbox" class="stadmin-mod" value="'+m.key+'" '+checked+' style="width:auto" '+disabled+'>'
+        +m.label+(m.comingSoon?' <span style="font-size:8px;color:var(--muted)">(próx.)</span>':'')+'</label>';
     }).join('');
     return '<div class="card" data-station="'+r.station_name+'" style="margin-bottom:10px">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
