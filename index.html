@@ -181,6 +181,12 @@ nav{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;ali
   <button class="nav-btn" id="nb-alm-pt-logout" onclick="almPTLogout()" style="display:none;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--danger);font-size:11px;padding:4px 10px">⏻ Salir</button>
   <button class="nav-btn" id="nb-compras" onclick="comprasClick()" style="display:flex;align-items:center;gap:4px"><span id="compras-lock">🔒</span> Compras</button>
   <button class="nav-btn" id="nb-compras-logout" onclick="comprasLogout()" style="display:none;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--danger);font-size:11px;padding:4px 10px">⏻ Salir</button>
+  <button class="nav-btn" id="nb-ventas" onclick="ventasClick()" style="display:flex;align-items:center;gap:4px"><span id="ven-lock">🔒</span> Ventas</button>
+  <button class="nav-btn" id="nb-ventas-logout" onclick="ventasLogout()" style="display:none;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--danger);font-size:11px;padding:4px 10px">⏻ Salir</button>
+  <button class="nav-btn" id="nb-cobranza" onclick="cobranzaClick()" style="display:flex;align-items:center;gap:4px"><span id="cob-lock">🔒</span> Cobranza y Pagos</button>
+  <button class="nav-btn" id="nb-cobranza-logout" onclick="cobranzaLogout()" style="display:none;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--danger);font-size:11px;padding:4px 10px">⏻ Salir</button>
+  <button class="nav-btn" id="nb-bancos" onclick="bancosClick()" style="display:flex;align-items:center;gap:4px"><span id="ban-lock">🔒</span> Bancos</button>
+  <button class="nav-btn" id="nb-bancos-logout" onclick="bancosLogout()" style="display:none;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--danger);font-size:11px;padding:4px 10px">⏻ Salir</button>
   <button class="nav-btn" onclick="reconectar()" style="font-size:11px;margin-left:4px">🔄</button>
   <div style="margin-left:6px;font-size:10px;color:var(--green);display:flex;align-items:center;gap:4px;white-space:nowrap"><div class="live-dot"></div>EN LÍNEA</div>
   <button onclick="showDebug()" style="margin-left:6px;background:var(--bg4);border:1px solid var(--border);color:var(--muted);padding:4px 8px;border-radius:6px;font-size:10px;cursor:pointer">🔍</button>
@@ -829,8 +835,230 @@ nav{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;ali
   </div>
 </div>
 
-<!-- MODAL NUEVA REQUISICIÓN -->
-<div id="requi-modal" class="overlay hidden">
+<div id="ven-modal" class="overlay hidden">
+  <div class="card modal card-accent" style="text-align:center">
+    <div style="font-size:32px;margin-bottom:12px">🧾</div>
+    <div style="font-family:var(--font-display,sans-serif);font-size:24px;color:var(--accent)">ACCESO A VENTAS</div>
+    <div style="color:var(--muted);font-size:12px;margin:6px 0 18px">Solo personal autorizado</div>
+    <div class="field" style="text-align:left;margin-bottom:6px">
+      <label>Contraseña</label>
+      <input type="password" id="ven-pass" style="text-align:center;letter-spacing:6px;font-size:20px" onkeydown="if(event.key==='Enter')tryVenLogin()">
+    </div>
+    <div id="ven-error" class="hidden" style="color:var(--danger);font-size:12px;font-weight:700;margin:6px 0">✕ Contraseña incorrecta</div>
+    <div class="g2" style="margin-top:14px;gap:10px">
+      <button class="btn btn-ghost" onclick="closeModal('ven-modal')">Cancelar</button>
+      <button class="btn btn-accent" onclick="tryVenLogin()">🔓 Ingresar</button>
+    </div>
+  </div>
+</div>
+
+<div id="cob-modal" class="overlay hidden">
+  <div class="card modal card-accent" style="text-align:center">
+    <div style="font-size:32px;margin-bottom:12px">💰</div>
+    <div style="font-family:var(--font-display,sans-serif);font-size:24px;color:var(--accent)">ACCESO A COBRANZA Y PAGOS</div>
+    <div style="color:var(--muted);font-size:12px;margin:6px 0 18px">Solo personal autorizado</div>
+    <div class="field" style="text-align:left;margin-bottom:6px">
+      <label>Contraseña</label>
+      <input type="password" id="cob-pass" style="text-align:center;letter-spacing:6px;font-size:20px" onkeydown="if(event.key==='Enter')tryCobLogin()">
+    </div>
+    <div id="cob-error" class="hidden" style="color:var(--danger);font-size:12px;font-weight:700;margin:6px 0">✕ Contraseña incorrecta</div>
+    <div class="g2" style="margin-top:14px;gap:10px">
+      <button class="btn btn-ghost" onclick="closeModal('cob-modal')">Cancelar</button>
+      <button class="btn btn-accent" onclick="tryCobLogin()">🔓 Ingresar</button>
+    </div>
+  </div>
+</div>
+
+<div id="ban-modal" class="overlay hidden">
+  <div class="card modal card-accent" style="text-align:center">
+    <div style="font-size:32px;margin-bottom:12px">🏦</div>
+    <div style="font-family:var(--font-display,sans-serif);font-size:24px;color:var(--accent)">ACCESO A BANCOS</div>
+    <div style="color:var(--muted);font-size:12px;margin:6px 0 18px">Solo personal autorizado</div>
+    <div class="field" style="text-align:left;margin-bottom:6px">
+      <label>Contraseña</label>
+      <input type="password" id="ban-pass" style="text-align:center;letter-spacing:6px;font-size:20px" onkeydown="if(event.key==='Enter')tryBanLogin()">
+    </div>
+    <div id="ban-error" class="hidden" style="color:var(--danger);font-size:12px;font-weight:700;margin:6px 0">✕ Contraseña incorrecta</div>
+    <div class="g2" style="margin-top:14px;gap:10px">
+      <button class="btn btn-ghost" onclick="closeModal('ban-modal')">Cancelar</button>
+      <button class="btn btn-accent" onclick="tryBanLogin()">🔓 Ingresar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FACTURA (Ventas) -->
+<div id="invoice-modal" class="overlay hidden">
+  <div class="card modal" style="max-width:560px">
+    <div style="font-family:var(--font-display,sans-serif);font-size:18px;color:var(--accent);margin-bottom:14px" id="invoice-modal-title">🧾 Nueva Factura</div>
+    <div class="field">
+      <label>Cliente *</label>
+      <select id="inv-client-id"></select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field"><label>Folio</label><input type="text" id="inv-folio" placeholder="Auto si se deja vacío"></div>
+      <div class="field"><label>Fecha</label><input type="date" id="inv-fecha"></div>
+      <div class="field"><label>Monto Total (MXN) *</label><input type="number" step="0.01" id="inv-monto"></div>
+      <div class="field"><label>Fecha Vencimiento</label><input type="date" id="inv-vencimiento"></div>
+      <div class="field"><label>Estado</label>
+        <select id="inv-status">
+          <option value="pendiente">Pendiente</option>
+          <option value="pagada">Pagada</option>
+          <option value="vencida">Vencida</option>
+          <option value="cancelada">Cancelada</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Observaciones</label><input type="text" id="inv-notas"></div>
+    <div class="g2" style="margin-top:14px;gap:10px">
+      <button class="btn btn-ghost" onclick="closeModal('invoice-modal')">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveVenInvoice()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CLIENTE (Ventas) -->
+<div id="ven-client-modal" class="overlay hidden">
+  <div class="card modal" style="max-width:560px">
+    <div style="font-family:var(--font-display,sans-serif);font-size:18px;color:var(--accent);margin-bottom:14px" id="ven-client-modal-title">👥 Nuevo Cliente</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field"><label>Código</label><input type="text" id="vcf-code"></div>
+      <div class="field"><label>Nombre / Razón Social *</label><input type="text" id="vcf-name"></div>
+      <div class="field"><label>RFC</label><input type="text" id="vcf-rfc"></div>
+      <div class="field"><label>Días de Crédito</label><input type="number" id="vcf-credit-days"></div>
+      <div class="field"><label>Límite de Crédito (MXN)</label><input type="number" step="0.01" id="vcf-credit-limit"></div>
+    </div>
+    <div class="field"><label>Dirección</label><input type="text" id="vcf-address"></div>
+    <div class="field"><label>Notas</label><input type="text" id="vcf-notes"></div>
+    <div class="g2" style="margin-top:14px;gap:10px">
+      <button class="btn btn-ghost" onclick="closeModal('ven-client-modal')">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveVenClient()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPORTAR XML CXP -->
+<div id="xml-cxp-modal" class="overlay hidden">
+  <div class="card modal" style="max-width:480px">
+    <div style="font-family:var(--font-display,sans-serif);font-size:18px;color:var(--accent);margin-bottom:14px">📥 Importar CFDI a Cuentas por Pagar</div>
+    <div id="xml-cxp-preview" style="font-size:12px;color:var(--muted);margin-bottom:14px"></div>
+    <div class="g2" style="margin-top:14px;gap:10px">
+      <button class="btn btn-ghost" onclick="closeModal('xml-cxp-modal')">Cancelar</button>
+      <button class="btn btn-accent" onclick="confirmCXPXmlImport()">💾 Confirmar Importación</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PAGO RECIBIDO (CXC) -->
+<div id="payment-received-modal" class="overlay hidden">
+  <div class="card modal" style="max-width:440px">
+    <div style="font-family:var(--font-display,sans-serif);font-size:18px;color:var(--accent);margin-bottom:14px">💵 Registrar Pago Recibido — <span id="prm-invoice-label"></span></div>
+    <div class="field"><label>Monto Pagado (MXN) *</label><input type="number" step="0.01" id="prm-monto"></div>
+    <div class="field"><label>Fecha de Pago</label><input type="date" id="prm-fecha"></div>
+    <div class="field"><label>Método de Pago</label>
+      <select id="prm-metodo">
+        <option value="Transferencia">Transferencia</option>
+        <option value="Efectivo">Efectivo</option>
+        <option value="Cheque">Cheque</option>
+        <option value="Tarjeta">Tarjeta</option>
+      </select>
+    </div>
+    <div class="field"><label>Cuenta Bancaria Destino</label><select id="prm-bank-account"></select></div>
+    <div class="field"><label>Notas</label><input type="text" id="prm-notas"></div>
+    <div class="g2" style="margin-top:14px;gap:10px">
+      <button class="btn btn-ghost" onclick="closeModal('payment-received-modal')">Cancelar</button>
+      <button class="btn btn-accent" onclick="confirmPaymentReceived()">💾 Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CUENTA POR PAGAR (CXP) -->
+<div id="payable-modal" class="overlay hidden">
+  <div class="card modal" style="max-width:520px">
+    <div style="font-family:var(--font-display,sans-serif);font-size:18px;color:var(--accent);margin-bottom:14px" id="payable-modal-title">📤 Nueva Cuenta por Pagar</div>
+    <div class="field"><label>Proveedor *</label><select id="pay-supplier-id"></select></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field"><label>Folio / Factura</label><input type="text" id="pay-folio"></div>
+      <div class="field"><label>Fecha</label><input type="date" id="pay-fecha"></div>
+      <div class="field"><label>Monto Total (MXN) *</label><input type="number" step="0.01" id="pay-monto"></div>
+      <div class="field"><label>Fecha Vencimiento</label><input type="date" id="pay-vencimiento"></div>
+      <div class="field"><label>Estado</label>
+        <select id="pay-status">
+          <option value="pendiente">Pendiente</option>
+          <option value="pagada">Pagada</option>
+          <option value="vencida">Vencida</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Notas</label><input type="text" id="pay-notas"></div>
+    <div class="g2" style="margin-top:14px;gap:10px">
+      <button class="btn btn-ghost" onclick="closeModal('payable-modal')">Cancelar</button>
+      <button class="btn btn-accent" onclick="savePayable()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PAGO A PRÉSTAMO -->
+<div id="loan-payment-modal" class="overlay hidden">
+  <div class="card modal" style="max-width:420px">
+    <div style="font-family:var(--font-display,sans-serif);font-size:18px;color:var(--accent);margin-bottom:14px">💵 Registrar Pago — <span id="lpm-loan-label"></span></div>
+    <div class="field"><label>Monto (MXN) *</label><input type="number" step="0.01" id="lpm-monto"></div>
+    <div class="field"><label>Fecha</label><input type="date" id="lpm-fecha"></div>
+    <div class="field"><label>Cuenta Bancaria Origen</label><select id="lpm-bank-account"></select></div>
+    <div class="g2" style="margin-top:14px;gap:10px">
+      <button class="btn btn-ghost" onclick="closeModal('loan-payment-modal')">Cancelar</button>
+      <button class="btn btn-accent" onclick="confirmLoanPayment()">💾 Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TRANSACCIÓN BANCARIA MANUAL -->
+<div id="txn-modal" class="overlay hidden">
+  <div class="card modal" style="max-width:440px">
+    <div style="font-family:var(--font-display,sans-serif);font-size:18px;color:var(--accent);margin-bottom:14px">📊 Movimiento Manual</div>
+    <div class="field"><label>Cuenta *</label><select id="txn-account-id"></select></div>
+    <div class="field"><label>Tipo</label>
+      <select id="txn-tipo">
+        <option value="ingreso">Ingreso</option>
+        <option value="egreso">Egreso</option>
+      </select>
+    </div>
+    <div class="field"><label>Monto (MXN) *</label><input type="number" step="0.01" id="txn-monto"></div>
+    <div class="field"><label>Fecha</label><input type="date" id="txn-fecha"></div>
+    <div class="field"><label>Concepto</label><input type="text" id="txn-concepto"></div>
+    <div class="g2" style="margin-top:14px;gap:10px">
+      <button class="btn btn-ghost" onclick="closeModal('txn-modal')">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveBankTxn()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL DE CONTACTOS DE CLIENTE -->
+<div id="contacts-panel" class="overlay hidden">
+  <div class="card modal" style="max-width:480px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-family:var(--font-display,sans-serif);font-size:18px;color:var(--accent)">👤 Contactos — <span id="cp-client-label"></span></div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('contacts-panel')">✕ Cerrar</button>
+    </div>
+    <div id="cp-contacts-list" style="margin-bottom:14px"></div>
+    <button class="btn btn-accent btn-sm" onclick="showContactForm()">+ Agregar Contacto</button>
+    <div id="cp-contact-form-wrap" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<!-- MODAL CONTACTO INDIVIDUAL -->
+<div id="contact-modal" class="overlay hidden">
+  <div class="card modal" style="max-width:420px">
+    <div style="font-family:var(--font-display,sans-serif);font-size:18px;color:var(--accent);margin-bottom:14px">👤 Contacto</div>
+    <div class="field"><label>Nombre *</label><input type="text" id="cm-name"></div>
+    <div class="field"><label>Puesto</label><input type="text" id="cm-pos"></div>
+    <div class="field"><label>Teléfono</label><input type="text" id="cm-phone"></div>
+    <div class="field"><label>Correo</label><input type="email" id="cm-email"></div>
+    <div class="g2" style="margin-top:14px;gap:10px">
+      <button class="btn btn-ghost" onclick="closeModal('contact-modal')">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveContact()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
   <div class="card modal" style="width:680px;max-width:98%;max-height:90vh;overflow-y:auto">
     <div style="font-family:var(--font-display,sans-serif);font-size:20px;color:var(--accent2);margin-bottom:4px">📋 NUEVA REQUISICIÓN DE COMPRA</div>
     <div id="requi-modal-sub" style="color:var(--muted);font-size:12px;margin-bottom:14px"></div>
@@ -1168,6 +1396,17 @@ nav{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;ali
   <div class="ptabs" style="margin-bottom:16px">
     <button class="ptab active" onclick="setComprasTab('cmp-requisiciones',this)">📋 Requisiciones</button>
     <button class="ptab" onclick="setComprasTab('cmp-historial',this)">📁 Historial</button>
+    <button class="ptab" onclick="setComprasTab('cmp-proveedores',this)">🏭 Proveedores</button>
+  </div>
+
+  <!-- PROVEEDORES -->
+  <div id="cmp-proveedores" class="subpage">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <input type="text" id="cmp-sup-search" placeholder="🔍 Buscar por nombre, código o RFC..." oninput="renderComprasSuppliers()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:300px">
+      <button class="btn btn-accent btn-sm" onclick="showComSupplierForm()">+ Nuevo Proveedor</button>
+    </div>
+    <div id="cmp-suppliers-form"></div>
+    <div id="cmp-suppliers-list"></div>
   </div>
 
   <!-- REQUISICIONES ACTIVAS -->
@@ -1193,6 +1432,133 @@ nav{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;ali
       <input type="date" id="cmp-hist-to" onchange="renderComprasHistorial()" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:12px">
     </div>
     <div id="cmp-historial-list"></div>
+  </div>
+</div>
+
+<!-- ════════ PÁGINA VENTAS ════════ -->
+<div id="page-ventas" class="page" style="padding:20px;max-width:1200px;margin:0 auto">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+    <div style="font-family:var(--font-display,sans-serif);font-size:28px;color:var(--accent2)">🧾 VENTAS</div>
+    <button class="btn btn-sm btn-ghost" onclick="loadFinancialData().then(renderVentasAll)">↻ Actualizar</button>
+  </div>
+
+  <div class="ptabs" id="ven-tabs" style="margin-bottom:16px">
+    <button class="ptab active" onclick="setVenTab('ven-clientes',this)">👥 Clientes</button>
+    <button class="ptab" onclick="setVenTab('ven-facturas',this)">🧾 Facturas</button>
+  </div>
+
+  <!-- CLIENTES -->
+  <div id="ven-clientes" class="subpage active">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <input type="text" id="ven-cli-search" placeholder="🔍 Buscar por nombre, código o RFC..." oninput="renderVentasClientes()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:300px">
+      <button class="btn btn-accent btn-sm" onclick="showVenClientForm()">+ Nuevo Cliente</button>
+    </div>
+    <div id="ven-client-form-wrap"></div>
+    <div id="ven-clientes-list"></div>
+  </div>
+
+  <!-- FACTURAS -->
+  <div id="ven-facturas" class="subpage">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <input type="text" id="ven-inv-search" placeholder="🔍 Buscar por folio o cliente..." oninput="renderVentasFacturas()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:260px">
+        <select id="ven-inv-status-filter" onchange="renderVentasFacturas()" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:12px">
+          <option value="">Todos los estados</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="pagada">Pagada</option>
+          <option value="vencida">Vencida</option>
+          <option value="cancelada">Cancelada</option>
+        </select>
+      </div>
+      <button class="btn btn-accent btn-sm" onclick="showVenInvoiceForm()">+ Nueva Factura</button>
+    </div>
+    <div id="ven-invoice-form-wrap"></div>
+    <div id="ven-facturas-list"></div>
+  </div>
+</div>
+
+<!-- ════════ PÁGINA COBRANZA Y PAGOS ════════ -->
+<div id="page-cobranza" class="page" style="padding:20px;max-width:1200px;margin:0 auto">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+    <div style="font-family:var(--font-display,sans-serif);font-size:28px;color:var(--accent2)">💰 COBRANZA Y PAGOS</div>
+    <button class="btn btn-sm btn-ghost" onclick="loadFinancialData().then(renderCobranzaAll)">↻ Actualizar</button>
+  </div>
+
+  <div class="ptabs" style="margin-bottom:16px">
+    <button class="ptab active" onclick="setCobTab('cob-cxc',this)">📥 Por Cobrar (CXC)</button>
+    <button class="ptab" onclick="setCobTab('cob-cxp',this)">📤 Por Pagar (CXP)</button>
+    <button class="ptab" onclick="setCobTab('cob-suppliers',this)">🏭 Proveedores (solo lectura)</button>
+  </div>
+
+  <!-- CXC -->
+  <div id="cob-cxc" class="subpage active">
+    <div id="cob-cxc-banner" style="margin-bottom:14px"></div>
+    <div id="cob-cxc-list"></div>
+  </div>
+
+  <!-- CXP -->
+  <div id="cob-cxp" class="subpage">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <input type="file" id="cob-xml-cxp-input" accept=".xml" style="display:none" onchange="handleCXPXmlUpload(event)">
+        <button class="btn btn-sm btn-ghost" onclick="document.getElementById('cob-xml-cxp-input').click()">📥 Importar XML CFDI</button>
+      </div>
+      <button class="btn btn-accent btn-sm" onclick="showPayableForm()">+ Nueva Cuenta por Pagar</button>
+    </div>
+    <div id="cob-cxp-form-wrap"></div>
+    <div id="cob-cxp-banner" style="margin-bottom:14px"></div>
+    <div id="cob-cxp-list"></div>
+  </div>
+
+  <!-- PROVEEDORES SOLO LECTURA -->
+  <div id="cob-suppliers" class="subpage">
+    <div style="margin-bottom:10px;font-size:11px;color:var(--muted)">Catálogo administrado en el módulo de Compras. Aquí solo consulta.</div>
+    <input type="text" id="cob-sup-search" placeholder="🔍 Buscar proveedor..." oninput="renderCobSuppliers()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:12px;width:300px;margin-bottom:14px">
+    <div id="cob-suppliers-list"></div>
+  </div>
+</div>
+
+<!-- ════════ PÁGINA BANCOS ════════ -->
+<div id="page-bancos" class="page" style="padding:20px;max-width:1200px;margin:0 auto">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+    <div style="font-family:var(--font-display,sans-serif);font-size:28px;color:var(--accent2)">🏦 BANCOS</div>
+    <button class="btn btn-sm btn-ghost" onclick="loadFinancialData().then(renderBancosAll)">↻ Actualizar</button>
+  </div>
+
+  <div class="ptabs" style="margin-bottom:16px">
+    <button class="ptab active" onclick="setBanTab('ban-cuentas',this)">🏦 Cuentas</button>
+    <button class="ptab" onclick="setBanTab('ban-movimientos',this)">📊 Movimientos</button>
+    <button class="ptab" onclick="setBanTab('ban-prestamos',this)">💵 Préstamos</button>
+  </div>
+
+  <!-- CUENTAS -->
+  <div id="ban-cuentas" class="subpage active">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
+      <button class="btn btn-accent btn-sm" onclick="showBankAccountForm()">+ Nueva Cuenta</button>
+    </div>
+    <div id="ban-cuentas-form-wrap"></div>
+    <div id="ban-cuentas-list"></div>
+  </div>
+
+  <!-- MOVIMIENTOS -->
+  <div id="ban-movimientos" class="subpage">
+    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+      <select id="ban-mov-account-filter" onchange="renderBanMovimientos()" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:12px">
+        <option value="">Todas las cuentas</option>
+      </select>
+      <button class="btn btn-accent btn-sm" onclick="showBankTxnForm()">+ Movimiento Manual</button>
+    </div>
+    <div id="ban-txn-form-wrap"></div>
+    <div id="ban-movimientos-list"></div>
+  </div>
+
+  <!-- PRÉSTAMOS -->
+  <div id="ban-prestamos" class="subpage">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
+      <button class="btn btn-accent btn-sm" onclick="showLoanForm()">+ Nuevo Préstamo</button>
+    </div>
+    <div id="ban-prestamos-form-wrap"></div>
+    <div id="ban-prestamos-list"></div>
   </div>
 </div>
 
@@ -1340,6 +1706,9 @@ const PASS_ALMACEN     = '4340';
 const PASS_ALMACEN_PT  = '7720';
 const PASS_INVENTARIOS = '52100';
 const PASS_COMPRAS     = '3560';
+const PASS_VENTAS      = 'K340';
+const PASS_COBRANZA    = '3310';
+const PASS_BANCOS      = '4140';
 const CFG_KEY = 'niq2_config';
 const OT_START_KEY = 'niq2_ot_start';
 
@@ -1347,6 +1716,7 @@ let SB_URL = '', SB_KEY = '';
 let products=[], operators=[], workOrders=[], sessions=[], machineCatalog=[], opCatalog=[], machineLoad=[], rawMaterial=[], otDeliveries=[], otScrap=[], otExternalServices=[], secOpsActive=[];
 let recursosProduccion=[];
 let reportsAuth=false, engAuth=false, progAuth=false, almPTAuth=false, comprasAuth=false;
+let venAuth=false, cobAuth=false, banAuth=false;
 
 function getConfig(){ try{ return JSON.parse(localStorage.getItem(CFG_KEY))||null; }catch{ return null; } }
 
@@ -1802,6 +2172,9 @@ function goPage(p){
   if(p==='engineering'){ loadAllData().then(renderEngineering); }
   if(p==='programming'){ loadAllData().then(renderProgramming); }
   if(p==='consulta'){ loadAllData().then(renderConsulta); }
+  if(p==='ventas'){ loadFinancialData().then(renderVentasAll); }
+  if(p==='cobranza'){ loadFinancialData().then(renderCobranzaAll); }
+  if(p==='bancos'){ loadFinancialData().then(renderBancosAll); }
 }
 
 /* AUTH */
@@ -1816,6 +2189,21 @@ function engLogout(){ engAuth=false; document.getElementById('eng-lock').textCon
 function programmingClick(){ if(progAuth){goPage('programming');return;} openModal('prog-modal','prog-pass','prog-error'); }
 function tryProgLogin(){ tryAuth('prog-pass','prog-error',PASS_PROGRAMMING,()=>{ progAuth=true; document.getElementById('prog-lock').textContent='🔓'; document.getElementById('nb-prog-logout').style.display=''; closeModal('prog-modal'); goPage('programming'); }); }
 function progLogout(){ progAuth=false; document.getElementById('prog-lock').textContent='🔒'; document.getElementById('nb-prog-logout').style.display='none'; goPage('operator'); }
+
+function ventasClick(){ if(venAuth){goPage('ventas');return;} openModal('ven-modal','ven-pass','ven-error'); }
+function tryVenLogin(){ tryAuth('ven-pass','ven-error',PASS_VENTAS,()=>{ venAuth=true; document.getElementById('ven-lock').textContent='🔓'; document.getElementById('nb-ventas-logout').style.display=''; closeModal('ven-modal'); goPage('ventas'); }); }
+function ventasLogout(){ venAuth=false; document.getElementById('ven-lock').textContent='🔒'; document.getElementById('nb-ventas-logout').style.display='none'; goPage('operator'); }
+window.ventasClick=ventasClick; window.tryVenLogin=tryVenLogin; window.ventasLogout=ventasLogout;
+
+function cobranzaClick(){ if(cobAuth){goPage('cobranza');return;} openModal('cob-modal','cob-pass','cob-error'); }
+function tryCobLogin(){ tryAuth('cob-pass','cob-error',PASS_COBRANZA,()=>{ cobAuth=true; document.getElementById('cob-lock').textContent='🔓'; document.getElementById('nb-cobranza-logout').style.display=''; closeModal('cob-modal'); goPage('cobranza'); }); }
+function cobranzaLogout(){ cobAuth=false; document.getElementById('cob-lock').textContent='🔒'; document.getElementById('nb-cobranza-logout').style.display='none'; goPage('operator'); }
+window.cobranzaClick=cobranzaClick; window.tryCobLogin=tryCobLogin; window.cobranzaLogout=cobranzaLogout;
+
+function bancosClick(){ if(banAuth){goPage('bancos');return;} openModal('ban-modal','ban-pass','ban-error'); }
+function tryBanLogin(){ tryAuth('ban-pass','ban-error',PASS_BANCOS,()=>{ banAuth=true; document.getElementById('ban-lock').textContent='🔓'; document.getElementById('nb-bancos-logout').style.display=''; closeModal('ban-modal'); goPage('bancos'); }); }
+function bancosLogout(){ banAuth=false; document.getElementById('ban-lock').textContent='🔒'; document.getElementById('nb-bancos-logout').style.display='none'; goPage('operator'); }
+window.bancosClick=bancosClick; window.tryBanLogin=tryBanLogin; window.bancosLogout=bancosLogout;
 
 function openModal(modalId,inputId,errId){
   document.getElementById(modalId).classList.remove('hidden');
@@ -11645,6 +12033,7 @@ function setComprasTab(id,btn){
   el.style.display=''; void el.offsetWidth; el.classList.add('active'); btn.classList.add('active');
   if(id==='cmp-requisiciones') renderComprasRequisiciones();
   if(id==='cmp-historial') renderComprasHistorial();
+  if(id==='cmp-proveedores') renderComprasSuppliers();
 }
 window.setComprasTab=setComprasTab;
 
@@ -11780,6 +12169,1069 @@ async function cambiarStatusRequi(id,newStatus){
   }catch(e){ alert('Error al actualizar: '+e.message); }
 }
 window.cambiarStatusRequi=cambiarStatusRequi;
+
+/* ══════════════════════════════════════════
+   CATÁLOGO DE PROVEEDORES (ampliado, vive en mp_suppliers)
+   ══════════════════════════════════════════ */
+function nextSupplierCode(){
+  let max=0;
+  mpSuppliers.forEach(s=>{
+    const m=(s.code||'').match(/^PROV-(\d+)$/);
+    if(m) max=Math.max(max,parseInt(m[1],10));
+  });
+  return 'PROV-'+String(max+1).padStart(4,'0');
+}
+
+function renderComprasSuppliers(){
+  const list=document.getElementById('cmp-suppliers-list');
+  if(!list) return;
+  const q=(document.getElementById('cmp-sup-search')?.value||'').toLowerCase();
+  let sups=[...mpSuppliers].sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  if(q){
+    sups=sups.filter(s=>
+      (s.name||'').toLowerCase().includes(q) ||
+      (s.code||'').toLowerCase().includes(q) ||
+      (s.rfc||'').toLowerCase().includes(q)
+    );
+  }
+  if(!sups.length){ list.innerHTML='<div class="card" style="color:var(--muted);text-align:center;padding:40px">Sin proveedores. Agrega el primero.</div>'; return; }
+  list.innerHTML=`<div style="display:grid;gap:10px">${sups.map(s=>`
+    <div class="card" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:220px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span style="font-family:var(--font-display,sans-serif);font-size:15px;color:var(--accent)">${s.name||'—'}</span>
+          <span style="font-size:10px;color:var(--muted);background:var(--bg3);padding:2px 8px;border-radius:6px">${s.code||'—'}</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted)">
+          ${s.rfc?`RFC: ${s.rfc} · `:''}${s.payment_type?`Pago: ${s.payment_type} · `:''}${s.credit_days?`Crédito: ${s.credit_days} días`:''}
+        </div>
+        ${s.contact_name?`<div style="font-size:11px;color:var(--muted);margin-top:4px">👤 ${s.contact_name}${s.contact_pos?' ('+s.contact_pos+')':''}${s.contact_phone?' · ☎ '+s.contact_phone:''}${s.contact_email?' · ✉ '+s.contact_email:''}</div>`:''}
+        ${s.address?`<div style="font-size:11px;color:var(--muted);margin-top:2px">📍 ${s.address}</div>`:''}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm btn-ghost" onclick="showComSupplierForm('${s.id}')">✎ Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteComSupplier('${s.id}')">🗑</button>
+      </div>
+    </div>`).join('')}</div>`;
+}
+window.renderComprasSuppliers=renderComprasSuppliers;
+
+function showComSupplierForm(id){
+  const s=id?mpSuppliers.find(x=>x.id===id):null;
+  document.getElementById('cmp-suppliers-form').innerHTML=`
+    <div class="card" style="margin-bottom:14px;border-color:rgba(0,212,255,.3)">
+      <div style="font-family:var(--font-display,sans-serif);font-size:18px;color:var(--accent);margin-bottom:12px">${s?'EDITAR PROVEEDOR':'NUEVO PROVEEDOR'}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field">
+          <label>Código</label>
+          <input type="text" id="csf-code" value="${s?.code||nextSupplierCode()}" placeholder="PROV-0001">
+        </div>
+        <div class="field">
+          <label>Nombre del Proveedor *</label>
+          <input type="text" id="csf-name" value="${s?.name||''}" placeholder="Razón social o nombre comercial">
+        </div>
+        <div class="field">
+          <label>RFC</label>
+          <input type="text" id="csf-rfc" value="${s?.rfc||''}" placeholder="XAXX010101000">
+        </div>
+        <div class="field">
+          <label>Tipo de Pago</label>
+          <select id="csf-payment-type">
+            <option value="">— Seleccionar —</option>
+            <option value="Contado" ${s?.payment_type==='Contado'?'selected':''}>Contado</option>
+            <option value="Crédito" ${s?.payment_type==='Crédito'?'selected':''}>Crédito</option>
+            <option value="Transferencia" ${s?.payment_type==='Transferencia'?'selected':''}>Transferencia</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Días de Crédito</label>
+          <input type="number" id="csf-credit-days" value="${s?.credit_days??''}" placeholder="30">
+        </div>
+        <div class="field">
+          <label>Límite de Crédito (MXN)</label>
+          <input type="number" step="0.01" id="csf-credit-limit" value="${s?.credit_limit??''}" placeholder="50000.00">
+        </div>
+        <div class="field" style="grid-column:1/-1">
+          <label>Dirección</label>
+          <input type="text" id="csf-address" value="${s?.address||''}" placeholder="Calle, número, colonia, ciudad">
+        </div>
+        <div class="field">
+          <label>Nombre de Contacto</label>
+          <input type="text" id="csf-contact-name" value="${s?.contact_name||''}" placeholder="Nombre del contacto">
+        </div>
+        <div class="field">
+          <label>Puesto</label>
+          <input type="text" id="csf-contact-pos" value="${s?.contact_pos||''}" placeholder="ej. Ventas, Gerente">
+        </div>
+        <div class="field">
+          <label>Teléfono</label>
+          <input type="text" id="csf-contact-phone" value="${s?.contact_phone||''}" placeholder="444-000-0000">
+        </div>
+        <div class="field">
+          <label>Correo</label>
+          <input type="email" id="csf-contact-email" value="${s?.contact_email||''}" placeholder="contacto@proveedor.com">
+        </div>
+        <div class="field" style="grid-column:1/-1">
+          <label>Notas de Contacto</label>
+          <input type="text" id="csf-contact-notes" value="${s?.contact_notes||''}" placeholder="ej. Mejor comunicarse por WhatsApp">
+        </div>
+        <div class="field" style="grid-column:1/-1">
+          <label>Notas Generales</label>
+          <input type="text" id="csf-notes" value="${s?.notes||''}" placeholder="Observaciones generales del proveedor">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn btn-accent" onclick="saveComSupplier('${s?.id||''}')">💾 Guardar</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('cmp-suppliers-form').innerHTML=''">Cancelar</button>
+      </div>
+    </div>`;
+}
+window.showComSupplierForm=showComSupplierForm;
+
+async function saveComSupplier(id){
+  const name=document.getElementById('csf-name').value.trim();
+  if(!name){alert('El nombre es requerido');return;}
+  const rec={
+    name,
+    code:document.getElementById('csf-code').value.trim()||nextSupplierCode(),
+    rfc:document.getElementById('csf-rfc').value.trim()||null,
+    address:document.getElementById('csf-address').value.trim()||null,
+    payment_type:document.getElementById('csf-payment-type').value||null,
+    credit_days:document.getElementById('csf-credit-days').value?parseInt(document.getElementById('csf-credit-days').value,10):null,
+    credit_limit:document.getElementById('csf-credit-limit').value?parseFloat(document.getElementById('csf-credit-limit').value):null,
+    contact_name:document.getElementById('csf-contact-name').value.trim()||null,
+    contact_pos:document.getElementById('csf-contact-pos').value.trim()||null,
+    contact_phone:document.getElementById('csf-contact-phone').value.trim()||null,
+    contact_email:document.getElementById('csf-contact-email').value.trim()||null,
+    contact_notes:document.getElementById('csf-contact-notes').value.trim()||null,
+    notes:document.getElementById('csf-notes').value.trim()||null,
+    active:true
+  };
+  try{
+    if(id){
+      await sbUpdate('mp_suppliers',{id},rec);
+      const idx=mpSuppliers.findIndex(s=>s.id===id);
+      if(idx>=0) mpSuppliers[idx]={...mpSuppliers[idx],...rec};
+    } else {
+      rec.id=uid();
+      await sbInsert('mp_suppliers',rec);
+      mpSuppliers.push(rec);
+    }
+    document.getElementById('cmp-suppliers-form').innerHTML='';
+    renderComprasSuppliers();
+    if(typeof renderAlmSuppliers==='function') renderAlmSuppliers();
+  }catch(e){alert('Error: '+e.message);}
+}
+window.saveComSupplier=saveComSupplier;
+
+async function deleteComSupplier(id){
+  const s=mpSuppliers.find(x=>x.id===id);
+  if(!confirm(`¿Eliminar proveedor "${s?.name||''}"?`)) return;
+  try{
+    await sbDelete('mp_suppliers',{id});
+    mpSuppliers=mpSuppliers.filter(x=>x.id!==id);
+    renderComprasSuppliers();
+    if(typeof renderAlmSuppliers==='function') renderAlmSuppliers();
+  }catch(e){ alert('Error al eliminar: '+e.message); }
+}
+window.deleteComSupplier=deleteComSupplier;
+
+/* ════════════════════════════════════════════════════════
+   MÓDULO FINANCIERO: VENTAS / COBRANZA / BANCOS
+   ════════════════════════════════════════════════════════ */
+
+let venClients=[], venClientContacts=[], venInvoices=[];
+let cobPayables=[], cobPaymentsReceived=[], cobPaymentsMade=[];
+let banAccounts=[], banTransactions=[], banLoans=[], banLoanPayments=[];
+let financialDataLoaded=false;
+let _cpActiveClientId=null; // cliente activo en el panel de contactos
+let _xmlCxpParsed=null; // CFDI parseado pendiente de confirmar
+
+/* CARGA CENTRALIZADA DE DATOS FINANCIEROS */
+async function loadFinancialData(){
+  try{
+    const [cli,cont,inv,pay,prec,pmade,accs,txns,loans,lpays,sup]=await Promise.all([
+      sbSelect('clients','select=*&order=name.asc'),
+      sbSelect('client_contacts','select=*'),
+      sbSelect('invoices','select=*&order=fecha.desc'),
+      sbSelect('payables','select=*&order=fecha.desc'),
+      sbSelect('payments_received','select=*&order=fecha.desc'),
+      sbSelect('payments_made','select=*&order=fecha.desc'),
+      sbSelect('bank_accounts','select=*&order=name.asc'),
+      sbSelect('bank_transactions','select=*&order=fecha.desc'),
+      sbSelect('loans','select=*&order=created_at.desc'),
+      sbSelect('loan_payments','select=*&order=fecha.desc'),
+      sbSelect('mp_suppliers','select=*&order=name.asc')
+    ]);
+    venClients=cli||[]; venClientContacts=cont||[]; venInvoices=inv||[];
+    cobPayables=pay||[]; cobPaymentsReceived=prec||[]; cobPaymentsMade=pmade||[];
+    banAccounts=accs||[]; banTransactions=txns||[]; banLoans=loans||[]; banLoanPayments=lpays||[];
+    mpSuppliers=sup||[]; // mantener sincronizado con Compras/Almacén
+    financialDataLoaded=true;
+  }catch(e){ console.error('loadFinancialData:',e); }
+}
+window.loadFinancialData=loadFinancialData;
+
+/* ══════════════════════════════════════════
+   VENTAS
+   ══════════════════════════════════════════ */
+function renderVentasAll(){
+  renderVentasClientes();
+  renderVentasFacturas();
+}
+window.renderVentasAll=renderVentasAll;
+
+function setVenTab(id,btn){
+  document.querySelectorAll('#page-ventas .subpage').forEach(el=>{ el.classList.remove('active'); el.style.display='none'; });
+  document.querySelectorAll('#ven-tabs .ptab').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.style.display=''; void el.offsetWidth; el.classList.add('active'); btn.classList.add('active');
+  if(id==='ven-clientes') renderVentasClientes();
+  if(id==='ven-facturas') renderVentasFacturas();
+}
+window.setVenTab=setVenTab;
+
+function nextClientCode(){
+  let max=0;
+  venClients.forEach(c=>{
+    const m=(c.code||'').match(/^CLI-(\d+)$/);
+    if(m) max=Math.max(max,parseInt(m[1],10));
+  });
+  return 'CLI-'+String(max+1).padStart(4,'0');
+}
+
+function renderVentasClientes(){
+  const list=document.getElementById('ven-clientes-list');
+  if(!list) return;
+  const q=(document.getElementById('ven-cli-search')?.value||'').toLowerCase();
+  let cs=[...venClients].sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  if(q) cs=cs.filter(c=>(c.name||'').toLowerCase().includes(q)||(c.code||'').toLowerCase().includes(q)||(c.rfc||'').toLowerCase().includes(q));
+  if(!cs.length){ list.innerHTML='<div class="card" style="color:var(--muted);text-align:center;padding:40px">Sin clientes. Agrega el primero.</div>'; return; }
+  list.innerHTML=`<div style="display:grid;gap:10px">${cs.map(c=>{
+    const nContacts=venClientContacts.filter(x=>x.client_id===c.id).length;
+    return `<div class="card" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:220px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span style="font-family:var(--font-display,sans-serif);font-size:15px;color:var(--accent)">${c.name||'—'}</span>
+          <span style="font-size:10px;color:var(--muted);background:var(--bg3);padding:2px 8px;border-radius:6px">${c.code||'—'}</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted)">
+          ${c.rfc?`RFC: ${c.rfc} · `:''}${c.credit_days?`Crédito: ${c.credit_days} días · `:''}${c.credit_limit?`Límite: $${Number(c.credit_limit).toLocaleString('es-MX',{minimumFractionDigits:2})}`:''}
+        </div>
+        ${c.address?`<div style="font-size:11px;color:var(--muted);margin-top:2px">📍 ${c.address}</div>`:''}
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-sm btn-ghost" onclick="openContactsPanel('${c.id}')">👤 Contactos (${nContacts})</button>
+        <button class="btn btn-sm btn-ghost" onclick="showVenClientForm('${c.id}')">✎ Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteVenClient('${c.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+window.renderVentasClientes=renderVentasClientes;
+
+function showVenClientForm(id){
+  const c=id?venClients.find(x=>x.id===id):null;
+  document.getElementById('ven-client-modal-title').textContent=c?'👥 Editar Cliente':'👥 Nuevo Cliente';
+  document.getElementById('vcf-code').value=c?.code||nextClientCode();
+  document.getElementById('vcf-name').value=c?.name||'';
+  document.getElementById('vcf-rfc').value=c?.rfc||'';
+  document.getElementById('vcf-credit-days').value=c?.credit_days??'';
+  document.getElementById('vcf-credit-limit').value=c?.credit_limit??'';
+  document.getElementById('vcf-address').value=c?.address||'';
+  document.getElementById('vcf-notes').value=c?.notes||'';
+  document.getElementById('ven-client-modal').dataset.editId=id||'';
+  document.getElementById('ven-client-modal').classList.remove('hidden');
+}
+window.showVenClientForm=showVenClientForm;
+
+async function saveVenClient(){
+  const id=document.getElementById('ven-client-modal').dataset.editId||null;
+  const name=document.getElementById('vcf-name').value.trim();
+  if(!name){alert('El nombre es requerido');return;}
+  const rec={
+    name,
+    code:document.getElementById('vcf-code').value.trim()||nextClientCode(),
+    rfc:document.getElementById('vcf-rfc').value.trim()||null,
+    credit_days:document.getElementById('vcf-credit-days').value?parseInt(document.getElementById('vcf-credit-days').value,10):null,
+    credit_limit:document.getElementById('vcf-credit-limit').value?parseFloat(document.getElementById('vcf-credit-limit').value):null,
+    address:document.getElementById('vcf-address').value.trim()||null,
+    notes:document.getElementById('vcf-notes').value.trim()||null,
+    active:true
+  };
+  try{
+    if(id){
+      await sbUpdate('clients',{id},rec);
+      const idx=venClients.findIndex(x=>x.id===id);
+      if(idx>=0) venClients[idx]={...venClients[idx],...rec};
+    } else {
+      rec.id=uid();
+      await sbInsert('clients',rec);
+      venClients.push(rec);
+    }
+    closeModal('ven-client-modal');
+    renderVentasClientes();
+  }catch(e){ alert('Error: '+e.message); }
+}
+window.saveVenClient=saveVenClient;
+
+async function deleteVenClient(id){
+  const c=venClients.find(x=>x.id===id);
+  if(!confirm(`¿Eliminar cliente "${c?.name||''}"? También se eliminarán sus contactos.`)) return;
+  try{
+    await sbDelete('client_contacts',{client_id:id});
+    await sbDelete('clients',{id});
+    venClients=venClients.filter(x=>x.id!==id);
+    venClientContacts=venClientContacts.filter(x=>x.client_id!==id);
+    renderVentasClientes();
+  }catch(e){ alert('Error al eliminar: '+e.message); }
+}
+window.deleteVenClient=deleteVenClient;
+
+/* CONTACTOS DE CLIENTE */
+function openContactsPanel(clientId){
+  _cpActiveClientId=clientId;
+  const c=venClients.find(x=>x.id===clientId);
+  document.getElementById('cp-client-label').textContent=c?.name||'';
+  document.getElementById('cp-contact-form-wrap').innerHTML='';
+  renderContactsList();
+  document.getElementById('contacts-panel').classList.remove('hidden');
+}
+window.openContactsPanel=openContactsPanel;
+
+function renderContactsList(){
+  const list=document.getElementById('cp-contacts-list');
+  if(!list) return;
+  const contacts=venClientContacts.filter(x=>x.client_id===_cpActiveClientId);
+  if(!contacts.length){ list.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:14px">Sin contactos registrados.</div>'; return; }
+  list.innerHTML=contacts.map(ct=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <div>
+      <div style="font-weight:700;font-size:13px">${ct.name||'—'}${ct.position?' <span style="color:var(--muted);font-weight:400">('+ct.position+')</span>':''}</div>
+      <div style="font-size:11px;color:var(--muted)">${ct.phone?'☎ '+ct.phone+' ':''}${ct.email?'✉ '+ct.email:''}</div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-sm btn-ghost" onclick="showContactForm('${ct.id}')">✎</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteContact('${ct.id}')">🗑</button>
+    </div>
+  </div>`).join('');
+}
+window.renderContactsList=renderContactsList;
+
+function showContactForm(id){
+  const ct=id?venClientContacts.find(x=>x.id===id):null;
+  document.getElementById('cm-name').value=ct?.name||'';
+  document.getElementById('cm-pos').value=ct?.position||'';
+  document.getElementById('cm-phone').value=ct?.phone||'';
+  document.getElementById('cm-email').value=ct?.email||'';
+  document.getElementById('contact-modal').dataset.editId=id||'';
+  document.getElementById('contact-modal').classList.remove('hidden');
+}
+window.showContactForm=showContactForm;
+
+async function saveContact(){
+  const id=document.getElementById('contact-modal').dataset.editId||null;
+  const name=document.getElementById('cm-name').value.trim();
+  if(!name){alert('El nombre es requerido');return;}
+  const rec={
+    name,
+    position:document.getElementById('cm-pos').value.trim()||null,
+    phone:document.getElementById('cm-phone').value.trim()||null,
+    email:document.getElementById('cm-email').value.trim()||null,
+    client_id:_cpActiveClientId
+  };
+  try{
+    if(id){
+      await sbUpdate('client_contacts',{id},rec);
+      const idx=venClientContacts.findIndex(x=>x.id===id);
+      if(idx>=0) venClientContacts[idx]={...venClientContacts[idx],...rec};
+    } else {
+      rec.id=uid();
+      await sbInsert('client_contacts',rec);
+      venClientContacts.push(rec);
+    }
+    closeModal('contact-modal');
+    renderContactsList();
+    renderVentasClientes();
+  }catch(e){ alert('Error: '+e.message); }
+}
+window.saveContact=saveContact;
+
+async function deleteContact(id){
+  if(!confirm('¿Eliminar este contacto?')) return;
+  try{
+    await sbDelete('client_contacts',{id});
+    venClientContacts=venClientContacts.filter(x=>x.id!==id);
+    renderContactsList();
+    renderVentasClientes();
+  }catch(e){ alert('Error al eliminar: '+e.message); }
+}
+window.deleteContact=deleteContact;
+
+/* FACTURAS */
+function renderVentasFacturas(){
+  const list=document.getElementById('ven-facturas-list');
+  if(!list) return;
+  const q=(document.getElementById('ven-inv-search')?.value||'').toLowerCase();
+  const st=document.getElementById('ven-inv-status-filter')?.value||'';
+  let invs=[...venInvoices];
+  if(st) invs=invs.filter(i=>i.status===st);
+  if(q){
+    invs=invs.filter(i=>{
+      const cli=venClients.find(c=>c.id===i.client_id);
+      return (i.folio||'').toLowerCase().includes(q)||(cli?.name||'').toLowerCase().includes(q);
+    });
+  }
+  if(!invs.length){ list.innerHTML='<div class="card" style="color:var(--muted);text-align:center;padding:40px">Sin facturas registradas.</div>'; return; }
+  const statusColor={pendiente:'var(--warn)',pagada:'var(--green)',vencida:'var(--danger)',cancelada:'var(--muted)'};
+  list.innerHTML=`<div style="display:grid;gap:8px">${invs.map(i=>{
+    const cli=venClients.find(c=>c.id===i.client_id);
+    return `<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px">
+        <div style="font-weight:700;font-size:13px">${i.folio||'—'} — ${cli?.name||'—'}</div>
+        <div style="font-size:11px;color:var(--muted)">Fecha: ${i.fecha||'—'} ${i.vencimiento?'· Vence: '+i.vencimiento:''}</div>
+      </div>
+      <div style="font-weight:700;font-size:15px;color:var(--accent2)">$${Number(i.monto||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+      <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:6px;background:var(--bg3);color:${statusColor[i.status]||'var(--muted)'}">${(i.status||'').toUpperCase()}</span>
+      <div style="display:flex;gap:6px">
+        ${i.status!=='pagada'&&i.status!=='cancelada'?`<button class="btn btn-sm btn-accent" onclick="openPaymentReceivedModal('${i.id}')">💵 Registrar Pago</button>`:''}
+        <button class="btn btn-sm btn-ghost" onclick="showVenInvoiceForm('${i.id}')">✎</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteVenInvoice('${i.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+window.renderVentasFacturas=renderVentasFacturas;
+
+function showVenInvoiceForm(id){
+  const inv=id?venInvoices.find(x=>x.id===id):null;
+  const sel=document.getElementById('inv-client-id');
+  sel.innerHTML=venClients.map(c=>`<option value="${c.id}" ${inv?.client_id===c.id?'selected':''}>${c.name}</option>`).join('');
+  document.getElementById('invoice-modal-title').textContent=inv?'🧾 Editar Factura':'🧾 Nueva Factura';
+  document.getElementById('inv-folio').value=inv?.folio||'';
+  document.getElementById('inv-fecha').value=inv?.fecha||new Date().toISOString().slice(0,10);
+  document.getElementById('inv-monto').value=inv?.monto??'';
+  document.getElementById('inv-vencimiento').value=inv?.vencimiento||'';
+  document.getElementById('inv-status').value=inv?.status||'pendiente';
+  document.getElementById('inv-notas').value=inv?.notas||'';
+  document.getElementById('invoice-modal').dataset.editId=id||'';
+  document.getElementById('invoice-modal').classList.remove('hidden');
+}
+window.showVenInvoiceForm=showVenInvoiceForm;
+
+async function saveVenInvoice(){
+  const id=document.getElementById('invoice-modal').dataset.editId||null;
+  const clientId=document.getElementById('inv-client-id').value;
+  const monto=parseFloat(document.getElementById('inv-monto').value);
+  if(!clientId){alert('Selecciona un cliente');return;}
+  if(!monto){alert('El monto es requerido');return;}
+  const rec={
+    client_id:clientId,
+    folio:document.getElementById('inv-folio').value.trim()||('FACT-'+Date.now().toString().slice(-6)),
+    fecha:document.getElementById('inv-fecha').value||new Date().toISOString().slice(0,10),
+    monto,
+    vencimiento:document.getElementById('inv-vencimiento').value||null,
+    status:document.getElementById('inv-status').value,
+    notas:document.getElementById('inv-notas').value.trim()||null
+  };
+  try{
+    if(id){
+      await sbUpdate('invoices',{id},rec);
+      const idx=venInvoices.findIndex(x=>x.id===id);
+      if(idx>=0) venInvoices[idx]={...venInvoices[idx],...rec};
+    } else {
+      rec.id=uid();
+      rec.created_at=new Date().toISOString();
+      await sbInsert('invoices',rec);
+      venInvoices.unshift(rec);
+    }
+    closeModal('invoice-modal');
+    renderVentasFacturas();
+    renderCobCxc();
+  }catch(e){ alert('Error: '+e.message); }
+}
+window.saveVenInvoice=saveVenInvoice;
+
+async function deleteVenInvoice(id){
+  if(!confirm('¿Eliminar esta factura?')) return;
+  try{
+    await sbDelete('invoices',{id});
+    venInvoices=venInvoices.filter(x=>x.id!==id);
+    renderVentasFacturas();
+    renderCobCxc();
+  }catch(e){ alert('Error al eliminar: '+e.message); }
+}
+window.deleteVenInvoice=deleteVenInvoice;
+
+/* ══════════════════════════════════════════
+   COBRANZA Y PAGOS
+   ══════════════════════════════════════════ */
+function renderCobranzaAll(){
+  renderCobCxc();
+  renderCobCxp();
+  renderCobSuppliers();
+}
+window.renderCobranzaAll=renderCobranzaAll;
+
+function setCobTab(id,btn){
+  document.querySelectorAll('#page-cobranza .subpage').forEach(el=>{ el.classList.remove('active'); el.style.display='none'; });
+  document.querySelectorAll('#page-cobranza .ptab').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.style.display=''; void el.offsetWidth; el.classList.add('active'); btn.classList.add('active');
+  if(id==='cob-cxc') renderCobCxc();
+  if(id==='cob-cxp') renderCobCxp();
+  if(id==='cob-suppliers') renderCobSuppliers();
+}
+window.setCobTab=setCobTab;
+
+/* CXC — solo lectura sobre invoices, registrar pago crea payments_received */
+function renderCobCxc(){
+  const banner=document.getElementById('cob-cxc-banner');
+  const list=document.getElementById('cob-cxc-list');
+  if(!list) return;
+  const pendientes=venInvoices.filter(i=>i.status==='pendiente'||i.status==='vencida');
+  const totalPendiente=pendientes.reduce((s,i)=>s+Number(i.monto||0),0);
+  if(banner){
+    banner.innerHTML=`<div style="display:flex;gap:12px;flex-wrap:wrap">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 18px;text-align:center">
+        <div style="font-size:11px;color:var(--muted)">FACTURAS PENDIENTES</div>
+        <div style="font-size:22px;font-weight:700;color:var(--warn)">${pendientes.length}</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 18px;text-align:center">
+        <div style="font-size:11px;color:var(--muted)">MONTO POR COBRAR</div>
+        <div style="font-size:22px;font-weight:700;color:var(--accent2)">$${totalPendiente.toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+      </div>
+    </div>`;
+  }
+  if(!pendientes.length){ list.innerHTML='<div class="card" style="color:var(--muted);text-align:center;padding:40px">Sin cuentas por cobrar pendientes.</div>'; return; }
+  list.innerHTML=`<div style="display:grid;gap:8px">${pendientes.map(i=>{
+    const cli=venClients.find(c=>c.id===i.client_id);
+    const pagos=cobPaymentsReceived.filter(p=>p.invoice_id===i.id).reduce((s,p)=>s+Number(p.monto||0),0);
+    const saldo=Number(i.monto||0)-pagos;
+    return `<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px">
+        <div style="font-weight:700;font-size:13px">${i.folio||'—'} — ${cli?.name||'—'}</div>
+        <div style="font-size:11px;color:var(--muted)">Vence: ${i.vencimiento||'—'} ${pagos>0?'· Abonado: $'+pagos.toLocaleString('es-MX',{minimumFractionDigits:2}):''}</div>
+      </div>
+      <div style="font-weight:700;font-size:15px;color:var(--warn)">$${saldo.toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+      <button class="btn btn-sm btn-accent" onclick="openPaymentReceivedModal('${i.id}')">💵 Registrar Pago</button>
+    </div>`;
+  }).join('')}</div>`;
+}
+window.renderCobCxc=renderCobCxc;
+
+function openPaymentReceivedModal(invoiceId){
+  const inv=venInvoices.find(x=>x.id===invoiceId);
+  document.getElementById('prm-invoice-label').textContent=inv?.folio||'';
+  document.getElementById('prm-monto').value=inv?.monto??'';
+  document.getElementById('prm-fecha').value=new Date().toISOString().slice(0,10);
+  document.getElementById('prm-metodo').value='Transferencia';
+  document.getElementById('prm-notas').value='';
+  const sel=document.getElementById('prm-bank-account');
+  sel.innerHTML='<option value="">— Sin especificar —</option>'+banAccounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  document.getElementById('payment-received-modal').dataset.invoiceId=invoiceId;
+  document.getElementById('payment-received-modal').classList.remove('hidden');
+}
+window.openPaymentReceivedModal=openPaymentReceivedModal;
+
+async function confirmPaymentReceived(){
+  const invoiceId=document.getElementById('payment-received-modal').dataset.invoiceId;
+  const monto=parseFloat(document.getElementById('prm-monto').value);
+  if(!monto){alert('El monto es requerido');return;}
+  const rec={
+    id:uid(),
+    invoice_id:invoiceId,
+    monto,
+    fecha:document.getElementById('prm-fecha').value||new Date().toISOString().slice(0,10),
+    metodo:document.getElementById('prm-metodo').value,
+    bank_account_id:document.getElementById('prm-bank-account').value||null,
+    notas:document.getElementById('prm-notas').value.trim()||null,
+    created_at:new Date().toISOString()
+  };
+  try{
+    await sbInsert('payments_received',rec);
+    cobPaymentsReceived.unshift(rec);
+    const inv=venInvoices.find(x=>x.id===invoiceId);
+    if(inv){
+      const totalPagado=cobPaymentsReceived.filter(p=>p.invoice_id===invoiceId).reduce((s,p)=>s+Number(p.monto||0),0);
+      if(totalPagado>=Number(inv.monto||0)){
+        await sbUpdate('invoices',{id:invoiceId},{status:'pagada'});
+        inv.status='pagada';
+      }
+    }
+    if(rec.bank_account_id){
+      const txn={id:uid(),account_id:rec.bank_account_id,tipo:'ingreso',monto,fecha:rec.fecha,concepto:'Pago recibido — '+(inv?.folio||''),created_at:new Date().toISOString()};
+      await sbInsert('bank_transactions',txn);
+      banTransactions.unshift(txn);
+    }
+    closeModal('payment-received-modal');
+    renderCobCxc();
+    renderVentasFacturas();
+    renderBanMovimientos();
+  }catch(e){ alert('Error: '+e.message); }
+}
+window.confirmPaymentReceived=confirmPaymentReceived;
+
+/* CXP */
+function renderCobCxp(){
+  const banner=document.getElementById('cob-cxp-banner');
+  const list=document.getElementById('cob-cxp-list');
+  if(!list) return;
+  const pendientes=cobPayables.filter(p=>p.status==='pendiente'||p.status==='vencida');
+  const totalPendiente=pendientes.reduce((s,p)=>s+Number(p.monto||0),0);
+  if(banner){
+    banner.innerHTML=`<div style="display:flex;gap:12px;flex-wrap:wrap">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 18px;text-align:center">
+        <div style="font-size:11px;color:var(--muted)">CUENTAS PENDIENTES</div>
+        <div style="font-size:22px;font-weight:700;color:var(--warn)">${pendientes.length}</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 18px;text-align:center">
+        <div style="font-size:11px;color:var(--muted)">MONTO POR PAGAR</div>
+        <div style="font-size:22px;font-weight:700;color:var(--danger)">$${totalPendiente.toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+      </div>
+    </div>`;
+  }
+  if(!cobPayables.length){ list.innerHTML='<div class="card" style="color:var(--muted);text-align:center;padding:40px">Sin cuentas por pagar registradas.</div>'; return; }
+  const statusColor={pendiente:'var(--warn)',pagada:'var(--green)',vencida:'var(--danger)'};
+  list.innerHTML=`<div style="display:grid;gap:8px">${cobPayables.map(p=>{
+    const sup=mpSuppliers.find(s=>s.id===p.supplier_id);
+    return `<div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px">
+        <div style="font-weight:700;font-size:13px">${p.folio||'—'} — ${sup?.name||'—'}</div>
+        <div style="font-size:11px;color:var(--muted)">Fecha: ${p.fecha||'—'} ${p.vencimiento?'· Vence: '+p.vencimiento:''}</div>
+      </div>
+      <div style="font-weight:700;font-size:15px;color:var(--danger)">$${Number(p.monto||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+      <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:6px;background:var(--bg3);color:${statusColor[p.status]||'var(--muted)'}">${(p.status||'').toUpperCase()}</span>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-sm btn-ghost" onclick="showPayableForm('${p.id}')">✎</button>
+        <button class="btn btn-sm btn-danger" onclick="deletePayable('${p.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+window.renderCobCxp=renderCobCxp;
+
+function showPayableForm(id){
+  const p=id?cobPayables.find(x=>x.id===id):null;
+  const sel=document.getElementById('pay-supplier-id');
+  sel.innerHTML=mpSuppliers.map(s=>`<option value="${s.id}" ${p?.supplier_id===s.id?'selected':''}>${s.name}</option>`).join('');
+  document.getElementById('payable-modal-title').textContent=p?'📤 Editar Cuenta por Pagar':'📤 Nueva Cuenta por Pagar';
+  document.getElementById('pay-folio').value=p?.folio||'';
+  document.getElementById('pay-fecha').value=p?.fecha||new Date().toISOString().slice(0,10);
+  document.getElementById('pay-monto').value=p?.monto??'';
+  document.getElementById('pay-vencimiento').value=p?.vencimiento||'';
+  document.getElementById('pay-status').value=p?.status||'pendiente';
+  document.getElementById('pay-notas').value=p?.notas||'';
+  document.getElementById('payable-modal').dataset.editId=id||'';
+  document.getElementById('cob-cxp-form-wrap').innerHTML='';
+  document.getElementById('payable-modal').classList.remove('hidden');
+}
+window.showPayableForm=showPayableForm;
+
+async function savePayable(){
+  const id=document.getElementById('payable-modal').dataset.editId||null;
+  const supplierId=document.getElementById('pay-supplier-id').value;
+  const monto=parseFloat(document.getElementById('pay-monto').value);
+  if(!supplierId){alert('Selecciona un proveedor');return;}
+  if(!monto){alert('El monto es requerido');return;}
+  const rec={
+    supplier_id:supplierId,
+    folio:document.getElementById('pay-folio').value.trim()||null,
+    fecha:document.getElementById('pay-fecha').value||new Date().toISOString().slice(0,10),
+    monto,
+    vencimiento:document.getElementById('pay-vencimiento').value||null,
+    status:document.getElementById('pay-status').value,
+    notas:document.getElementById('pay-notas').value.trim()||null
+  };
+  try{
+    if(id){
+      await sbUpdate('payables',{id},rec);
+      const idx=cobPayables.findIndex(x=>x.id===id);
+      if(idx>=0) cobPayables[idx]={...cobPayables[idx],...rec};
+    } else {
+      rec.id=uid();
+      rec.created_at=new Date().toISOString();
+      await sbInsert('payables',rec);
+      cobPayables.unshift(rec);
+    }
+    closeModal('payable-modal');
+    renderCobCxp();
+  }catch(e){ alert('Error: '+e.message); }
+}
+window.savePayable=savePayable;
+
+async function deletePayable(id){
+  if(!confirm('¿Eliminar esta cuenta por pagar?')) return;
+  try{
+    await sbDelete('payables',{id});
+    cobPayables=cobPayables.filter(x=>x.id!==id);
+    renderCobCxp();
+  }catch(e){ alert('Error al eliminar: '+e.message); }
+}
+window.deletePayable=deletePayable;
+
+/* IMPORTAR XML CFDI A CXP */
+function handleCXPXmlUpload(event){
+  const file=event.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const parser=new DOMParser();
+      const xml=parser.parseFromString(e.target.result,'text/xml');
+      const comprobante=xml.querySelector('Comprobante')||xml.documentElement;
+      const emisor=xml.querySelector('Emisor');
+      const folio=comprobante?.getAttribute('Folio')||comprobante?.getAttribute('folio')||'';
+      const serie=comprobante?.getAttribute('Serie')||comprobante?.getAttribute('serie')||'';
+      const total=comprobante?.getAttribute('Total')||comprobante?.getAttribute('total')||'0';
+      const fecha=(comprobante?.getAttribute('Fecha')||comprobante?.getAttribute('fecha')||'').slice(0,10);
+      const emisorNombre=emisor?.getAttribute('Nombre')||emisor?.getAttribute('nombre')||'';
+      const emisorRfc=emisor?.getAttribute('Rfc')||emisor?.getAttribute('rfc')||'';
+      const matchedSupplier=mpSuppliers.find(s=>s.rfc&&emisorRfc&&s.rfc.toUpperCase()===emisorRfc.toUpperCase());
+      _xmlCxpParsed={
+        folio:(serie?serie+'-':'')+folio,
+        fecha:fecha||new Date().toISOString().slice(0,10),
+        monto:parseFloat(total)||0,
+        emisorNombre,
+        emisorRfc,
+        supplierId:matchedSupplier?.id||null
+      };
+      document.getElementById('xml-cxp-preview').innerHTML=`
+        <div><strong>Emisor:</strong> ${emisorNombre||'—'} (${emisorRfc||'—'})</div>
+        <div><strong>Folio:</strong> ${_xmlCxpParsed.folio||'—'}</div>
+        <div><strong>Fecha:</strong> ${_xmlCxpParsed.fecha}</div>
+        <div><strong>Total:</strong> $${_xmlCxpParsed.monto.toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+        <div style="margin-top:10px;color:${matchedSupplier?'var(--green)':'var(--warn)'}">${matchedSupplier?'✓ Proveedor encontrado: '+matchedSupplier.name:'⚠ No se encontró proveedor con este RFC. Se creará la cuenta sin proveedor asignado; podrás asignarlo editando después.'}</div>`;
+      document.getElementById('xml-cxp-modal').classList.remove('hidden');
+    }catch(err){
+      alert('No se pudo leer el XML: '+err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value='';
+}
+window.handleCXPXmlUpload=handleCXPXmlUpload;
+
+async function confirmCXPXmlImport(){
+  if(!_xmlCxpParsed){ closeModal('xml-cxp-modal'); return; }
+  const rec={
+    id:uid(),
+    supplier_id:_xmlCxpParsed.supplierId,
+    folio:_xmlCxpParsed.folio,
+    fecha:_xmlCxpParsed.fecha,
+    monto:_xmlCxpParsed.monto,
+    vencimiento:null,
+    status:'pendiente',
+    notas:_xmlCxpParsed.supplierId?null:`CFDI emisor: ${_xmlCxpParsed.emisorNombre} (${_xmlCxpParsed.emisorRfc}) — asignar proveedor manualmente`,
+    created_at:new Date().toISOString()
+  };
+  try{
+    await sbInsert('payables',rec);
+    cobPayables.unshift(rec);
+    closeModal('xml-cxp-modal');
+    _xmlCxpParsed=null;
+    renderCobCxp();
+  }catch(e){ alert('Error: '+e.message); }
+}
+window.confirmCXPXmlImport=confirmCXPXmlImport;
+
+/* PROVEEDORES SOLO LECTURA (vista de Cobranza) */
+function renderCobSuppliers(){
+  const list=document.getElementById('cob-suppliers-list');
+  if(!list) return;
+  const q=(document.getElementById('cob-sup-search')?.value||'').toLowerCase();
+  let sups=[...mpSuppliers].sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  if(q) sups=sups.filter(s=>(s.name||'').toLowerCase().includes(q)||(s.code||'').toLowerCase().includes(q)||(s.rfc||'').toLowerCase().includes(q));
+  if(!sups.length){ list.innerHTML='<div class="card" style="color:var(--muted);text-align:center;padding:40px">Sin proveedores registrados.</div>'; return; }
+  list.innerHTML=`<div style="display:grid;gap:8px">${sups.map(s=>`
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span style="font-family:var(--font-display,sans-serif);font-size:14px;color:var(--accent)">${s.name||'—'}</span>
+        <span style="font-size:10px;color:var(--muted);background:var(--bg3);padding:2px 8px;border-radius:6px">${s.code||'—'}</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted)">${s.rfc?'RFC: '+s.rfc+' · ':''}${s.payment_type?'Pago: '+s.payment_type:''}</div>
+      ${s.contact_name?`<div style="font-size:11px;color:var(--muted);margin-top:2px">👤 ${s.contact_name}${s.contact_phone?' · ☎ '+s.contact_phone:''}</div>`:''}
+    </div>`).join('')}</div>`;
+}
+window.renderCobSuppliers=renderCobSuppliers;
+
+/* ══════════════════════════════════════════
+   BANCOS
+   ══════════════════════════════════════════ */
+function renderBancosAll(){
+  renderBanCuentas();
+  renderBanMovimientos();
+  renderBanPrestamos();
+}
+window.renderBancosAll=renderBancosAll;
+
+function setBanTab(id,btn){
+  document.querySelectorAll('#page-bancos .subpage').forEach(el=>{ el.classList.remove('active'); el.style.display='none'; });
+  document.querySelectorAll('#page-bancos .ptab').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.style.display=''; void el.offsetWidth; el.classList.add('active'); btn.classList.add('active');
+  if(id==='ban-cuentas') renderBanCuentas();
+  if(id==='ban-movimientos') renderBanMovimientos();
+  if(id==='ban-prestamos') renderBanPrestamos();
+}
+window.setBanTab=setBanTab;
+
+function bankAccountBalance(accountId){
+  return banTransactions.filter(t=>t.account_id===accountId).reduce((s,t)=>s+(t.tipo==='ingreso'?Number(t.monto||0):-Number(t.monto||0)),0);
+}
+
+function renderBanCuentas(){
+  const list=document.getElementById('ban-cuentas-list');
+  if(!list) return;
+  if(!banAccounts.length){ list.innerHTML='<div class="card" style="color:var(--muted);text-align:center;padding:40px">Sin cuentas bancarias. Agrega la primera.</div>'; return; }
+  list.innerHTML=`<div style="display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">${banAccounts.map(a=>{
+    const bal=bankAccountBalance(a.id);
+    return `<div class="card">
+      <div style="font-family:var(--font-display,sans-serif);font-size:15px;color:var(--accent);margin-bottom:4px">${a.name||'—'}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${a.bank||''} ${a.account_number?'· ****'+String(a.account_number).slice(-4):''}</div>
+      <div style="font-size:20px;font-weight:700;color:${bal>=0?'var(--green)':'var(--danger)'}">$${bal.toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+      <div style="display:flex;gap:6px;margin-top:10px">
+        <button class="btn btn-sm btn-ghost" onclick="showBankAccountForm('${a.id}')">✎ Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteBankAccount('${a.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+window.renderBanCuentas=renderBanCuentas;
+
+function showBankAccountForm(id){
+  const a=id?banAccounts.find(x=>x.id===id):null;
+  document.getElementById('ban-cuentas-form-wrap').innerHTML=`
+    <div class="card" style="margin-bottom:14px;border-color:rgba(0,212,255,.3)">
+      <div style="font-family:var(--font-display,sans-serif);font-size:18px;color:var(--accent);margin-bottom:12px">${a?'EDITAR CUENTA':'NUEVA CUENTA'}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field"><label>Nombre de la Cuenta *</label><input type="text" id="baf-name" value="${a?.name||''}" placeholder="ej. BBVA Cuenta Operativa"></div>
+        <div class="field"><label>Banco</label><input type="text" id="baf-bank" value="${a?.bank||''}" placeholder="ej. BBVA, Santander..."></div>
+        <div class="field"><label>Número de Cuenta</label><input type="text" id="baf-account-number" value="${a?.account_number||''}"></div>
+        <div class="field"><label>Saldo Inicial (MXN)</label><input type="number" step="0.01" id="baf-initial-balance" value="${a?.initial_balance??'0'}"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn btn-accent" onclick="saveBankAccount('${a?.id||''}')">💾 Guardar</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('ban-cuentas-form-wrap').innerHTML=''">Cancelar</button>
+      </div>
+    </div>`;
+}
+window.showBankAccountForm=showBankAccountForm;
+
+async function saveBankAccount(id){
+  const name=document.getElementById('baf-name').value.trim();
+  if(!name){alert('El nombre es requerido');return;}
+  const rec={
+    name,
+    bank:document.getElementById('baf-bank').value.trim()||null,
+    account_number:document.getElementById('baf-account-number').value.trim()||null,
+    initial_balance:parseFloat(document.getElementById('baf-initial-balance').value)||0,
+    active:true
+  };
+  try{
+    if(id){
+      await sbUpdate('bank_accounts',{id},rec);
+      const idx=banAccounts.findIndex(x=>x.id===id);
+      if(idx>=0) banAccounts[idx]={...banAccounts[idx],...rec};
+    } else {
+      rec.id=uid();
+      await sbInsert('bank_accounts',rec);
+      banAccounts.push(rec);
+      if(rec.initial_balance){
+        const txn={id:uid(),account_id:rec.id,tipo:'ingreso',monto:rec.initial_balance,fecha:new Date().toISOString().slice(0,10),concepto:'Saldo inicial',created_at:new Date().toISOString()};
+        await sbInsert('bank_transactions',txn);
+        banTransactions.unshift(txn);
+      }
+    }
+    document.getElementById('ban-cuentas-form-wrap').innerHTML='';
+    renderBanCuentas();
+  }catch(e){ alert('Error: '+e.message); }
+}
+window.saveBankAccount=saveBankAccount;
+
+async function deleteBankAccount(id){
+  if(!confirm('¿Eliminar esta cuenta bancaria? También se eliminarán sus movimientos.')) return;
+  try{
+    await sbDelete('bank_transactions',{account_id:id});
+    await sbDelete('bank_accounts',{id});
+    banAccounts=banAccounts.filter(x=>x.id!==id);
+    banTransactions=banTransactions.filter(x=>x.account_id!==id);
+    renderBanCuentas();
+    renderBanMovimientos();
+  }catch(e){ alert('Error al eliminar: '+e.message); }
+}
+window.deleteBankAccount=deleteBankAccount;
+
+function renderBanMovimientos(){
+  const sel=document.getElementById('ban-mov-account-filter');
+  if(sel && sel.options.length<=1){
+    sel.innerHTML='<option value="">Todas las cuentas</option>'+banAccounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  }
+  const list=document.getElementById('ban-movimientos-list');
+  if(!list) return;
+  const filterAcc=sel?.value||'';
+  let txns=[...banTransactions];
+  if(filterAcc) txns=txns.filter(t=>t.account_id===filterAcc);
+  if(!txns.length){ list.innerHTML='<div class="card" style="color:var(--muted);text-align:center;padding:40px">Sin movimientos registrados.</div>'; return; }
+  list.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr style="text-align:left;color:var(--muted);border-bottom:1px solid var(--border)">
+      <th style="padding:6px">Fecha</th><th style="padding:6px">Cuenta</th><th style="padding:6px">Concepto</th><th style="padding:6px;text-align:right">Monto</th>
+    </tr></thead>
+    <tbody>${txns.map(t=>{
+      const acc=banAccounts.find(a=>a.id===t.account_id);
+      return `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:6px">${t.fecha||'—'}</td>
+        <td style="padding:6px">${acc?.name||'—'}</td>
+        <td style="padding:6px">${t.concepto||'—'}</td>
+        <td style="padding:6px;text-align:right;font-weight:700;color:${t.tipo==='ingreso'?'var(--green)':'var(--danger)'}">${t.tipo==='ingreso'?'+':'-'}$${Number(t.monto||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+window.renderBanMovimientos=renderBanMovimientos;
+
+function showBankTxnForm(){
+  const sel=document.getElementById('txn-account-id');
+  sel.innerHTML=banAccounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  document.getElementById('txn-tipo').value='ingreso';
+  document.getElementById('txn-monto').value='';
+  document.getElementById('txn-fecha').value=new Date().toISOString().slice(0,10);
+  document.getElementById('txn-concepto').value='';
+  document.getElementById('txn-modal').classList.remove('hidden');
+}
+window.showBankTxnForm=showBankTxnForm;
+
+async function saveBankTxn(){
+  const accountId=document.getElementById('txn-account-id').value;
+  const monto=parseFloat(document.getElementById('txn-monto').value);
+  if(!accountId){alert('Selecciona una cuenta');return;}
+  if(!monto){alert('El monto es requerido');return;}
+  const rec={
+    id:uid(),
+    account_id:accountId,
+    tipo:document.getElementById('txn-tipo').value,
+    monto,
+    fecha:document.getElementById('txn-fecha').value||new Date().toISOString().slice(0,10),
+    concepto:document.getElementById('txn-concepto').value.trim()||'Movimiento manual',
+    created_at:new Date().toISOString()
+  };
+  try{
+    await sbInsert('bank_transactions',rec);
+    banTransactions.unshift(rec);
+    closeModal('txn-modal');
+    renderBanMovimientos();
+    renderBanCuentas();
+  }catch(e){ alert('Error: '+e.message); }
+}
+window.saveBankTxn=saveBankTxn;
+
+/* PRÉSTAMOS */
+function renderBanPrestamos(){
+  const list=document.getElementById('ban-prestamos-list');
+  if(!list) return;
+  if(!banLoans.length){ list.innerHTML='<div class="card" style="color:var(--muted);text-align:center;padding:40px">Sin préstamos registrados.</div>'; return; }
+  list.innerHTML=`<div style="display:grid;gap:10px">${banLoans.map(l=>{
+    const pagado=banLoanPayments.filter(p=>p.loan_id===l.id).reduce((s,p)=>s+Number(p.monto||0),0);
+    const saldo=Number(l.monto||0)-pagado;
+    return `<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-family:var(--font-display,sans-serif);font-size:15px;color:var(--accent)">${l.nombre||'Préstamo'}</div>
+          <div style="font-size:11px;color:var(--muted)">Monto original: $${Number(l.monto||0).toLocaleString('es-MX',{minimumFractionDigits:2})} · Pagado: $${pagado.toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+        </div>
+        <div style="font-weight:700;font-size:17px;color:${saldo>0?'var(--warn)':'var(--green)'}">Saldo: $${saldo.toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+        ${saldo>0?`<button class="btn btn-sm btn-accent" onclick="openLoanPaymentModal('${l.id}')">💵 Registrar Pago</button>`:'<span style="color:var(--green);font-size:12px;font-weight:700">✓ LIQUIDADO</span>'}
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+window.renderBanPrestamos=renderBanPrestamos;
+
+function showLoanForm(){
+  const wrap=document.getElementById('ban-prestamos-form-wrap');
+  wrap.innerHTML=`
+    <div class="card" style="margin-bottom:14px;border-color:rgba(0,212,255,.3)">
+      <div style="font-family:var(--font-display,sans-serif);font-size:18px;color:var(--accent);margin-bottom:12px">NUEVO PRÉSTAMO</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field"><label>Nombre / Descripción *</label><input type="text" id="lf-nombre" placeholder="ej. Préstamo refacción torno"></div>
+        <div class="field"><label>Monto (MXN) *</label><input type="number" step="0.01" id="lf-monto"></div>
+        <div class="field"><label>Fecha</label><input type="date" id="lf-fecha" value="${new Date().toISOString().slice(0,10)}"></div>
+        <div class="field"><label>Acreedor</label><input type="text" id="lf-acreedor" placeholder="ej. Banco, persona física..."></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn btn-accent" onclick="saveLoan()">💾 Guardar</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('ban-prestamos-form-wrap').innerHTML=''">Cancelar</button>
+      </div>
+    </div>`;
+}
+window.showLoanForm=showLoanForm;
+
+async function saveLoan(){
+  const nombre=document.getElementById('lf-nombre').value.trim();
+  const monto=parseFloat(document.getElementById('lf-monto').value);
+  if(!nombre){alert('El nombre es requerido');return;}
+  if(!monto){alert('El monto es requerido');return;}
+  const rec={
+    id:uid(),
+    nombre,
+    monto,
+    fecha:document.getElementById('lf-fecha').value||new Date().toISOString().slice(0,10),
+    acreedor:document.getElementById('lf-acreedor').value.trim()||null,
+    created_at:new Date().toISOString()
+  };
+  try{
+    await sbInsert('loans',rec);
+    banLoans.unshift(rec);
+    document.getElementById('ban-prestamos-form-wrap').innerHTML='';
+    renderBanPrestamos();
+  }catch(e){ alert('Error: '+e.message); }
+}
+window.saveLoan=saveLoan;
+
+function openLoanPaymentModal(loanId){
+  const l=banLoans.find(x=>x.id===loanId);
+  document.getElementById('lpm-loan-label').textContent=l?.nombre||'';
+  document.getElementById('lpm-monto').value='';
+  document.getElementById('lpm-fecha').value=new Date().toISOString().slice(0,10);
+  const sel=document.getElementById('lpm-bank-account');
+  sel.innerHTML='<option value="">— Sin especificar —</option>'+banAccounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
+  document.getElementById('loan-payment-modal').dataset.loanId=loanId;
+  document.getElementById('loan-payment-modal').classList.remove('hidden');
+}
+window.openLoanPaymentModal=openLoanPaymentModal;
+
+async function confirmLoanPayment(){
+  const loanId=document.getElementById('loan-payment-modal').dataset.loanId;
+  const monto=parseFloat(document.getElementById('lpm-monto').value);
+  if(!monto){alert('El monto es requerido');return;}
+  const rec={
+    id:uid(),
+    loan_id:loanId,
+    monto,
+    fecha:document.getElementById('lpm-fecha').value||new Date().toISOString().slice(0,10),
+    bank_account_id:document.getElementById('lpm-bank-account').value||null,
+    created_at:new Date().toISOString()
+  };
+  try{
+    await sbInsert('loan_payments',rec);
+    banLoanPayments.unshift(rec);
+    if(rec.bank_account_id){
+      const l=banLoans.find(x=>x.id===loanId);
+      const txn={id:uid(),account_id:rec.bank_account_id,tipo:'egreso',monto,fecha:rec.fecha,concepto:'Pago préstamo — '+(l?.nombre||''),created_at:new Date().toISOString()};
+      await sbInsert('bank_transactions',txn);
+      banTransactions.unshift(txn);
+    }
+    closeModal('loan-payment-modal');
+    renderBanPrestamos();
+    renderBanMovimientos();
+    renderBanCuentas();
+  }catch(e){ alert('Error: '+e.message); }
+}
+window.confirmLoanPayment=confirmLoanPayment;
+
+
 
 /* ══════════════════════════════════════════
    MODAL NUEVA REQUISICIÓN desde Reporte Mínimos
