@@ -3471,6 +3471,9 @@ async function completeTTOp(){
   if(typeof renderConsulta==='function' && document.getElementById('c-lib-list')) renderConsulta();
 
   showStep('step-select');
+  // Refrescar selector de operaciones para marcar TT como CONCLUIDA
+  const woSel=document.getElementById('sel-ot');
+  if(woSel&&woSel.value&&typeof onWOChange==='function') onWOChange();
 }
 window.completeTTOp=completeTTOp;
 
