@@ -6518,7 +6518,7 @@ function renderReleasedOTs(){
             </div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <span style="font-weight:700;font-size:14px">${p?.name||'Sin producto'}</span>
-              ${(()=>{const qr=(otQualityRecords||[]).filter(q=>q.ot_id===o.id);return qr.length?`<span class="tag" style="background:rgba(245,158,11,.15);color:var(--warn);border:1px solid rgba(245,158,11,.3);cursor:pointer;font-size:10px" data-qpanel="prog-q-${o.id}">&#10003; ${qr.length} reg. calidad</span>`:''})()}
+              ${(()=>{const qr=(otQualityRecords||[]).filter(q=>q.ot_id===o.id);return qr.length?'<span class="tag" style="background:rgba(245,158,11,.15);color:var(--warn);border:1px solid rgba(245,158,11,.3);cursor:pointer;font-size:10px" onclick="toggleQualityPanel(\'prog-q-'+o.id+'\')">&#10003; '+qr.length+' reg. calidad</span>':'';})()}
             </div>
             <div style="font-size:11px;color:var(--muted);margin-top:2px">Lote: <strong style="color:var(--text)">${o.qty} pzas</strong></div>
             ${(()=>{
@@ -6559,7 +6559,30 @@ function renderReleasedOTs(){
           <button class="btn btn-sm btn-danger" onclick="deleteReleasedOT('${o.id}','${o.number}')"><svg class="ic"><use href="#ic-trash"/></svg> Eliminar</button>
         </div>
         <div id="bom-status-${o.id}" style="margin-top:10px"></div>
-        <div id="prog-q-${o.id}" style="display:none;margin-top:8px"></div>
+        ${(()=>{
+          const qr2=(otQualityRecords||[]).filter(q=>q.ot_id===o.id);
+          if(!qr2.length) return '<div id="prog-q-'+o.id+'" style="display:none"></div>';
+          let h='<div style="font-size:11px;font-weight:700;color:var(--warn);margin-bottom:8px;text-transform:uppercase">Registros de Calidad</div>';
+          qr2.forEach(function(q){
+            var d={}; try{d=JSON.parse(q.datos||'{}')}catch(e){}
+            var rc=q.resultado==='aprobado'?'var(--green)':q.resultado==='rechazado'?'var(--danger)':'var(--warn)';
+            h+='<div style="background:var(--bg3);border-radius:6px;padding:10px;margin-bottom:6px;font-size:11px">';
+            h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">';
+            h+='<span style="font-weight:700;color:var(--accent2)">'+(q.tipo_inspeccion||'').replace(/_/g,' ').toUpperCase()+'</span>';
+            h+='<span style="color:var(--muted)">'+new Date(q.fecha).toLocaleDateString('es-MX')+'</span>';
+            h+='<span style="font-weight:700;color:'+rc+'">'+(q.resultado||'').toUpperCase()+'</span>';
+            h+='<span style="color:var(--muted)">Inspector: '+(q.inspector||'—')+'</span>';
+            h+='</div><div style="display:flex;gap:16px;flex-wrap:wrap">';
+            if(d.c_superficial!=null) h+='<span>%C Sup: <strong>'+d.c_superficial+'</strong></span>';
+            if(d.capa_carburizado!=null) h+='<span>Capa: <strong>'+d.capa_carburizado+'mm</strong></span>';
+            if(d.dureza_hrc!=null) h+='<span>Dureza: <strong>'+d.dureza_hrc+' HRC</strong></span>';
+            if(d.lote_muestra) h+='<span>Lote: <strong>'+d.lote_muestra+'</strong></span>';
+            h+='</div>';
+            if(q.notas) h+='<div style="color:var(--muted);margin-top:4px">'+q.notas+'</div>';
+            h+='</div>';
+          });
+          return '<div id="prog-q-'+o.id+'" style="display:none;margin-top:8px;border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:10px;background:rgba(245,158,11,.04)">'+h+'</div>';
+        })()}
       </div>`);
     }catch(err){ console.error('Error rendering OT '+o.number+':', err); }
   }
@@ -6605,41 +6628,7 @@ function renderReleasedOTs(){
     }catch(e){ console.warn('No se pudo refrescar mpStock en liberadas:', e); }
 
     released.forEach(async o=>{
-      // Poblar panel de registros de calidad PRIMERO (independiente del BOM)
-      const qPanel=document.getElementById('prog-q-'+o.id);
-      if(qPanel){
-        const qRecs=(otQualityRecords||[]).filter(q=>q.ot_id===o.id);
-        if(qRecs.length){
-          let qHtml='<div style="font-size:11px;font-weight:700;color:var(--warn);margin-bottom:8px;text-transform:uppercase">Registros de Calidad</div>';
-          qRecs.forEach(q=>{
-            try{
-              const d=JSON.parse(q.datos||'{}');
-              const rc=q.resultado==='aprobado'?'var(--green)':q.resultado==='rechazado'?'var(--danger)':'var(--warn)';
-              qHtml+='<div style="background:var(--bg3);border-radius:6px;padding:10px;margin-bottom:6px;font-size:11px">';
-              qHtml+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">';
-              qHtml+='<span style="font-weight:700;color:var(--accent2)">'+(q.tipo_inspeccion||'').replace(/_/g,' ').toUpperCase()+'</span>';
-              qHtml+='<span style="color:var(--muted)">'+new Date(q.fecha).toLocaleDateString('es-MX')+'</span>';
-              qHtml+='<span style="font-weight:700;color:'+rc+'">'+(q.resultado||'').toUpperCase()+'</span>';
-              qHtml+='<span style="color:var(--muted)">Inspector: '+(q.inspector||'—')+'</span>';
-              qHtml+='</div>';
-              qHtml+='<div style="display:flex;gap:16px;flex-wrap:wrap">';
-              if(d.c_superficial!=null) qHtml+='<span>%C Superficial: <strong style="color:var(--accent)">'+d.c_superficial+'</strong></span>';
-              if(d.capa_carburizado!=null) qHtml+='<span>Capa: <strong style="color:var(--accent)">'+d.capa_carburizado+' mm</strong></span>';
-              if(d.dureza_hrc!=null) qHtml+='<span>Dureza: <strong style="color:var(--accent)">'+d.dureza_hrc+' HRC</strong></span>';
-              if(d.lote_muestra) qHtml+='<span>Lote: <strong style="color:var(--accent)">'+d.lote_muestra+'</strong></span>';
-              qHtml+='</div>';
-              if(q.notas) qHtml+='<div style="color:var(--muted);margin-top:4px;font-style:italic">'+q.notas+'</div>';
-              qHtml+='</div>';
-            }catch(e){ console.warn('Error parsing quality record:',e); }
-          });
-          qPanel.innerHTML=qHtml;
-          qPanel.style.border='1px solid rgba(245,158,11,.3)';
-          qPanel.style.borderRadius='8px';
-          qPanel.style.padding='10px';
-          qPanel.style.background='rgba(245,158,11,.04)';
-          qPanel.style.marginTop='8px';
-        }
-      }
+      // Quality panel ya poblado en render principal
       // Renderizar BOM status (materiales faltantes)
       const cell=document.getElementById('bom-status-'+o.id);
       if(cell){
