@@ -2680,7 +2680,7 @@ async function loadAlmDataSilent(){
 }
 
 async function loadAllData(){
-  const [prods,ops,ots,opsList,sess,sessComplete,mc,oc,ml,rm,del,scr,ext,prodMats,mpMatsData,recursosProdData,secOps,qualRecs,mpRes,mpTrn]=await Promise.all([
+  const [prods,ops,ots,opsList,sess,sessComplete,mc,oc,ml,rm,del,scr,ext,prodMats,mpMatsData,recursosProdData,secOps,qualRecs,mpRes,mpTrn,mpStockPP]=await Promise.all([
     sbSelect('products','select=*&order=name.asc'),
     sbSelect('operations','select=*&order=sort_order'),
     sbSelect('work_orders','select=*&order=created_at.desc'),
@@ -2701,6 +2701,7 @@ async function loadAllData(){
     sbSelect('ot_quality_records','select=*&order=created_at.desc'),
     sbSelect('mp_reservations','select=*&status=in.(apartado,parcial,en_transito)'),
     sbSelect('mp_transit','select=*&status=in.(listo,liberado)&order=moved_at.desc'),
+    sbSelect('mp_stock','select=id,producto_id,bom_item_id,cantidad,status&status=in.(disponible,apartado,parcial)&producto_id=not.is.null'),
   ]);
   products=prods.map(p=>({...p,operations:(ops||[]).filter(o=>o.product_id===p.id).sort((a,b)=>a.sort_order-b.sort_order),materials:(prodMats||[]).filter(m=>m.product_id===p.id)}));
   operators=(opsList||[]);
@@ -2722,6 +2723,11 @@ async function loadAllData(){
   // Solo actualizar si Almacén no los cargó más recientemente
   if(!(mpReservations&&mpReservations.length)) mpReservations=mpRes||[];
   if(!(mpTransit&&mpTransit.length)) mpTransit=mpTrn||[];
+  // Merge lotes PP en mpStock sin sobreescribir lotes completos si ya están cargados
+  if(mpStockPP&&mpStockPP.length){
+    const existIds=new Set((mpStock||[]).map(s=>s.id));
+    mpStockPP.forEach(s=>{ if(!existIds.has(s.id)) mpStock.push(s); });
+  }
   // Catálogo de materiales dinámico
   mpMaterials=mpMatsData||[];
   if(mpMaterials.length){
@@ -5842,9 +5848,20 @@ function renderProgrammingList(){
     const resO=mpReservations.filter(r=>r.ot_id===o.id);
     const enTransitoO=mpTransit.some(t=>t.ot_id===o.id&&(t.status==='listo'||t.status==='liberado'));
     const apartadoO=resO.some(r=>r.status==='apartado'||r.status==='parcial');
+    // Verificar si todos los renglones del BOM están cubiertos por lotes Por Producto
+    const bomMats=(p?.materials||[]).filter(m=>(parseInt(m.cantidad)||0)>0);
+    const cubiertoPorProducto=bomMats.length>0&&bomMats.every(m=>{
+      const bomId=m.id;
+      const stockPP=mpStock.filter(s=>s.producto_id===o.product_id&&String(s.bom_item_id)===String(bomId)&&(s.status==='disponible'||s.status==='apartado'||s.status==='parcial'));
+      const dispPP=stockPP.reduce((a,s)=>a+(parseInt(s.cantidad)||0),0);
+      const matCat=MAT_TYPES.find(t=>t.val===m.tipo);
+      const esBarra=matCat?.grupo==='barra'||matCat?.grupo==='tubing'||['Redondo','Hexagonal','Barra Hueca','Cuadrado/Solera','Tubo'].includes(matCat?.forma||'');
+      return !esBarra&&dispPP>=(parseInt(m.cantidad)||0);
+    });
     let badgeMP='<span class="tag" style="color:var(--muted);font-size:10px"><svg class="ic"><use href="#ic-dot-red"/></svg> Sin apartar</span>';
     if(enTransitoO) badgeMP='<span class="tag" style="color:var(--warn);font-size:10px">⏳ En Habilitado</span>';
     else if(apartadoO) badgeMP='<span class="tag" style="color:var(--green);font-size:10px"><svg class="ic"><use href="#ic-dot-green"/></svg> Apartado</span>';
+    else if(cubiertoPorProducto) badgeMP='<span class="tag" style="color:var(--green);font-size:10px"><svg class="ic"><use href="#ic-dot-green"/></svg> Cubierto PP</span>';
 
     const tr=document.createElement('tr');
     tr.innerHTML=
@@ -5864,7 +5881,7 @@ function renderProgrammingList(){
     btnEdit.innerHTML='<svg class="ic"><use href="#ic-pencil"/></svg>';
     btnEdit.addEventListener('click',()=>editProgrammingOT(o.id));
 
-    if(!enTransitoO&&!apartadoO){
+    if(!enTransitoO&&!apartadoO&&!cubiertoPorProducto){
       const btnApt=document.createElement('button');
       btnApt.className='btn btn-sm';
       btnApt.style.cssText='background:rgba(0,212,255,.1);color:var(--accent);border:1px solid rgba(0,212,255,.3);font-size:11px';
