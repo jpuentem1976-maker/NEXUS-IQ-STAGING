@@ -21,7 +21,7 @@
 :root{
   --bg:#F3F2F1;--bg2:#FFFFFF;--bg3:#F7F8FA;--bg4:#EEF2F6;
   --accent:#0B5FA5;--accent2:#0F7B3F;--warn:#B45309;--danger:#B91C1C;--green:#0F7B3F;--orange:#C2410C;
-  --border:#9CA3AF;--text:#1F2937;--muted:#374151;--fs-sm:12px;--fs-xs:11px;
+  --border:#9CA3AF;--text:#1F2937;--muted:#1F2937;--fs-sm:12px;--fs-xs:11px;
   --r:6px;--r2:8px;
 }
 /* ICON SYSTEM — sprite SVG, line-style, hereda color via currentColor */
@@ -7933,16 +7933,13 @@ function renderConsulta(){
         // ── Lee del BOM — misma lógica que Ingeniería ──
         const mats=p.materials||[];
         const mat=mats[0]||null;
-        const TIPO_LABEL={acero:'Acero',laton:'Latón',aluminio:'Aluminio',bronce:'Bronce',
-          nylamid:'Nylamid/Plástico',fundicion:'Fundición',forja:'Forja',
-          pieza_unitaria:'Pieza Unitaria',pieza_comprada:'Pieza Comprada',corte_externo:'Corte Externo'};
         const FORMA_LABEL={redondo:'Redondo',hexagonal:'Hexagonal',barra_hueca:'Barra Hueca',cuadrado:'Cuadrado/Solera'};
-        const GRUPO_A=['acero','laton','aluminio','bronce'];
         let matInfo='';
         if(mat){
-          const tipoLabel=TIPO_LABEL[mat.tipo]||mat.tipo||'';
-          const formaLabel=FORMA_LABEL[mat.forma]||mat.forma||'';
-          const esGrupoA=GRUPO_A.includes(mat.tipo);
+          const matEntry=MAT_TYPES.find(x=>x.val===mat.tipo);
+          const tipoLabel=matEntry?.label||mat.tipo||'';
+          const formaLabel=FORMA_LABEL[mat.forma]||matEntry?.forma||mat.forma||'';
+          const esGrupoA=['barra','tubing'].includes(matEntry?.grupo||'');
           if(tipoLabel)  matInfo+=`<span>Tipo: <strong style="color:var(--text)">${tipoLabel}</strong></span>`;
           if(formaLabel) matInfo+=`<span>Forma: <strong style="color:var(--text)">${formaLabel}</strong></span>`;
           if(esGrupoA){
@@ -8944,7 +8941,7 @@ function renderAlmGeneral(){
             const longDisp=Math.max(0,longTotal-longApartado);
             return '<div style="font-size:11px;color:var(--warn);margin-top:3px;font-family:DM Mono,monospace">'
               +longTotal.toFixed(3)+'"  '
-              +'<span style="color:var(--muted)">—</span>  '
+              +'<span style="color:#374151">—</span>  '
               +'<span style="color:var(--danger)">'+longApartado.toFixed(3)+'"</span>  '
               +'<span style="color:var(--muted)">=</span>  '
               +'<span style="color:'+( longDisp>0?'var(--green)':'var(--danger)')+'">'+longDisp.toFixed(3)+'"</span>'
