@@ -21,7 +21,7 @@
 :root{
   --bg:#F3F2F1;--bg2:#FFFFFF;--bg3:#F7F8FA;--bg4:#EEF2F6;
   --accent:#0B5FA5;--accent2:#0F7B3F;--warn:#B45309;--danger:#B91C1C;--green:#0F7B3F;--orange:#C2410C;
-  --border:#D1D5DB;--text:#1F2937;--muted:#6B7280;
+  --border:#D1D5DB;--text:#1F2937;--muted:#4B5563;--fs-sm:12px;--fs-xs:11px;
   --r:6px;--r2:8px;
 }
 /* ICON SYSTEM — sprite SVG, line-style, hereda color via currentColor */
@@ -64,7 +64,7 @@ button{cursor:pointer;font-family:'Barlow',sans-serif;border:none;outline:none;t
 /* NAV — Ribbon estilo Excel: cinta de marca + fila de pestañas de módulo */
 nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-items:center;padding:8px 18px;min-height:46px;gap:4px 5px;position:sticky;top:0;z-index:200;flex-wrap:wrap}
 .logo{font-family:var(--font-display,sans-serif);font-size:19px;color:#fff;letter-spacing:1.5px;margin-right:4px;white-space:nowrap;flex-shrink:0;font-weight:700}
-.logo-sub{font-size:9px;color:#BFD9F0;margin-right:auto;letter-spacing:.5px;text-transform:uppercase;border-left:1px solid #3D7FB8;padding-left:10px;margin-left:4px;white-space:nowrap;flex-shrink:0}
+.logo-sub{font-size:11px;color:#BFD9F0;margin-right:auto;letter-spacing:.5px;text-transform:uppercase;border-left:1px solid #3D7FB8;padding-left:10px;margin-left:4px;white-space:nowrap;flex-shrink:0}
 .nav-btn{background:transparent;border:1px solid transparent;color:#D6E6F5;padding:8px 15px;border-radius:var(--r);font-weight:700;font-size:13.5px;white-space:nowrap;flex-shrink:0;line-height:1.3}
 .nav-btn:hover{color:#fff;background:rgba(255,255,255,.1)}
 .nav-btn.active{background:var(--bg3);border-color:var(--border);color:var(--accent)}
@@ -81,24 +81,24 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
 .btn:disabled{background:var(--bg4)!important;color:var(--muted)!important;cursor:not-allowed;opacity:.7}
 /* FIELDS */
 .field{display:flex;flex-direction:column;gap:5px}
-.field label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+.field label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
 /* MODAL */
 .overlay{position:fixed;inset:0;background:rgba(31,41,55,.55);display:flex;align-items:center;justify-content:center;z-index:500;padding:16px}
 .modal{width:440px;max-width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 24px rgba(16,24,40,.18)}
 /* TABS inside page — fila de comandos tipo ribbon */
 .ptabs{display:flex;gap:0;background:var(--bg2);padding:4px;border-radius:var(--r);border:1px solid var(--border);width:fit-content;margin-bottom:18px;flex-wrap:wrap;box-shadow:0 1px 2px rgba(16,24,40,.04)}
-.ptab{background:transparent;border:1px solid transparent;color:var(--muted);padding:7px 14px;border-radius:4px;font-weight:600;font-size:12px;white-space:nowrap}
+.ptab{background:transparent;border:1px solid transparent;color:#374151;padding:8px 14px;border-radius:4px;font-weight:600;font-size:13px;white-space:nowrap}
 .ptab:hover{background:var(--bg3)}
 .ptab.active{background:var(--accent2);border-color:var(--accent2);color:#fff}
 /* TABLE — grid completo tipo hoja de cálculo */
 .tbl{width:100%;border-collapse:collapse;font-size:13.5px}
-.tbl th{text-align:left;padding:9px 10px;font-size:11.5px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.5px;background:#E8EAED;border:1px solid var(--border)}
-.tbl td{padding:9px 10px;border:1px solid #E5E7EB;vertical-align:middle;font-weight:500}
+.tbl th{text-align:left;padding:9px 10px;font-size:12px;font-weight:700;color:#1F2937;text-transform:uppercase;letter-spacing:.4px;background:#E8EAED;border:1px solid var(--border)}
+.tbl td{padding:9px 10px;border:1px solid #E5E7EB;vertical-align:middle;font-weight:500;font-size:13px}
 .tbl tr:nth-child(even) td{background:#FAFBFC}
 .tbl tr:hover td{background:#EAF2FB}
 /* STAT */
 .stat-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:14px 10px;text-align:center}
-.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
 .stat-val{font-family:var(--font-display,sans-serif);font-size:32px;line-height:1}
 /* BIG EFF */
 .eff-huge{font-family:var(--font-display,sans-serif);font-size:100px;line-height:1;text-align:center;transition:color .4s}
@@ -474,7 +474,7 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
 <!-- NAV -->
 <nav id="main-nav" style="display:none">
   <div class="logo">NEXUS IQ</div>
-  <div class="logo-sub">Sistema de Gestión Integral &nbsp;<span style="font-size:9px;color:#BFD9F0;font-family:'DM Mono',monospace;opacity:.9">v6.0</span></div>
+  <div class="logo-sub">Sistema de Gestión Integral &nbsp;<span style="font-size:11px;color:#BFD9F0;font-family:'DM Mono',monospace;opacity:.9">v6.0</span></div>
   <button class="nav-btn active" id="nb-operator" onclick="goPage('operator')"><svg class="ic"><use href="#ic-gear"/></svg> Operador</button>
   <button class="nav-btn" id="nb-consulta" onclick="goPage('consulta')"><svg class="ic"><use href="#ic-eye"/></svg> Consulta</button>
   <button class="nav-btn" id="nb-reports" onclick="reportsClick()" style="display:flex;align-items:center;gap:4px"><span id="reports-lock"><svg class="ic"><use href="#ic-lock"/></svg></span> Reportes</button>
@@ -497,9 +497,9 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
   <button class="nav-btn" id="nb-bancos-logout" onclick="bancosLogout()" style="display:none;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--danger);font-size:11px;padding:5px 8px" title="Salir"><svg class="ic"><use href="#ic-lock"/></svg></button>
   <button class="nav-btn" onclick="reconectar()" style="font-size:11px;margin-left:4px"><svg class="ic"><use href="#ic-refresh"/></svg></button>
   <button class="nav-btn hidden" id="nb-station-admin" onclick="openStationAdmin()" style="font-size:11px;background:rgba(255,255,255,.1)" title="Administrar estaciones"><svg class="ic"><use href="#ic-gear"/></svg> Estaciones</button>
-  <div style="margin-left:6px;padding:4px 8px;font-size:10px;color:#BFD9F0;display:flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0" id="station-indicator"></div>
-  <div style="margin-left:6px;padding:4px 8px;font-size:10px;color:var(--green);display:flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0"><div class="live-dot"></div>EN LÍNEA</div>
-  <button onclick="showDebug()" style="margin-left:6px;background:var(--bg4);border:1px solid var(--border);color:var(--muted);padding:4px 8px;border-radius:6px;font-size:10px;cursor:pointer"><svg class="ic"><use href="#ic-search"/></svg></button>
+  <div style="margin-left:6px;padding:4px 8px;font-size:11px;color:#BFD9F0;display:flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0" id="station-indicator"></div>
+  <div style="margin-left:6px;padding:4px 8px;font-size:11px;color:var(--green);display:flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0"><div class="live-dot"></div>EN LÍNEA</div>
+  <button onclick="showDebug()" style="margin-left:6px;background:var(--bg4);border:1px solid var(--border);color:var(--muted);padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer"><svg class="ic"><use href="#ic-search"/></svg></button>
 </nav>
 
 <!-- ══════════════════════════════════════════════════
@@ -518,9 +518,9 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
       </div>
       <div id="ot-info-box" class="hidden" style="background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.2);border-radius:var(--r);padding:12px 14px">
         <div class="g3" style="gap:14px">
-          <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Producto</div><div id="oi-prod" style="font-weight:700;margin-top:3px;font-size:14px"></div></div>
-          <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Código</div><div id="oi-code" style="font-family:'DM Mono',monospace;color:var(--accent);margin-top:3px"></div></div>
-          <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Cant. Programada</div><div id="oi-qty" style="font-family:'DM Mono',monospace;margin-top:3px"></div></div>
+          <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">Producto</div><div id="oi-prod" style="font-weight:700;margin-top:3px;font-size:14px"></div></div>
+          <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">Código</div><div id="oi-code" style="font-family:'DM Mono',monospace;color:var(--accent);margin-top:3px"></div></div>
+          <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">Cant. Programada</div><div id="oi-qty" style="font-family:'DM Mono',monospace;margin-top:3px"></div></div>
         </div>
       </div>
       <div class="field">
@@ -529,10 +529,10 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
       </div>
       <div id="op-info-box" class="hidden" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px">
         <div class="g4" style="gap:10px">
-          <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">No. Op.</div><div id="oi-opnum" style="font-family:'DM Mono',monospace;font-weight:700;color:var(--accent);font-size:18px;margin-top:3px"></div></div>
-          <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Máquina</div><div id="oi-machine" style="font-weight:700;margin-top:3px;color:var(--accent2);font-size:13px"></div></div>
-          <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">T. Montaje</div><div id="oi-setup" style="font-family:'DM Mono',monospace;color:var(--warn);margin-top:3px"></div></div>
-          <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">T. Unitario</div><div id="oi-unit" style="font-family:'DM Mono',monospace;color:var(--green);margin-top:3px"></div></div>
+          <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">No. Op.</div><div id="oi-opnum" style="font-family:'DM Mono',monospace;font-weight:700;color:var(--accent);font-size:18px;margin-top:3px"></div></div>
+          <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">Máquina</div><div id="oi-machine" style="font-weight:700;margin-top:3px;color:var(--accent2);font-size:13px"></div></div>
+          <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">T. Montaje</div><div id="oi-setup" style="font-family:'DM Mono',monospace;color:var(--warn);margin-top:3px"></div></div>
+          <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">T. Unitario</div><div id="oi-unit" style="font-family:'DM Mono',monospace;color:var(--green);margin-top:3px"></div></div>
         </div>
         <div id="op-type-badge" style="margin-top:8px"></div>
       </div>
@@ -562,11 +562,11 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
     </div>
     <div class="card" style="margin-bottom:12px">
       <div class="g5">
-        <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Operador</div><div id="su-operator" style="font-weight:700;margin-top:3px;font-size:13px"></div></div>
-        <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">O.T.</div><div id="su-ot" style="font-family:'DM Mono',monospace;margin-top:3px;color:var(--accent);font-size:12px"></div></div>
-        <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">No. Op.</div><div id="su-opnum" style="font-family:'DM Mono',monospace;margin-top:3px;color:var(--accent);font-weight:700;font-size:16px"></div></div>
-        <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Máquina</div><div id="su-machine" style="font-weight:700;margin-top:3px;color:var(--accent2);font-size:12px"></div></div>
-        <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Cantidad</div><div id="su-qty" style="font-family:'DM Mono',monospace;margin-top:3px;font-size:12px"></div></div>
+        <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">Operador</div><div id="su-operator" style="font-weight:700;margin-top:3px;font-size:13px"></div></div>
+        <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">O.T.</div><div id="su-ot" style="font-family:'DM Mono',monospace;margin-top:3px;color:var(--accent);font-size:12px"></div></div>
+        <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">No. Op.</div><div id="su-opnum" style="font-family:'DM Mono',monospace;margin-top:3px;color:var(--accent);font-weight:700;font-size:16px"></div></div>
+        <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">Máquina</div><div id="su-machine" style="font-weight:700;margin-top:3px;color:var(--accent2);font-size:12px"></div></div>
+        <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">Cantidad</div><div id="su-qty" style="font-family:'DM Mono',monospace;margin-top:3px;font-size:12px"></div></div>
       </div>
     </div>
     <div class="card card-accent" style="text-align:center;padding:28px 20px;max-width:580px;margin:0 auto">
@@ -635,9 +635,9 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
     </div>
     <div class="card card-accent" style="max-width:580px;margin:0 auto;display:flex;flex-direction:column;gap:14px;padding:24px">
       <div class="g3">
-        <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Operador</div><div id="sec-operator" style="font-weight:700;margin-top:3px"></div></div>
-        <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">O.T.</div><div id="sec-ot" style="font-family:'DM Mono',monospace;margin-top:3px;color:var(--accent)"></div></div>
-        <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase">Máquina/Área</div><div id="sec-machine" style="font-weight:700;margin-top:3px;color:var(--accent2)"></div></div>
+        <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">Operador</div><div id="sec-operator" style="font-weight:700;margin-top:3px"></div></div>
+        <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">O.T.</div><div id="sec-ot" style="font-family:'DM Mono',monospace;margin-top:3px;color:var(--accent)"></div></div>
+        <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase">Máquina/Área</div><div id="sec-machine" style="font-weight:700;margin-top:3px;color:var(--accent2)"></div></div>
       </div>
       <div style="text-align:center;padding:16px 0">
         <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px">Tiempo Transcurrido</div>
@@ -674,25 +674,25 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
           <span id="disp-setup-eff" style="display:none"></span>
           <span id="disp-setup-pcs" style="display:none">0</span>
           <div style="text-align:center;margin-bottom:10px">
-            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">EFICIENCIA DE PRODUCCIÓN</div>
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">EFICIENCIA DE PRODUCCIÓN</div>
             <div class="eff-huge" id="prod-eff-val" style="color:var(--muted)">0%</div>
             <div class="eff-label" id="prod-eff-label" style="color:var(--muted);margin-bottom:6px">--</div>
           </div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">
             <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
-              <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">PZAS PROD</div>
+              <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">PZAS PROD</div>
               <div style="font-size:28px;font-weight:700;color:var(--green)" id="disp-prod-pcs">0</div>
             </div>
             <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
-              <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">SCRAP</div>
+              <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">SCRAP</div>
               <div style="font-size:28px;font-weight:700;color:var(--danger)" id="disp-scrap">0</div>
             </div>
             <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center">
-              <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">TOTAL / LOTE</div>
+              <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">TOTAL / LOTE</div>
               <div style="font-size:28px;font-weight:700;color:var(--accent2)">
                 <span id="prod-count">0</span><span style="font-size:14px;color:var(--muted)">/<span id="prod-qty-total">0</span></span>
               </div>
-              <div style="font-size:10px;color:var(--warn)">Falta: <span id="disp-pending" style="font-weight:700">0</span></div>
+              <div style="font-size:11px;color:var(--warn)">Falta: <span id="disp-pending" style="font-weight:700">0</span></div>
             </div>
           </div>
           <div class="pbar-wrap"><div class="pbar" id="prod-qty-bar" style="width:0%;background:var(--accent)"></div></div>
@@ -718,7 +718,7 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <div class="card">
-          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Datos de la Operación</div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Datos de la Operación</div>
           <div id="prod-info-rows"></div>
         </div>
         <div class="g2">
@@ -727,14 +727,14 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
         </div>
         <div class="stat-box"><div class="stat-label">Mínimo Histórico OT</div><div class="stat-val" id="st-hist-min" style="color:var(--warn);font-size:24px">--</div></div>
         <div class="card" id="dt-list-box" style="display:none">
-          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Paros</div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Paros</div>
           <div id="dt-list"></div>
           <div class="info-row" style="border-top:1px solid var(--border);margin-top:4px;padding-top:6px;border-bottom:none;font-weight:700">
             <span>Total</span><span id="dt-total" style="font-family:'DM Mono',monospace;color:var(--danger)">00:00</span>
           </div>
         </div>
         <div class="card" id="last-pieces-box" style="display:none">
-          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Últimas Piezas</div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Últimas Piezas</div>
           <div id="last-pieces-list"></div>
         </div>
       </div>
@@ -1905,15 +1905,15 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
     <div id="mpf-mat-info" style="background:var(--bg3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px"></div>
     <div style="display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap">
       <div style="flex:1;min-width:140px">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Requerido por BOM</div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Requerido por BOM</div>
         <div id="mpf-requerido" style="font-weight:700;color:var(--warn);font-size:15px"></div>
       </div>
       <div style="flex:1;min-width:140px">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Disponible en Almacén</div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Disponible en Almacén</div>
         <div id="mpf-disponible" style="font-weight:700;color:var(--green);font-size:15px"></div>
       </div>
       <div style="flex:1;min-width:140px">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Ya asignado a OT</div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Ya asignado a OT</div>
         <div id="mpf-asignado" style="font-weight:700;color:var(--accent);font-size:15px"></div>
       </div>
     </div>
@@ -2176,7 +2176,7 @@ async function showStationSelectScreen(){
     } else {
       listEl.innerHTML = rows.map(r=>
         '<button class="btn btn-ghost" style="justify-content:flex-start;text-align:left" onclick="selectExistingStation(\''+r.station_name.replace(/'/g,"\\'")+'\')">'
-        +'<svg class="ic"><use href="#ic-factory"/></svg> '+r.station_name+(r.is_admin?' <span class="tag" style="margin-left:6px;font-size:9px">ADMIN</span>':'')
+        +'<svg class="ic"><use href="#ic-factory"/></svg> '+r.station_name+(r.is_admin?' <span class="tag" style="margin-left:6px;font-size:11px">ADMIN</span>':'')
         +'</button>'
       ).join('');
     }
@@ -2213,7 +2213,7 @@ function startStationModuleSelect(){
     ? '<label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);opacity:.55;cursor:not-allowed">'
       +'<input type="checkbox" disabled style="width:auto">'
       +'<span style="font-size:13px">'+m.label+'</span>'
-      +'<span class="tag" style="margin-left:auto;font-size:9px">PRÓXIMAMENTE</span>'
+      +'<span class="tag" style="margin-left:auto;font-size:11px">PRÓXIMAMENTE</span>'
       +'</label>'
     : '<label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer">'
       +'<input type="checkbox" class="station-mod-check" value="'+m.key+'" style="width:auto">'
@@ -2267,7 +2267,7 @@ async function openStationAdmin(){
     }).join('');
     return '<div class="card" data-station="'+r.station_name+'" style="margin-bottom:10px">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
-      +'<div style="font-weight:700;font-size:14px">'+r.station_name+(r.is_admin?' <span class="tag" style="font-size:9px">ADMIN — ve todos los módulos</span>':'')+'</div>'
+      +'<div style="font-weight:700;font-size:14px">'+r.station_name+(r.is_admin?' <span class="tag" style="font-size:11px">ADMIN — ve todos los módulos</span>':'')+'</div>'
       +(r.is_admin?'':'<button class="btn btn-danger btn-sm" onclick="deleteStation(\''+r.station_name.replace(/'/g,"\\'")+'\')"><svg class="ic"><use href="#ic-trash"/></svg></button>')
       +'</div>'
       +(r.is_admin?'':'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">'+checks+'</div>'
@@ -3209,11 +3209,11 @@ function renderSecOpsActive(){
         <div style="font-size:11px;color:var(--muted)">Op.${s.op_number||'--'} ${s.operation_name||''} · OT: <b style="color:var(--accent)">${s.ot_number||'--'}</b></div>
       </div>
       <div style="font-size:11px;color:var(--muted);text-align:center">
-        <div style="text-transform:uppercase;font-size:9px">Operador</div>
+        <div style="text-transform:uppercase;font-size:11px">Operador</div>
         <div style="font-weight:700;color:${mine?'var(--accent)':'var(--text)'}">${s.operator_name||'--'}</div>
       </div>
       <div style="font-size:11px;color:var(--muted);text-align:center;font-family:'DM Mono',monospace">
-        <div style="text-transform:uppercase;font-size:9px">En curso</div>
+        <div style="text-transform:uppercase;font-size:11px">En curso</div>
         <div class="sec-active-timer" data-started="${s.started_at}" style="font-weight:700;color:var(--warn)">${fmtSec(elSec)}</div>
       </div>
       <button class="btn btn-sm btn-orange" onclick="reopenSecondaryOp('${s.id}')">▶ Reabrir / Terminar</button>
@@ -3282,22 +3282,22 @@ function startSecondaryStep(){
       <div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px">
         <div style="font-size:11px;font-weight:700;color:var(--warn);text-transform:uppercase;letter-spacing:1px">Inspección de Tratamiento Térmico</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div class="field" style="margin:0"><label style="font-size:10px">% C Superficial</label>
+          <div class="field" style="margin:0"><label style="font-size:11px">% C Superficial</label>
             <input id="tt-c-superficial" type="number" step="0.01" placeholder="ej. 0.85" style="font-family:'DM Mono',monospace"></div>
-          <div class="field" style="margin:0"><label style="font-size:10px">Capa de Carburizado (mm)</label>
+          <div class="field" style="margin:0"><label style="font-size:11px">Capa de Carburizado (mm)</label>
             <input id="tt-capa" type="number" step="0.01" placeholder="ej. 0.8" style="font-family:'DM Mono',monospace"></div>
-          <div class="field" style="margin:0"><label style="font-size:10px">Dureza (HRC)</label>
+          <div class="field" style="margin:0"><label style="font-size:11px">Dureza (HRC)</label>
             <input id="tt-dureza" type="number" step="0.1" placeholder="ej. 58" style="font-family:'DM Mono',monospace"></div>
-          <div class="field" style="margin:0"><label style="font-size:10px">Lote de Muestra</label>
+          <div class="field" style="margin:0"><label style="font-size:11px">Lote de Muestra</label>
             <input id="tt-lote" type="text" placeholder="ej. LM-2026-001" style="font-family:'DM Mono',monospace"></div>
         </div>
-        <div class="field" style="margin:0"><label style="font-size:10px">Resultado</label>
+        <div class="field" style="margin:0"><label style="font-size:11px">Resultado</label>
           <select id="tt-resultado" style="font-size:13px">
             <option value="aprobado">✅ Aprobado</option>
             <option value="rechazado">❌ Rechazado</option>
             <option value="pendiente">⏳ Pendiente de revisión</option>
           </select></div>
-        <div class="field" style="margin:0"><label style="font-size:10px">Notas / Observaciones</label>
+        <div class="field" style="margin:0"><label style="font-size:11px">Notas / Observaciones</label>
           <textarea id="tt-notas" rows="2" placeholder="Observaciones del proceso..." style="resize:none;font-size:12px"></textarea></div>
         <button class="btn btn-orange btn-xl" style="width:100%;margin-top:4px" onclick="completeTTOp()">
           <svg class="ic"><use href="#ic-flag"/></svg> OPERACIÓN CONCLUIDA
@@ -3954,7 +3954,7 @@ function bomRowHTML(m, prodId, idx){
   const mid=m.id||uid();
   return `<div id="bom-row-${mid}" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px">
     <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:end">
-      <div class="field" style="margin:0"><label style="font-size:9px">MATERIAL</label>
+      <div class="field" style="margin:0"><label style="font-size:11px">MATERIAL</label>
         <select id="bom-tipo-${mid}" onchange="onBomTypeChange('${mid}')" style="font-size:11px">
           <option value="">-- Selecciona material --</option>
           ${[...MAT_TYPES].sort((a,b)=>{
@@ -3991,16 +3991,16 @@ function bomRowHTML(m, prodId, idx){
           }).join('')}
         </select>
       </div>
-      <div class="field" style="margin:0"><label style="font-size:9px">¿CRÍTICO? <span style="color:var(--muted);font-size:9px">(bloquea liberación)</span></label>
+      <div class="field" style="margin:0"><label style="font-size:11px">¿CRÍTICO? <span style="color:var(--muted);font-size:11px">(bloquea liberación)</span></label>
         <select id="bom-critical-${mid}" style="font-size:11px">
           <option value="1" ${m.critico!==false?'selected':''}>Sí - bloquea liberación</option>
           <option value="0" ${m.critico===false?'selected':''}>No - confirmar después</option>
         </select>
       </div>
-      <div class="field" style="margin:0"><label style="font-size:9px">MÍN. REPOSICIÓN <span style="color:var(--muted);font-size:9px">(Por Producto)</span></label>
+      <div class="field" style="margin:0"><label style="font-size:11px">MÍN. REPOSICIÓN <span style="color:var(--muted);font-size:11px">(Por Producto)</span></label>
         <input type="number" id="bom-stockmin-${mid}" value="${m.stock_min_pp||''}" placeholder="0 = solo SIN STOCK" style="font-size:11px">
       </div>
-      <div class="field" style="margin:0"><label style="font-size:9px">TIPO REPOSICIÓN</label>
+      <div class="field" style="margin:0"><label style="font-size:11px">TIPO REPOSICIÓN</label>
         <select id="bom-tiporep-${mid}" onchange="onBomTipoRepChange('${mid}')" style="font-size:11px">
           <option value="lote_exacto" ${(m.tipo_reposicion||'lote_exacto')==='lote_exacto'?'selected':''}>Lote exacto</option>
           <option value="multiplo" ${m.tipo_reposicion==='multiplo'?'selected':''}>Múltiplo fijo</option>
@@ -4008,42 +4008,42 @@ function bomRowHTML(m, prodId, idx){
         </select>
       </div>
       <div class="field" id="bom-lotecompra-wrap-${mid}" style="margin:0;${(m.tipo_reposicion==='multiplo')?'':'display:none'}">
-        <label style="font-size:9px">LOTE COMPRA <span style="color:var(--muted);font-size:9px">(múltiplo)</span></label>
+        <label style="font-size:11px">LOTE COMPRA <span style="color:var(--muted);font-size:11px">(múltiplo)</span></label>
         <input type="number" id="bom-lotecompra-${mid}" value="${m.lote_compra||1}" min="1" placeholder="ej. 100" style="font-size:11px">
       </div>
       <button type="button" onclick="removeBomRow('${mid}')" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);color:var(--danger);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:14px;height:32px"><svg class="ic"><use href="#ic-x"/></svg></button>
     </div>
     <div id="bom-barra-${mid}" style="${(()=>{const mc=MAT_TYPES.find(x=>x.val===m.tipo);return mc&&(mc.grupo==='barra'||mc.grupo==='tubing')?'':'display:none';})()}">
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr;gap:8px;align-items:end">
-        <div class="field" style="margin:0"><label style="font-size:9px">FORMA</label>
+        <div class="field" style="margin:0"><label style="font-size:11px">FORMA</label>
           <select id="bom-forma-${mid}" onchange="onBomFormaChange('${mid}')" style="font-size:11px">
             ${MAT_SHAPES.map(s=>`<option value="${s.val}" ${m.forma===s.val?'selected':''}>${s.label}</option>`).join('')}
           </select>
         </div>
-        <div class="field" style="margin:0"><label style="font-size:9px">DIÁM. EXT. (")</label>
+        <div class="field" style="margin:0"><label style="font-size:11px">DIÁM. EXT. (")</label>
           <input type="number" step="0.001" id="bom-diam-${mid}" value="${m.diametro||''}" placeholder="1.000" oninput="calcBomRowKg('${mid}')" style="font-size:11px">
         </div>
-        <div class="field" id="bom-dint-wrap-${mid}" style="margin:0;${(()=>{const mc=MAT_TYPES.find(x=>x.val===m.tipo);return m.forma==='barra_hueca'||mc?.grupo==='tubing'?'':'display:none';})()}"><label style="font-size:9px">DIÁM. INT. (")</label>
+        <div class="field" id="bom-dint-wrap-${mid}" style="margin:0;${(()=>{const mc=MAT_TYPES.find(x=>x.val===m.tipo);return m.forma==='barra_hueca'||mc?.grupo==='tubing'?'':'display:none';})()}"><label style="font-size:11px">DIÁM. INT. (")</label>
           <input type="number" step="0.001" id="bom-dint-${mid}" value="${m.diametro_int||''}" placeholder="0.500" oninput="calcBomRowKg('${mid}')" style="font-size:11px">
         </div>
-        <div class="field" style="margin:0"><label style="font-size:9px">LONGITUD (")</label>
+        <div class="field" style="margin:0"><label style="font-size:11px">LONGITUD (")</label>
           <input type="number" step="0.001" id="bom-long-${mid}" value="${m.longitud||''}" placeholder="42.000" oninput="calcBomRowKg('${mid}')" style="font-size:11px">
         </div>
-        <div class="field" style="margin:0"><label style="font-size:9px">BARRAS</label>
+        <div class="field" style="margin:0"><label style="font-size:11px">BARRAS</label>
           <input type="number" id="bom-cant-${mid}" value="${m.cantidad||''}" placeholder="8" oninput="calcBomRowKg('${mid}')" style="font-size:11px">
         </div>
         <div style="background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);border-radius:6px;padding:6px;text-align:center">
-          <div style="font-size:9px;color:var(--muted)">TOTAL KG</div>
+          <div style="font-size:11px;color:var(--muted)">TOTAL KG</div>
           <div id="bom-kg-${mid}" style="font-family:'DM Mono',monospace;font-weight:700;color:var(--accent2);font-size:13px">${totalKg>0?totalKg+' kg':'--'}</div>
         </div>
       </div>
     </div>
     <div id="bom-pieza-${mid}" style="${(()=>{const mc=MAT_TYPES.find(x=>x.val===m.tipo);return mc&&(mc.grupo==='barra'||mc.grupo==='tubing')?'display:none':'';})()}">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div class="field" style="margin:0"><label style="font-size:9px">CANTIDAD</label>
+        <div class="field" style="margin:0"><label style="font-size:11px">CANTIDAD</label>
           <input type="number" id="bom-cant2-${mid}" value="${m.cantidad||''}" placeholder="ej. 50" style="font-size:11px">
         </div>
-        <div class="field" style="margin:0"><label style="font-size:9px">UNIDAD</label>
+        <div class="field" style="margin:0"><label style="font-size:11px">UNIDAD</label>
           <select id="bom-unidad-${mid}" style="font-size:11px">
             <option value="piezas" ${m.unidad==='piezas'||!m.unidad?'selected':''}>Piezas</option>
             <option value="kg" ${m.unidad==='kg'?'selected':''}>Kg</option>
@@ -4220,10 +4220,10 @@ function showProductForm(id){
 
       <!-- Photo -->
       <div style="margin-bottom:14px">
-        <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:6px">Foto del Producto</label>
+        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:6px">Foto del Producto</label>
         <div style="display:flex;gap:14px;align-items:flex-start">
           <div id="pf-photo-preview" style="width:100px;height:100px;border-radius:10px;background:var(--bg3);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;cursor:pointer" onclick="document.getElementById('pf-photo-file').click()">
-            ${p.photo_url?`<img src="${p.photo_url}" style="width:100%;height:100%;object-fit:cover">`:'<div style="text-align:center"><div style="font-size:28px"><svg class="ic"><use href="#ic-camera"/></svg></div><div style="font-size:9px;color:var(--muted);margin-top:4px">Click para<br>subir foto</div></div>'}
+            ${p.photo_url?`<img src="${p.photo_url}" style="width:100%;height:100%;object-fit:cover">`:'<div style="text-align:center"><div style="font-size:28px"><svg class="ic"><use href="#ic-camera"/></svg></div><div style="font-size:11px;color:var(--muted);margin-top:4px">Click para<br>subir foto</div></div>'}
           </div>
           <div style="flex:1;display:flex;flex-direction:column;gap:8px">
             <input type="file" id="pf-photo-file" accept="image/jpeg,image/jpg,image/png,image/webp" style="display:none" onchange="uploadProductPhoto(this)">
@@ -4244,7 +4244,7 @@ function showProductForm(id){
           <input type="file" id="pf-drawing-file" accept=".pdf" style="display:none" onchange="uploadDrawingFile(this)">
           <button type="button" onclick="document.getElementById('pf-drawing-file').click()" class="btn btn-ghost btn-sm"><svg class="ic"><use href="#ic-folder"/></svg> Subir PDF</button>
           <span id="pf-drawing-status" style="font-size:11px">${p.drawing_url
-            ?'<a href="'+p.drawing_url+'" target="_blank" style="color:var(--accent2);font-weight:600">Ver dibujo actual</a>&nbsp;<button onclick="deleteProductDrawing()" class="btn btn-danger btn-sm" style="font-size:10px;padding:2px 7px"><svg class="ic"><use href="#ic-trash"/></svg> Eliminar</button>'
+            ?'<a href="'+p.drawing_url+'" target="_blank" style="color:var(--accent2);font-weight:600">Ver dibujo actual</a>&nbsp;<button onclick="deleteProductDrawing()" class="btn btn-danger btn-sm" style="font-size:11px;padding:2px 7px"><svg class="ic"><use href="#ic-trash"/></svg> Eliminar</button>'
             :'Sin dibujo cargado'}</span>
         </div>
         <input type="hidden" id="pf-drawing-url" value="${p.drawing_url||''}">
@@ -4291,7 +4291,7 @@ function showProductForm(id){
           <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Operaciones</span>
           <button class="btn btn-blue btn-sm" onclick="addOpRowPF()">+ Agregar</button>
         </div>
-        <div style="display:grid;grid-template-columns:60px 160px 1fr 1fr 90px 90px 36px;gap:6px;padding:0 0 6px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">
+        <div style="display:grid;grid-template-columns:60px 160px 1fr 1fr 90px 90px 36px;gap:6px;padding:0 0 6px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">
           <div>No.</div><div>Tipo / Operación</div><div>Máquina</div><div>Nombre</div><div style="text-align:center">Mont(min)</div><div style="text-align:center">Unit(min)</div><div></div>
         </div>
         <div id="pf-ops-rows"></div>
@@ -4375,9 +4375,9 @@ function opRowPF(op,i,prodId){
       <!-- TOOLS -->
       <div>
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-          <span style="font-size:10px;font-weight:700;color:var(--warn);text-transform:uppercase;letter-spacing:.4px"><svg class="ic"><use href="#ic-wrench"/></svg> Herramientas ${(op.tools||[]).length?'('+( op.tools||[]).length+')':''}</span>
+          <span style="font-size:11px;font-weight:700;color:var(--warn);text-transform:uppercase;letter-spacing:.4px"><svg class="ic"><use href="#ic-wrench"/></svg> Herramientas ${(op.tools||[]).length?'('+( op.tools||[]).length+')':''}</span>
           <button type="button" onclick="addToolRow('${op.id}')" style="background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:var(--warn);padding:1px 8px;border-radius:5px;font-size:11px;cursor:pointer;font-family:Barlow,sans-serif;font-weight:700">+</button>
-          <button type="button" onclick="(function(b){var d=document.getElementById('tools-rows-${op.id}');var h=d.style.display==='none';d.style.display=h?'':'none';b.textContent=h?'▲ ocultar':'▼ ver '+(d.children.length)+' herr.';})(this)" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);padding:1px 6px;border-radius:5px;font-size:10px;cursor:pointer">${(op.tools||[]).length?'▼ ver '+(op.tools||[]).length+' herr.':'▲ ocultar'}</button>
+          <button type="button" onclick="(function(b){var d=document.getElementById('tools-rows-${op.id}');var h=d.style.display==='none';d.style.display=h?'':'none';b.textContent=h?'▲ ocultar':'▼ ver '+(d.children.length)+' herr.';})(this)" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);padding:1px 6px;border-radius:5px;font-size:11px;cursor:pointer">${(op.tools||[]).length?'▼ ver '+(op.tools||[]).length+' herr.':'▲ ocultar'}</button>
         </div>
         <div id="tools-rows-${op.id}" style="${(op.tools||[]).length>3?'display:none':''}">
           ${(op.tools||[]).map(t=>`
@@ -4387,42 +4387,42 @@ function opRowPF(op,i,prodId){
               <input type="hidden" id="tphoto-${t.id}" value="${t.photo_url||''}">
               <input value="${t.name||''}" placeholder="Nombre herramienta" id="tname-${t.id}" style="font-size:11px;padding:5px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);width:100%">
               <input type="number" value="${t.compensator||''}" placeholder="No." id="tcomp-${t.id}" style="font-size:11px;padding:5px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);width:100%;text-align:center">
-              <button type="button" onclick="document.getElementById('tool-${t.id}').remove()" style="background:rgba(239,68,68,.15);color:var(--danger);border:1px solid rgba(239,68,68,.3);border-radius:5px;padding:4px;font-size:10px;cursor:pointer"><svg class="ic"><use href="#ic-x"/></svg></button>
+              <button type="button" onclick="document.getElementById('tool-${t.id}').remove()" style="background:rgba(239,68,68,.15);color:var(--danger);border:1px solid rgba(239,68,68,.3);border-radius:5px;padding:4px;font-size:11px;cursor:pointer"><svg class="ic"><use href="#ic-x"/></svg></button>
             </div>`).join('')}
         </div>
       </div>
       <!-- GAGES -->
       <div>
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-          <span style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.4px"><svg class="ic"><use href="#ic-ruler-straight"/></svg> Gages</span>
+          <span style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.4px"><svg class="ic"><use href="#ic-ruler-straight"/></svg> Gages</span>
           <button type="button" onclick="addGageRow('${op.id}')" style="background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.25);color:var(--accent);padding:1px 8px;border-radius:5px;font-size:11px;cursor:pointer;font-family:Barlow,sans-serif;font-weight:700">+</button>
         </div>
         <div id="gages-rows-${op.id}">
           ${(op.gages||[]).map(g=>`
             <div id="gage-${g.id}" style="display:grid;grid-template-columns:1fr 28px;gap:3px;margin-bottom:4px;align-items:center">
               <input value="${g.name||''}" placeholder="Nombre gage" id="gname-${g.id}" style="font-size:11px;padding:5px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);width:100%">
-              <button type="button" onclick="document.getElementById('gage-${g.id}').remove()" style="background:rgba(239,68,68,.15);color:var(--danger);border:1px solid rgba(239,68,68,.3);border-radius:5px;padding:4px;font-size:10px;cursor:pointer"><svg class="ic"><use href="#ic-x"/></svg></button>
+              <button type="button" onclick="document.getElementById('gage-${g.id}').remove()" style="background:rgba(239,68,68,.15);color:var(--danger);border:1px solid rgba(239,68,68,.3);border-radius:5px;padding:4px;font-size:11px;cursor:pointer"><svg class="ic"><use href="#ic-x"/></svg></button>
             </div>`).join('')}
         </div>
       </div>
       <!-- DEVICES -->
       <div>
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-          <span style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.4px"><svg class="ic"><use href="#ic-bolt"/></svg> Dispositivos</span>
+          <span style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.4px"><svg class="ic"><use href="#ic-bolt"/></svg> Dispositivos</span>
           <button type="button" onclick="addDeviceRow('${op.id}')" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:var(--green);padding:1px 8px;border-radius:5px;font-size:11px;cursor:pointer;font-family:Barlow,sans-serif;font-weight:700">+</button>
         </div>
         <div id="devices-rows-${op.id}">
           ${(op.devices||[]).map(d=>`
             <div id="device-${d.id}" style="display:grid;grid-template-columns:1fr 28px;gap:3px;margin-bottom:4px;align-items:center">
               <input value="${d.name||''}" placeholder="Nombre dispositivo" id="dname-${d.id}" style="font-size:11px;padding:5px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);width:100%">
-              <button type="button" onclick="document.getElementById('device-${d.id}').remove()" style="background:rgba(239,68,68,.15);color:var(--danger);border:1px solid rgba(239,68,68,.3);border-radius:5px;padding:4px;font-size:10px;cursor:pointer"><svg class="ic"><use href="#ic-x"/></svg></button>
+              <button type="button" onclick="document.getElementById('device-${d.id}').remove()" style="background:rgba(239,68,68,.15);color:var(--danger);border:1px solid rgba(239,68,68,.3);border-radius:5px;padding:4px;font-size:11px;cursor:pointer"><svg class="ic"><use href="#ic-x"/></svg></button>
             </div>`).join('')}
         </div>
       </div>
     </div>
     <!-- CNC PROGRAM -->
     <div id="cnc-section-${op.id}" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)" data-cnc="1">
-      <div style="font-size:10px;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Programa CNC</div>
+      <div style="font-size:11px;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Programa CNC</div>
       <input type="hidden" id="cnc-url-${op.id}" value="${op.cnc_program_url||''}">
       <input type="hidden" id="cnc-name-${op.id}" value="${op.cnc_program_name||''}">
       <div style="display:flex;align-items:center;gap:8px">
@@ -4557,7 +4557,7 @@ function previewPhoto(){
   const prev=document.getElementById('pf-photo-preview');
   document.getElementById('pf-photo-url-final').value=url;
   if(url) prev.innerHTML=`<img src="${url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='<span style=font-size:24px><svg class="ic"><use href="#ic-x-circle"/></svg></span>'">`;
-  else prev.innerHTML='<div style="text-align:center"><div style="font-size:28px"><svg class="ic"><use href="#ic-camera"/></svg></div><div style="font-size:9px;color:var(--muted);margin-top:4px">Click para<br>subir foto</div></div>';
+  else prev.innerHTML='<div style="text-align:center"><div style="font-size:28px"><svg class="ic"><use href="#ic-camera"/></svg></div><div style="font-size:11px;color:var(--muted);margin-top:4px">Click para<br>subir foto</div></div>';
 }
 
 async function deleteNexusImage(url){
@@ -4603,7 +4603,7 @@ async function uploadProductPhoto(input){
     document.getElementById('pf-photo-url-final').value = publicUrl;
     prevEl.innerHTML = `<img src="${publicUrl}" style="width:100%;height:100%;object-fit:cover">`;
     document.getElementById('pf-photo-url-final').value = publicUrl;
-    statusEl.innerHTML = '<svg class="ic"><use href="#ic-check-circle"/></svg> Imagen subida &nbsp;<button onclick="deleteProductPhoto()" class="btn btn-danger btn-sm" style="font-size:10px;padding:2px 7px"><svg class="ic"><use href="#ic-trash"/></svg> Eliminar foto</button>';
+    statusEl.innerHTML = '<svg class="ic"><use href="#ic-check-circle"/></svg> Imagen subida &nbsp;<button onclick="deleteProductPhoto()" class="btn btn-danger btn-sm" style="font-size:11px;padding:2px 7px"><svg class="ic"><use href="#ic-trash"/></svg> Eliminar foto</button>';
     statusEl.style.color = 'var(--green)';
   }catch(e){
     statusEl.innerHTML= '<svg class="ic"><use href="#ic-x-circle"/></svg> Error al subir: ' + e.message;
@@ -4618,7 +4618,7 @@ async function deleteProductPhoto(){
   if(urlEl?.value) await deleteNexusImage(urlEl.value);
   if(urlEl) urlEl.value='';
   const prev=document.getElementById('pf-photo-preview');
-  if(prev) prev.innerHTML='<div style="text-align:center"><div style="font-size:28px"><svg class="ic"><use href="#ic-camera"/></svg></div><div style="font-size:9px;color:var(--muted);margin-top:4px">Sin foto</div></div>';
+  if(prev) prev.innerHTML='<div style="text-align:center"><div style="font-size:28px"><svg class="ic"><use href="#ic-camera"/></svg></div><div style="font-size:11px;color:var(--muted);margin-top:4px">Sin foto</div></div>';
   const st=document.getElementById('pf-upload-status');
   if(st){st.textContent='Foto eliminada';st.style.color='var(--muted)';}
 }
@@ -5001,7 +5001,7 @@ function renderOperators(){
   if(!operators.length){ list.innerHTML=`<div class="card" style="color:var(--muted);text-align:center;padding:40px">Sin operadores registrados. Usa el botón + Nuevo Operador para agregar.</div>`; return; }
   try{
     list.innerHTML=`<div class="card" style="padding:0;overflow:hidden"><table class="tbl"><thead><tr><th>Nombre</th><th>Código</th><th>Área</th><th>Costo/Hora</th><th style="width:100px">Acciones</th></tr></thead><tbody>
-      ${operators.map(o=>`<tr><td style="font-weight:600">${o.name||''}</td><td><span class="tag" style="background:rgba(124,58,237,.15);color:var(--accent2);border:1px solid rgba(124,58,237,.3)">${o.code||''}</span></td><td style="color:var(--muted)">${o.area||''}</td><td style="color:var(--green);font-family:'DM Mono',monospace"><span style="letter-spacing:2px">••••</span> <button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:10px;padding:2px 6px;border-radius:4px;border:1px solid var(--border)" onclick="revealCostoHora('${o.id}','ch-${o.id}')">Ver</button><span id="ch-${o.id}" style="display:none;color:var(--green);font-family:'DM Mono',monospace"></span></td>
+      ${operators.map(o=>`<tr><td style="font-weight:600">${o.name||''}</td><td><span class="tag" style="background:rgba(124,58,237,.15);color:var(--accent2);border:1px solid rgba(124,58,237,.3)">${o.code||''}</span></td><td style="color:var(--muted)">${o.area||''}</td><td style="color:var(--green);font-family:'DM Mono',monospace"><span style="letter-spacing:2px">••••</span> <button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:11px;padding:2px 6px;border-radius:4px;border:1px solid var(--border)" onclick="revealCostoHora('${o.id}','ch-${o.id}')">Ver</button><span id="ch-${o.id}" style="display:none;color:var(--green);font-family:'DM Mono',monospace"></span></td>
       <td><div style="display:flex;gap:5px"><button class="btn btn-ghost btn-sm" onclick="showOperatorForm('${o.id}')"><svg class="ic"><use href="#ic-pencil"/></svg></button><button class="btn btn-sm btn-danger" onclick="deleteOperator('${o.id}')"><svg class="ic"><use href="#ic-trash"/></svg></button></div></td></tr>`).join('')}
     </tbody></table></div>`;
   }catch(e){ console.error('renderOperators error:',e); list.innerHTML='<div style="color:red;padding:20px">Error: '+e.message+'</div>'; }
@@ -5017,7 +5017,7 @@ function showOperatorForm(id){
         <div class="field"><label>Nombre Completo</label><input id="of-name" value="${o.name}" placeholder="Nombre del operador"></div>
         <div class="field"><label>Código / No. Empleado</label><input id="of-code" value="${o.code}" placeholder="ej. OP-01"></div>
         <div class="field"><label>Área</label><input id="of-area" value="${o.area||''}" placeholder="ej. Maquinado"></div>
-        <div cclass="field"><label>Costo por Hora (MXN) <span style="font-size:10px;color:var(--warn)">&#128274; Protegido</span></label><div style="display:flex;gap:8px;align-items:center"><input id="of-costo-hora" type="number" step="0.01" value="" placeholder="ej. 80.00" style="display:none" data-real="${o.costo_hora||0}"><span id="of-costo-hora-masked" style="font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:3px">••••••</span><button type="button" class="btn btn-sm btn-ghost" style="font-size:11px" onclick="unlockCostoHora(this)">&#128275; Desbloquear</button></div></div>/div>
+        <div cclass="field"><label>Costo por Hora (MXN) <span style="font-size:11px;color:var(--warn)">&#128274; Protegido</span></label><div style="display:flex;gap:8px;align-items:center"><input id="of-costo-hora" type="number" step="0.01" value="" placeholder="ej. 80.00" style="display:none" data-real="${o.costo_hora||0}"><span id="of-costo-hora-masked" style="font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:3px">••••••</span><button type="button" class="btn btn-sm btn-ghost" style="font-size:11px" onclick="unlockCostoHora(this)">&#128275; Desbloquear</button></div></div>/div>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button class="btn btn-ghost" onclick="document.getElementById('operator-form-wrap').innerHTML=''">Cancelar</button>
@@ -5361,7 +5361,7 @@ async function uploadDrawingFile(input){
     const inp=document.getElementById('pf-drawing-url');
     if(inp) inp.value=url;
     if(statusEl) statusEl.innerHTML='<a href="'+url+'" target="_blank" style="color:var(--accent2);font-weight:600">Dibujo cargado — Ver <svg class="ic"><use href="#ic-link"/></svg></a>'
-      +'&nbsp;<button onclick="deleteProductDrawing()" class="btn btn-danger btn-sm" style="font-size:10px;padding:2px 7px"><svg class="ic"><use href="#ic-trash"/></svg> Eliminar</button>';
+      +'&nbsp;<button onclick="deleteProductDrawing()" class="btn btn-danger btn-sm" style="font-size:11px;padding:2px 7px"><svg class="ic"><use href="#ic-trash"/></svg> Eliminar</button>';
   }catch(e){
     if(statusEl) statusEl.textContent='Error: '+e.message;
   }
@@ -5408,7 +5408,7 @@ async function uploadMaterialDrawing(input){
     const isDwgUp=extUp==='DWG'||extUp==='DXF';
     const lblUp=isDwgUp?'Archivo '+extUp+' cargado — Descargar '+icon('down'):'Dibujo cargado — Ver '+icon('link');
     if(statusEl) statusEl.innerHTML='<a href="'+url+'" target="_blank" '+(isDwgUp?'download':'')+' style="color:var(--accent2);font-weight:600">'+lblUp+'</a>'
-      +'&nbsp;<button onclick="deleteMaterialDrawing()" class="btn btn-danger btn-sm" style="font-size:10px;padding:2px 7px"><svg class="ic"><use href="#ic-trash"/></svg> Eliminar</button>';
+      +'&nbsp;<button onclick="deleteMaterialDrawing()" class="btn btn-danger btn-sm" style="font-size:11px;padding:2px 7px"><svg class="ic"><use href="#ic-trash"/></svg> Eliminar</button>';
   }catch(e){
     if(statusEl) statusEl.textContent='Error: '+e.message;
   }
@@ -5481,8 +5481,8 @@ function buildDrawingsMpGrid(mats, containerId){
     html+='<div class="card" style="text-align:center;padding:16px;cursor:pointer" onclick="window.open(\''+m.dibujo_url+'\',\'_blank\')">'
       +'<div style="font-size:30px;margin-bottom:6px">'+(esImg?icon('image','ic-xl'):esDwg?icon('ruler','ic-xl'):icon('page','ic-xl'))+'</div>'
       +'<div style="font-weight:700;font-size:12px;margin-bottom:2px">'+m.name+'</div>'
-      +'<div style="font-size:10px;color:'+catDef.color+';margin-bottom:2px">'+icon(catDef.icon)+' '+cat+'</div>'
-      +'<div style="font-size:10px;color:var(--muted);margin-bottom:8px">'+formaLabel+codigo+'</div>'
+      +'<div style="font-size:11px;color:'+catDef.color+';margin-bottom:2px">'+icon(catDef.icon)+' '+cat+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);margin-bottom:8px">'+formaLabel+codigo+'</div>'
       +'<a href="'+m.dibujo_url+'" target="_blank" download class="btn btn-accent btn-sm" style="display:inline-flex" onclick="event.stopPropagation()">'
       +(esImg?'Ver imagen':esDwg?icon('down')+' Descargar DWG':'Ver PDF')+'</a>'
     +'</div>';
@@ -5570,11 +5570,11 @@ function renderRecItems(items){
     +'<div style="flex:1;min-width:0">'
       +'<div style="font-weight:700;font-size:13px">'+r.nombre+'</div>'
       +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:3px">'
-        +(r.codigo?'<span class="tag" style="color:var(--accent2);font-size:10px">'+r.codigo+'</span>':'')
-        +(r.proveedor_sugerido?'<span class="tag" style="color:var(--muted);font-size:10px"><svg class="ic"><use href="#ic-factory"/></svg> '+r.proveedor_sugerido+'</span>':'')
-        +(r.stock_min?'<span class="tag" style="color:var(--green);font-size:10px">Mín: '+r.stock_min+'</span>':'')
-        +(r.stock_max?'<span class="tag" style="color:var(--accent2);font-size:10px">'+(r.stock_max_tipo==='lote'?'<svg class="ic"><use href="#ic-refresh"/></svg> Lote:':'<svg class="ic"><use href="#ic-package"/></svg> Máx:')+' '+r.stock_max+'</span>':'')
-        +(r.notas?'<span style="font-size:10px;color:var(--muted)"><svg class="ic"><use href="#ic-note"/></svg> '+r.notas+'</span>':'')
+        +(r.codigo?'<span class="tag" style="color:var(--accent2);font-size:11px">'+r.codigo+'</span>':'')
+        +(r.proveedor_sugerido?'<span class="tag" style="color:var(--muted);font-size:11px"><svg class="ic"><use href="#ic-factory"/></svg> '+r.proveedor_sugerido+'</span>':'')
+        +(r.stock_min?'<span class="tag" style="color:var(--green);font-size:11px">Mín: '+r.stock_min+'</span>':'')
+        +(r.stock_max?'<span class="tag" style="color:var(--accent2);font-size:11px">'+(r.stock_max_tipo==='lote'?'<svg class="ic"><use href="#ic-refresh"/></svg> Lote:':'<svg class="ic"><use href="#ic-package"/></svg> Máx:')+' '+r.stock_max+'</span>':'')
+        +(r.notas?'<span style="font-size:11px;color:var(--muted)"><svg class="ic"><use href="#ic-note"/></svg> '+r.notas+'</span>':'')
       +'</div>'
     +'</div>'
     +'<div style="display:flex;gap:5px;flex-shrink:0">'
@@ -5606,16 +5606,16 @@ function showRecursoForm(id){
       +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:12px">'
         +'<div class="field"><label>FAMILIA <span style="color:var(--danger)">*</span></label>'
           +'<input type="text" id="rec-familia" value="'+(r?.familia||'')+'" placeholder="ej. Herramienta de Corte" style="text-transform:uppercase"></div>'
-        +'<div class="field"><label>SUBFAMILIA <span style="color:var(--muted);font-size:10px">(opcional)</span></label>'
+        +'<div class="field"><label>SUBFAMILIA <span style="color:var(--muted);font-size:11px">(opcional)</span></label>'
           +'<input type="text" id="rec-subfamilia" value="'+(r?.subfamilia||'')+'" placeholder="ej. Insertos" style="text-transform:uppercase"></div>'
         +'<div class="field" style="grid-column:span 2"><label>NOMBRE / ESPECIFICACIÓN <span style="color:var(--danger)">*</span></label>'
           +'<input type="text" id="rec-nombre" value="'+(r?.nombre||'')+'" placeholder="ej. Inserto CNMG 432 MC6025 o Broca HSS 1/4&quot; x 6&quot;"></div>'
       +'</div>'
       // Fila 2: Código | Proveedor | Stock min | Stock max
       +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-bottom:12px">'
-        +'<div class="field"><label>CÓDIGO <span style="color:var(--muted);font-size:10px">(opcional)</span></label>'
+        +'<div class="field"><label>CÓDIGO <span style="color:var(--muted);font-size:11px">(opcional)</span></label>'
           +'<input type="text" id="rec-codigo" value="'+(r?.codigo||'')+'" placeholder="Solo si aplica"></div>'
-        +'<div class="field"><label>PROVEEDOR SUGERIDO <span style="color:var(--muted);font-size:10px">(opcional)</span></label>'
+        +'<div class="field"><label>PROVEEDOR SUGERIDO <span style="color:var(--muted);font-size:11px">(opcional)</span></label>'
           +'<input type="text" id="rec-proveedor" value="'+(r?.proveedor_sugerido||'')+'" placeholder="ej. Sandvik, Kennametal..."></div>'
         +'<div class="field"><label>STOCK MÍNIMO</label>'
           +'<input type="number" id="rec-min" value="'+(r?.stock_min||0)+'" placeholder="0"></div>'
@@ -5634,11 +5634,11 @@ function showRecursoForm(id){
             +'<div>'
               +'<input type="file" id="rec-foto-file" accept="image/jpeg,image/jpg,image/png,image/webp" style="display:none" onchange="uploadRecursoFoto(this)">'
               +'<button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById(\'rec-foto-file\').click()"><svg class="ic"><use href="#ic-folder"/></svg> Subir foto</button>'
-              +'<div id="rec-foto-status" style="font-size:11px;margin-top:4px">'+(r?.foto_url?'<button onclick="deleteRecursoFoto()" class="btn btn-danger btn-sm" style="font-size:10px;padding:2px 7px"><svg class="ic"><use href="#ic-trash"/></svg> Eliminar foto</button>':'Sin foto')+'</div>'
+              +'<div id="rec-foto-status" style="font-size:11px;margin-top:4px">'+(r?.foto_url?'<button onclick="deleteRecursoFoto()" class="btn btn-danger btn-sm" style="font-size:11px;padding:2px 7px"><svg class="ic"><use href="#ic-trash"/></svg> Eliminar foto</button>':'Sin foto')+'</div>'
             +'</div>'
           +'</div>'
           +'<input type="hidden" id="rec-foto-url" value="'+(r?.foto_url||'')+'"></div>'
-        +'<div class="field"><label>NOTAS TÉCNICAS <span style="color:var(--muted);font-size:10px">(opcional)</span></label>'
+        +'<div class="field"><label>NOTAS TÉCNICAS <span style="color:var(--muted);font-size:11px">(opcional)</span></label>'
           +'<textarea id="rec-notas" rows="3" style="width:100%;resize:vertical" placeholder="Especificaciones, restricciones, notas de uso...">'+(r?.notas||'')+'</textarea></div>'
       +'</div>'
       +'<div style="display:flex;gap:10px">'
@@ -5785,7 +5785,7 @@ function showApartarOTPanel(otId){
     html+='<div style="background:var(--bg3);border-radius:6px;padding:8px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
     html+='<div style="flex:1;min-width:200px">';
     html+=icon+' <strong>'+(b.matCat.label||b.m.tipo)+(dimStr?' — '+dimStr:'')+'</strong>'
-      +(b.critico?'<span class="tag" style="color:var(--danger);font-size:10px;margin-left:6px">CRÍTICO</span>':'<span class="tag" style="color:var(--muted);font-size:10px;margin-left:6px">no bloquea</span>');
+      +(b.critico?'<span class="tag" style="color:var(--danger);font-size:11px;margin-left:6px">CRÍTICO</span>':'<span class="tag" style="color:var(--muted);font-size:11px;margin-left:6px">no bloquea</span>');
     html+='<div style="font-size:11px;color:var(--muted);margin-top:4px">';
     if(b.esBarra){
       if(b.cubierto>0) html+='Cubierto por Pre-habilitado: '+b.cubierto.toFixed(3)+'" · ';
@@ -5913,18 +5913,18 @@ function renderProgrammingList(){
     const cubiertoPorProducto=estadoBOM.length>0&&estadoBOM.filter(b=>b.critico!==false).every(b=>b.cubiertoTotal);
     // Auto-marcar raw_material_ok si está cubierto por PP y aún no está marcado
     if(cubiertoPorProducto&&!o.raw_material_ok) autoMarkRawMaterialOK(o.id);
-    let badgeMP='<span class="tag" style="color:var(--muted);font-size:10px"><svg class="ic"><use href="#ic-dot-red"/></svg> Sin apartar</span>';
-    if(enTransitoO) badgeMP='<span class="tag" style="color:var(--warn);font-size:10px">⏳ En Habilitado</span>';
-    else if(apartadoO) badgeMP='<span class="tag" style="color:var(--green);font-size:10px"><svg class="ic"><use href="#ic-dot-green"/></svg> Apartado</span>';
-    else if(cubiertoPorProducto) badgeMP='<span class="tag" style="color:var(--green);font-size:10px"><svg class="ic"><use href="#ic-dot-green"/></svg> Cubierto PP</span>';
+    let badgeMP='<span class="tag" style="color:var(--muted);font-size:11px"><svg class="ic"><use href="#ic-dot-red"/></svg> Sin apartar</span>';
+    if(enTransitoO) badgeMP='<span class="tag" style="color:var(--warn);font-size:11px">⏳ En Habilitado</span>';
+    else if(apartadoO) badgeMP='<span class="tag" style="color:var(--green);font-size:11px"><svg class="ic"><use href="#ic-dot-green"/></svg> Apartado</span>';
+    else if(cubiertoPorProducto) badgeMP='<span class="tag" style="color:var(--green);font-size:11px"><svg class="ic"><use href="#ic-dot-green"/></svg> Cubierto PP</span>';
 
     const tr=document.createElement('tr');
     tr.innerHTML=
       '<td style="font-family:monospace;font-weight:700;color:var(--accent)">'+o.number+'</td>'+
-      '<td><div style="font-weight:600">'+(p?.name||'--')+'</div><div style="font-size:10px;color:var(--muted)">'+(p?.code||'')+'</div></td>'+
+      '<td><div style="font-weight:600">'+(p?.name||'--')+'</div><div style="font-size:11px;color:var(--muted)">'+(p?.code||'')+'</div></td>'+
       '<td><div>'+(p?.batch||'--')+'</div><div style="font-size:11px;color:var(--muted)">'+o.qty+' pzas</div></td>'+
       '<td style="font-weight:700;color:'+dc+'">'+em+' '+sc+(sm?'<br><small style="color:'+dc+'">'+(days)+' días</small>':'')+'</td>'+
-      '<td><span class="tag" style="'+(o.raw_material_ok?'background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3)':'background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.25)')+'font-size:10px">'+(o.raw_material_ok?'<svg class="ic"><use href="#ic-check"/></svg> LISTA':'<svg class="ic"><use href="#ic-warning"/></svg> PENDIENTE')+'</span></td>'+
+      '<td><span class="tag" style="'+(o.raw_material_ok?'background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3)':'background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.25)')+'font-size:11px">'+(o.raw_material_ok?'<svg class="ic"><use href="#ic-check"/></svg> LISTA':'<svg class="ic"><use href="#ic-warning"/></svg> PENDIENTE')+'</span></td>'+
       '<td>'+badgeMP+'</td>'+
       '<td></td>';
 
@@ -6542,7 +6542,7 @@ function renderReleasedOTs(){
             </div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <span style="font-weight:700;font-size:14px">${p?.name||'Sin producto'}</span>
-              ${(()=>{const qr=(otQualityRecords||[]).filter(q=>q.ot_id===o.id);return qr.length?'<span class="tag" style="background:rgba(245,158,11,.15);color:var(--warn);border:1px solid rgba(245,158,11,.3);cursor:pointer;font-size:10px" onclick="toggleQualityPanel(\'prog-q-'+o.id+'\')">&#10003; '+qr.length+' reg. calidad</span>':'';})()}
+              ${(()=>{const qr=(otQualityRecords||[]).filter(q=>q.ot_id===o.id);return qr.length?'<span class="tag" style="background:rgba(245,158,11,.15);color:var(--warn);border:1px solid rgba(245,158,11,.3);cursor:pointer;font-size:11px" onclick="toggleQualityPanel(\'prog-q-'+o.id+'\')">&#10003; '+qr.length+' reg. calidad</span>':'';})()}
             </div>
             <div style="font-size:11px;color:var(--muted);margin-top:2px">Lote: <strong style="color:var(--text)">${o.qty} pzas</strong></div>
             ${(()=>{
@@ -6568,10 +6568,10 @@ function renderReleasedOTs(){
             </div>
           </div>
           <div style="display:flex;gap:10px;text-align:center;flex-shrink:0">
-            <div><div style="font-size:10px;color:var(--muted)">ENTREGADAS</div><div style="font-family:var(--font-display,sans-serif);font-size:28px;color:var(--green)">${dels}</div></div>
-            <div><div style="font-size:10px;color:var(--muted)">SCRAP</div><div style="font-family:var(--font-display,sans-serif);font-size:28px;color:var(--danger)">${scraps}</div></div>
-            <div><div style="font-size:10px;color:var(--muted)">PENDIENTES</div><div style="font-family:var(--font-display,sans-serif);font-size:28px;color:var(--warn)">${Math.max(0,o.qty-dels-scraps)}</div></div>
-            ${extSvcs.length?`<div><div style="font-size:10px;color:var(--muted)">SERV. EXT.</div><div style="font-family:var(--font-display,sans-serif);font-size:20px;color:#9A3412">$${extTotal.toFixed(0)}</div></div>`:''}
+            <div><div style="font-size:11px;color:var(--muted)">ENTREGADAS</div><div style="font-family:var(--font-display,sans-serif);font-size:28px;color:var(--green)">${dels}</div></div>
+            <div><div style="font-size:11px;color:var(--muted)">SCRAP</div><div style="font-family:var(--font-display,sans-serif);font-size:28px;color:var(--danger)">${scraps}</div></div>
+            <div><div style="font-size:11px;color:var(--muted)">PENDIENTES</div><div style="font-family:var(--font-display,sans-serif);font-size:28px;color:var(--warn)">${Math.max(0,o.qty-dels-scraps)}</div></div>
+            ${extSvcs.length?`<div><div style="font-size:11px;color:var(--muted)">SERV. EXT.</div><div style="font-family:var(--font-display,sans-serif);font-size:20px;color:#9A3412">$${extTotal.toFixed(0)}</div></div>`:''}
           </div>
         </div>
         <div id="ot-costing-${o.id}" style="margin-top:10px"></div>
@@ -6632,7 +6632,7 @@ function renderReleasedOTs(){
       const {totalMP,totalMOD,totalGIF,totalMOE,totalDel,costoTotal,costoUnitario}=c;
       if(totalMP===0&&totalMOD===0&&totalGIF===0&&totalMOE===0) return; // sin datos aún, no mostrar fila vacía
       cell.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:11px">
-        <span style="color:var(--muted);text-transform:uppercase;font-size:10px;font-weight:700"><svg class="ic"><use href="#ic-money-bag"/></svg> Costeo en vivo:</span>
+        <span style="color:var(--muted);text-transform:uppercase;font-size:11px;font-weight:700"><svg class="ic"><use href="#ic-money-bag"/></svg> Costeo en vivo:</span>
         <span>MP: <b style="color:var(--accent2)">$${totalMP.toFixed(2)}</b></span>
         <span>MOD: <b style="color:#0C447C">$${totalMOD.toFixed(2)}</b></span>
         <span>GIF: <b style="color:#9A3412">$${totalGIF.toFixed(2)}</b></span>
@@ -6749,18 +6749,18 @@ function renderBomStatusOTLiberada(o, p, cell, transitOT){
 
     let estadoTag, puedeSolicitar=false;
     if(yaCubierto){
-      estadoTag=`<span style="background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3);border-radius:12px;padding:2px 8px;font-size:10px;font-weight:700"><svg class="ic"><use href="#ic-check-circle"/></svg> Cubierto</span>`;
+      estadoTag=`<span style="background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3);border-radius:12px;padding:2px 8px;font-size:11px;font-weight:700"><svg class="ic"><use href="#ic-check-circle"/></svg> Cubierto</span>`;
     } else if(dispGeneral>0){
-      estadoTag=`<span style="background:rgba(245,158,11,.15);color:var(--warn);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:2px 8px;font-size:10px;font-weight:700"><svg class="ic"><use href="#ic-warning"/></svg> Pendiente</span>`;
+      estadoTag=`<span style="background:rgba(245,158,11,.15);color:var(--warn);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:2px 8px;font-size:11px;font-weight:700"><svg class="ic"><use href="#ic-warning"/></svg> Pendiente</span>`;
       puedeSolicitar=true;
       itemsConProblema.push(b);
     } else if(!esBarra && b.dispPP>=b.reqLote){
       // Pieza con stock Por Producto suficiente — se puede solicitar/asignar
-      estadoTag=`<span style="background:rgba(245,158,11,.15);color:var(--warn);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:2px 8px;font-size:10px;font-weight:700"><svg class="ic"><use href="#ic-warning"/></svg> Pendiente</span>`;
+      estadoTag=`<span style="background:rgba(245,158,11,.15);color:var(--warn);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:2px 8px;font-size:11px;font-weight:700"><svg class="ic"><use href="#ic-warning"/></svg> Pendiente</span>`;
       puedeSolicitar=true;
       itemsConProblema.push(b);
     } else {
-      estadoTag=`<span style="background:rgba(239,68,68,.15);color:var(--danger);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:2px 8px;font-size:10px;font-weight:700"><svg class="ic"><use href="#ic-dot-red"/></svg> Sin stock</span>`;
+      estadoTag=`<span style="background:rgba(239,68,68,.15);color:var(--danger);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:2px 8px;font-size:11px;font-weight:700"><svg class="ic"><use href="#ic-dot-red"/></svg> Sin stock</span>`;
       // Piezas no-críticas sin stock también pueden solicitarse (el almacén las conseguirá)
       if(!esBarra) puedeSolicitar=true;
       itemsConProblema.push(b);
@@ -6796,13 +6796,13 @@ function renderBomStatusOTLiberada(o, p, cell, transitOT){
     <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:4px">
       <div style="background:var(--bg3);padding:6px 10px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none"
            onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.bom-arrow').textContent=this.nextElementSibling.style.display==='none'?'▶':'▼'">
-        <span class="bom-arrow" style="color:var(--muted);font-size:10px">▼</span>
+        <span class="bom-arrow" style="color:var(--muted);font-size:11px">▼</span>
         <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase"><svg class="ic"><use href="#ic-package"/></svg> Material Pendiente</span>
-        <span style="background:rgba(245,158,11,.2);color:var(--warn);border-radius:10px;padding:1px 8px;font-size:10px;font-weight:700">${pendCount} ítem${pendCount!==1?'s':''} sin asignar</span>
+        <span style="background:rgba(245,158,11,.2);color:var(--warn);border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700">${pendCount} ítem${pendCount!==1?'s':''} sin asignar</span>
       </div>
       <div>
         <table style="width:100%;border-collapse:collapse">
-          <thead><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;background:var(--bg2)">
+          <thead><tr style="color:var(--muted);font-size:11px;text-transform:uppercase;background:var(--bg2)">
             <th style="padding:5px 10px;text-align:left">Material</th>
             <th style="padding:5px 10px;text-align:left">Requerido</th>
             <th style="padding:5px 10px;text-align:left">En Almacén</th>
@@ -7033,7 +7033,7 @@ function renderExtSvcExisting(){
   if(!list.length){ cont.innerHTML=`<div style="font-size:12px;color:var(--muted)">Sin servicios registrados para esta OT.</div>`; return; }
   const total=list.reduce((a,e)=>a+(parseFloat(e.costo)||0),0);
   cont.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px">
-    <thead><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">
+    <thead><tr style="color:var(--muted);font-size:11px;text-transform:uppercase;border-bottom:1px solid var(--border)">
       <th style="padding:5px 8px;text-align:left">Proveedor</th>
       <th style="padding:5px 8px;text-align:left">Concepto</th>
       <th style="padding:5px 8px;text-align:center">Costo</th>
@@ -7209,7 +7209,7 @@ function renderClosedOTs(){
         }
         return `<tr>
           <td style="font-family:'DM Mono',monospace;font-weight:700;color:var(--muted)">${o.number}</td>
-          <td><div style="font-weight:600">${p?.name||'--'}</div><div style="font-size:10px;color:var(--muted)">${p?.code||''}</div></td>
+          <td><div style="font-weight:600">${p?.name||'--'}</div><div style="font-size:11px;color:var(--muted)">${p?.code||''}</div></td>
           <td style="font-family:'DM Mono',monospace">${o.qty}</td>
           <td style="color:var(--green);font-weight:700">${dels}</td>
           <td style="color:var(--danger);font-weight:700">${scraps}</td>
@@ -7396,7 +7396,7 @@ function renderMachineLoad(){
         rows+=`<tr id="mlrow-${m.id}" data-id="${m.id}" data-machine="${m.machine_name}">
           <td style="width:60px">${priSelect}</td>
           <td style="font-family:'DM Mono',monospace;color:var(--accent);font-size:11px">${m.ot_number}</td>
-          <td><div style="font-weight:600;font-size:12px">${m.product_name}</div><div style="font-size:10px;color:var(--muted)">${m.product_code}</div></td>
+          <td><div style="font-weight:600;font-size:12px">${m.product_name}</div><div style="font-size:11px;color:var(--muted)">${m.product_code}</div></td>
           <td style="color:var(--muted);font-size:11px">${m.qty||'--'} pzas</td>
           <td><span class="badge-op">Op.${m.op_number}</span> <span style="font-size:11px">${m.operation_name}</span></td>
           <td style="font-size:11px;font-family:'DM Mono',monospace;color:${dc}">${sc2??'--'}</td>
@@ -7434,7 +7434,7 @@ function renderMachineLoad(){
         rows+=`<tr id="mlrow-${m.id}" data-id="${m.id}" data-machine="${m.machine_name}" style="${rowOpacity}">
           <td style="width:60px">${priSelect}</td>
           <td style="font-family:'DM Mono',monospace;color:var(--accent);font-size:11px">${m.ot_number}</td>
-          <td><div style="font-weight:600;font-size:12px">${m.product_name}</div><div style="font-size:10px;color:var(--muted)">${m.product_code}</div></td>
+          <td><div style="font-weight:600;font-size:12px">${m.product_name}</div><div style="font-size:11px;color:var(--muted)">${m.product_code}</div></td>
           <td style="color:var(--muted);font-size:11px">${m.qty||'--'} pzas</td>
           <td><span class="badge-op">Op.${m.op_number}</span> <span style="font-size:11px">${m.operation_name}</span></td>
           <td style="color:var(--warn);font-size:11px">${m.setup_time||0}min</td>
@@ -7442,11 +7442,11 @@ function renderMachineLoad(){
           <td style="font-size:11px">${m.total_time_min?Math.round(m.total_time_min)+'min':'--'}</td>
           <td style="font-size:11px;font-family:'DM Mono',monospace;color:${dc}">${(products.find(pr=>pr.id===m.product_id)?.stock_current)??'--'}</td>
           <td style="font-size:11px;font-weight:700;color:${dc}">${days2!==null?days2+'d':'--'}</td>
-          <td style="font-size:10px;color:var(--muted)">${m.started_at?new Date(m.started_at).toLocaleDateString('es-MX'):'--'}</td>
-          <td style="font-size:10px;color:var(--warn)">${m.estimated_end?new Date(m.estimated_end).toLocaleDateString('es-MX'):'--'}</td>
+          <td style="font-size:11px;color:var(--muted)">${m.started_at?new Date(m.started_at).toLocaleDateString('es-MX'):'--'}</td>
+          <td style="font-size:11px;color:var(--warn)">${m.estimated_end?new Date(m.estimated_end).toLocaleDateString('es-MX'):'--'}</td>
           <td style="font-weight:700;color:${setupEffColor};font-size:11px">${setupEffStr}</td>
           <td style="font-weight:700;color:${prodEffColor};font-size:11px">${prodEffStr}</td>
-          <td><span class="tag" style="font-size:10px;font-weight:700;background:${realStatus==='completed'?'rgba(16,185,129,.12)':realStatus==='in_progress'?'rgba(0,212,255,.1)':realStatus==='setup'?'rgba(245,158,11,.12)':'var(--bg3)'};color:${stColor};border:1px solid ${realStatus==='completed'?'rgba(16,185,129,.25)':realStatus==='in_progress'?'rgba(0,212,255,.2)':realStatus==='setup'?'rgba(245,158,11,.25)':'var(--border)'}">${sl}</span></td>
+          <td><span class="tag" style="font-size:11px;font-weight:700;background:${realStatus==='completed'?'rgba(16,185,129,.12)':realStatus==='in_progress'?'rgba(0,212,255,.1)':realStatus==='setup'?'rgba(245,158,11,.12)':'var(--bg3)'};color:${stColor};border:1px solid ${realStatus==='completed'?'rgba(16,185,129,.25)':realStatus==='in_progress'?'rgba(0,212,255,.2)':realStatus==='setup'?'rgba(245,158,11,.25)':'var(--border)'}">${sl}</span></td>
           <td><button class="btn btn-sm btn-danger" onclick="removeMachineLoad('${m.id}')">&#128465;</button></td>
         </tr>`;
       }
@@ -7598,8 +7598,8 @@ function buildDashCards(todaySess,scrapSess,mStatus){
       +'<div style="width:12px;height:12px;border-radius:50%;background:'+semColor
       +';box-shadow:0 0 6px '+semColor+';flex-shrink:0'+(msStatus==='running'?';animation:pulse 1.5s infinite':'')+'"></div>'
       +'<div style="flex:1">'
-      +'<div style="font-size:10px;font-weight:700;color:'+semColor+';text-transform:uppercase;letter-spacing:.5px;line-height:1.2">'+semLabel+'</div>'
-      +(semDetail?'<div style="font-size:10px;color:'+semColor+';opacity:.8;line-height:1.2">'+semDetail+'</div>':'')
+      +'<div style="font-size:11px;font-weight:700;color:'+semColor+';text-transform:uppercase;letter-spacing:.5px;line-height:1.2">'+semLabel+'</div>'
+      +(semDetail?'<div style="font-size:11px;color:'+semColor+';opacity:.8;line-height:1.2">'+semDetail+'</div>':'')
       +'</div>'
       +'</div>';
     const statusTag=isConcluded
@@ -7673,13 +7673,13 @@ function buildConsultaProdCard(p){
   summary+='<span style="font-size:11px;color:var(--muted)">'+ops.length+' ops &nbsp;·&nbsp; '+tools.length+' herramientas</span>';
 
   var matDetail='';
-  if(p.steel_type||p.material_type) matDetail+='<div style="margin-bottom:4px"><span style="font-size:10px;color:var(--muted);text-transform:uppercase">Material</span> <strong style="font-size:12px">'+(p.steel_type||p.material_type||'')+' '+(p.material_shape||'')+'</strong></div>';
-  if(p.bar_diameter) matDetail+='<div style="margin-bottom:4px"><span style="font-size:10px;color:var(--muted)">Diámetro</span> <strong style="font-family:monospace">'+parseFloat(p.bar_diameter).toFixed(3)+'"</strong></div>';
-  if(p.bar_pcs_per_bar) matDetail+='<div style="margin-bottom:4px"><span style="font-size:10px;color:var(--muted)">Pzas/Barra</span> <strong style="font-family:monospace">'+p.bar_pcs_per_bar+'</strong></div>';
-  if(p.bar_final_length) matDetail+='<div style="margin-bottom:4px"><span style="font-size:10px;color:var(--muted)">Long. Final</span> <strong style="font-family:monospace">'+p.bar_final_length+'"</strong></div>';
-  if(p.heat_treatment&&p.heat_treatment!=='none') matDetail+='<div style="margin-bottom:4px"><span style="font-size:10px;color:var(--muted)">Tratamiento</span> <strong style="color:var(--warn)">'+p.heat_treatment+'</strong></div>';
-  if(p.final_hardness) matDetail+='<div style="margin-bottom:4px"><span style="font-size:10px;color:var(--muted)">Dureza</span> <strong>'+p.final_hardness+'</strong></div>';
-  if(p.finish) matDetail+='<div style="margin-bottom:4px"><span style="font-size:10px;color:var(--muted)">Acabado</span> <strong>'+p.finish+'</strong></div>';
+  if(p.steel_type||p.material_type) matDetail+='<div style="margin-bottom:4px"><span style="font-size:11px;color:var(--muted);text-transform:uppercase">Material</span> <strong style="font-size:12px">'+(p.steel_type||p.material_type||'')+' '+(p.material_shape||'')+'</strong></div>';
+  if(p.bar_diameter) matDetail+='<div style="margin-bottom:4px"><span style="font-size:11px;color:var(--muted)">Diámetro</span> <strong style="font-family:monospace">'+parseFloat(p.bar_diameter).toFixed(3)+'"</strong></div>';
+  if(p.bar_pcs_per_bar) matDetail+='<div style="margin-bottom:4px"><span style="font-size:11px;color:var(--muted)">Pzas/Barra</span> <strong style="font-family:monospace">'+p.bar_pcs_per_bar+'</strong></div>';
+  if(p.bar_final_length) matDetail+='<div style="margin-bottom:4px"><span style="font-size:11px;color:var(--muted)">Long. Final</span> <strong style="font-family:monospace">'+p.bar_final_length+'"</strong></div>';
+  if(p.heat_treatment&&p.heat_treatment!=='none') matDetail+='<div style="margin-bottom:4px"><span style="font-size:11px;color:var(--muted)">Tratamiento</span> <strong style="color:var(--warn)">'+p.heat_treatment+'</strong></div>';
+  if(p.final_hardness) matDetail+='<div style="margin-bottom:4px"><span style="font-size:11px;color:var(--muted)">Dureza</span> <strong>'+p.final_hardness+'</strong></div>';
+  if(p.finish) matDetail+='<div style="margin-bottom:4px"><span style="font-size:11px;color:var(--muted)">Acabado</span> <strong>'+p.finish+'</strong></div>';
 
   var opsHtml='<p style="color:var(--muted);font-size:12px">Sin operaciones registradas</p>';
   if(ops.length){
@@ -7775,7 +7775,7 @@ function renderConsulta(){
           const em=days===null?'':days>=22?'<svg class="ic"><use href="#ic-dot-green"/></svg>':days>=11?'<svg class="ic"><use href="#ic-dot-yellow"/></svg>':'<svg class="ic"><use href="#ic-dot-red"/></svg>';
           return '<tr>'
             +'<td style="monospace;font-weight:700;color:var(--accent)">'+o.number+'</td>'
-            +'<td><div style="font-weight:600">'+(p?.name||'--')+'</div><div style="font-size:10px;color:var(--muted)">'+(p?.code||'')+'</div></td>'
+            +'<td><div style="font-weight:600">'+(p?.name||'--')+'</div><div style="font-size:11px;color:var(--muted)">'+(p?.code||'')+'</div></td>'
             +'<td style="color:var(--muted);font-size:11px">'+(o.qty||'--')+' pzas</td>'
             +'<td style="monospace">'+o.qty+' pzas</td>'
             +'<td style="font-weight:700;color:'+dc+'">'+em+' '+sc+(sm?'<br><small style="color:'+dc+'">'+(days)+' días</small>':'')+'</td>'
@@ -7812,7 +7812,7 @@ function renderConsulta(){
         const qRecs=(otQualityRecords||[]).filter(q=>q.ot_id===o.id);
         const qBadge=qRecs.length?'<span class="tag" style="background:rgba(245,158,11,.15);color:var(--warn);border:1px solid rgba(245,158,11,.3);cursor:pointer" onclick="toggleQualityPanel(\'clib-q-'+o.id+'\')">&#10003; '+qRecs.length+' reg. calidad</span>':'';
         const qRows=qRecs.map(q=>{const d=JSON.parse(q.datos||'{}');const rc=q.resultado==='aprobado'?'var(--green)':q.resultado==='rechazado'?'var(--danger)':'var(--warn)';return '<div style="background:var(--bg3);border-radius:6px;padding:8px;margin-bottom:6px;font-size:11px"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px"><span style="font-weight:700;color:var(--accent2)">'+q.tipo_inspeccion.replace(/_/g,' ').toUpperCase()+'</span><span style="color:var(--muted)">'+new Date(q.fecha).toLocaleDateString('es-MX')+'</span><span style="font-weight:700;color:'+rc+'">'+q.resultado.toUpperCase()+'</span><span style="color:var(--muted)">'+q.inspector+'</span></div>'+(d.c_superficial!=null?'%C: <strong>'+d.c_superficial+'</strong>&nbsp;':'')+(d.capa_carburizado!=null?'Capa: <strong>'+d.capa_carburizado+'mm</strong>&nbsp;':'')+(d.dureza_hrc!=null?'Dureza: <strong>'+d.dureza_hrc+' HRC</strong>&nbsp;':'')+(d.lote_muestra?'Lote: <strong>'+d.lote_muestra+'</strong>':'')+(q.notas?'<div style="color:var(--muted);margin-top:3px">'+q.notas+'</div>':'')+'</div>';}).join('');
-        const qPanel=qRecs.length?'<div id="clib-q-'+o.id+'" style="display:none;margin-top:8px;border-top:1px solid var(--border);padding-top:8px"><div style="font-size:10px;font-weight:700;color:var(--warn);margin-bottom:6px">REGISTROS DE CALIDAD</div>'+qRows+'</div>':'';
+        const qPanel=qRecs.length?'<div id="clib-q-'+o.id+'" style="display:none;margin-top:8px;border-top:1px solid var(--border);padding-top:8px"><div style="font-size:11px;font-weight:700;color:var(--warn);margin-bottom:6px">REGISTROS DE CALIDAD</div>'+qRows+'</div>':'';
         return '<div class="card fade" style="margin-bottom:10px">'
           +'<div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">'
           +'<div style="flex:1;min-width:200px">'
@@ -7833,9 +7833,9 @@ function renderConsulta(){
           +qPanel
           +'</div>'
           +'<div style="display:flex;gap:16px;text-align:center;flex-shrink:0">'
-          +'<div><div style="font-size:10px;color:var(--muted)">ENTREGADAS</div><div style="font-size:28px;color:var(--green)">'+dels+'</div></div>'
-          +'<div><div style="font-size:10px;color:var(--muted)">SCRAP</div><div style="font-size:28px;color:var(--danger)">'+scraps+'</div></div>'
-          +'<div><div style="font-size:10px;color:var(--muted)">PENDIENTES</div><div style="font-size:28px;color:var(--warn)">'+Math.max(0,o.qty-dels-scraps)+'</div></div>'
+          +'<div><div style="font-size:11px;color:var(--muted)">ENTREGADAS</div><div style="font-size:28px;color:var(--green)">'+dels+'</div></div>'
+          +'<div><div style="font-size:11px;color:var(--muted)">SCRAP</div><div style="font-size:28px;color:var(--danger)">'+scraps+'</div></div>'
+          +'<div><div style="font-size:11px;color:var(--muted)">PENDIENTES</div><div style="font-size:28px;color:var(--warn)">'+Math.max(0,o.qty-dels-scraps)+'</div></div>'
           +'</div>'
           +'</div>'
           +'</div>';
@@ -7874,7 +7874,7 @@ function renderConsulta(){
             rows3+='<tr>'+
               '<td>'+priBadge+'</td>'+
               '<td style="color:var(--accent);font-size:11px">'+m.ot_number+'</td>'+
-              '<td><div style="font-weight:600;font-size:12px">'+m.product_name+'</div><div style="font-size:10px;color:var(--muted)">'+m.product_code+'</div></td>'+
+              '<td><div style="font-weight:600;font-size:12px">'+m.product_name+'</div><div style="font-size:11px;color:var(--muted)">'+m.product_code+'</div></td>'+
               '<td style="color:var(--muted);font-size:11px">'+(m.qty||'--')+' pzas</td>'+
               '<td><span class="badge-op">Op.'+m.op_number+'</span> <span style="font-size:11px">'+m.operation_name+'</span></td>'+
               '<td style="font-size:11px;font-family:\'DM Mono\',monospace;color:'+dc2+'">'+sc2+'</td>'+
@@ -7895,7 +7895,7 @@ function renderConsulta(){
             rows3+='<tr style="'+(realSt2==='completed'?'opacity:.6':'')+'">'+
               '<td>'+priBadge+'</td>'+
               '<td style="color:var(--accent);font-size:11px">'+m.ot_number+'</td>'+
-              '<td><div style="font-weight:600;font-size:12px">'+m.product_name+'</div><div style="font-size:10px;color:var(--muted)">'+m.product_code+'</div></td>'+
+              '<td><div style="font-weight:600;font-size:12px">'+m.product_name+'</div><div style="font-size:11px;color:var(--muted)">'+m.product_code+'</div></td>'+
               '<td style="color:var(--muted);font-size:11px">'+(m.qty||m.ot_qty||'--')+' pzas</td>'+
               '<td><span class="badge-op">Op.'+m.op_number+'</span> <span style="font-size:11px">'+m.operation_name+'</span></td>'+
               '<td style="color:var(--warn);font-size:11px">'+(m.setup_time||0)+'min</td>'+
@@ -7903,11 +7903,11 @@ function renderConsulta(){
               '<td style="font-size:11px">'+(m.total_time_min?Math.round(m.total_time_min)+'min':'--')+'</td>'+
               '<td style="font-size:11px;font-family:\'DM Mono\',monospace;color:'+dc2+'">'+(sc2??'--')+'</td>'+
               '<td style="font-size:11px;font-weight:700;color:'+dc2+'">'+(d2!==null?d2+'d':'--')+'</td>'+
-              '<td style="font-size:10px;color:var(--muted)">'+(m.started_at?new Date(m.started_at).toLocaleDateString('es-MX'):'--')+'</td>'+
-              '<td style="font-size:10px;color:var(--warn)">'+(m.estimated_end?new Date(m.estimated_end).toLocaleDateString('es-MX'):'--')+'</td>'+
+              '<td style="font-size:11px;color:var(--muted)">'+(m.started_at?new Date(m.started_at).toLocaleDateString('es-MX'):'--')+'</td>'+
+              '<td style="font-size:11px;color:var(--warn)">'+(m.estimated_end?new Date(m.estimated_end).toLocaleDateString('es-MX'):'--')+'</td>'+
               '<td style="font-weight:700;color:'+sEc2+';font-size:11px">'+sEff2+'</td>'+
               '<td style="font-weight:700;color:'+pEc2+';font-size:11px">'+pEff2+'</td>'+
-              '<td><span class="tag" style="font-size:10px;font-weight:700;background:'+(realSt2==='completed'?'rgba(16,185,129,.12)':realSt2==='in_progress'?'rgba(0,212,255,.1)':realSt2==='setup'?'rgba(245,158,11,.12)':'var(--bg3)')+';color:'+stC+';border:1px solid '+(realSt2==='completed'?'rgba(16,185,129,.25)':realSt2==='in_progress'?'rgba(0,212,255,.2)':realSt2==='setup'?'rgba(245,158,11,.25)':'var(--border)')+'">'+sl+'</span></td>'+
+              '<td><span class="tag" style="font-size:11px;font-weight:700;background:'+(realSt2==='completed'?'rgba(16,185,129,.12)':realSt2==='in_progress'?'rgba(0,212,255,.1)':realSt2==='setup'?'rgba(245,158,11,.12)':'var(--bg3)')+';color:'+stC+';border:1px solid '+(realSt2==='completed'?'rgba(16,185,129,.25)':realSt2==='in_progress'?'rgba(0,212,255,.2)':realSt2==='setup'?'rgba(245,158,11,.25)':'var(--border)')+'">'+sl+'</span></td>'+
               '</tr>';
           }
         });
@@ -8620,7 +8620,7 @@ function renderLearning(){
       ${tbl(['#Pieza','Fecha','T.Real','T.Estándar','Eficiencia'],
         g.pieces.map((s,i)=>`<tr>
           <td style="font-family:'DM Mono',monospace;color:var(--muted)">${i+1}</td>
-          <td style="font-size:10px;color:var(--muted)">${s.date_label||'--'}</td>
+          <td style="font-size:11px;color:var(--muted)">${s.date_label||'--'}</td>
           <td style="font-family:'DM Mono',monospace">${fmtSec(parseInt(s.actual_sec)||0)}</td>
           <td style="font-family:'DM Mono',monospace;color:var(--muted)">${fmtSec(std)}</td>
           <td>${effBadge(s.efficiency||0)}</td>
@@ -8917,11 +8917,11 @@ function renderAlmGeneral(){
           '<div style="flex:1">'+
             '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
               '<span style="font-family:DM Mono,monospace;font-size:13px;color:var(--text);font-weight:700">'+(s.cantidad||0)+' pzas</span>'+
-              '<span class="tag" style="color:'+stColor+';font-size:10px">'+(s.status||'disponible')+'</span>'+
-              (s.lote?'<span style="font-size:10px;color:var(--muted)">Lote: '+s.lote+'</span>':'')+
-              (reservas.length>0?'<span style="font-size:10px;color:var(--warn)"><svg class="ic"><use href="#ic-pin"/></svg> '+reservas.map(r=>r.ot_number).join(', ')+'</span>':'')+
+              '<span class="tag" style="color:'+stColor+';font-size:11px">'+(s.status||'disponible')+'</span>'+
+              (s.lote?'<span style="font-size:11px;color:var(--muted)">Lote: '+s.lote+'</span>':'')+
+              (reservas.length>0?'<span style="font-size:11px;color:var(--warn)"><svg class="ic"><use href="#ic-pin"/></svg> '+reservas.map(r=>r.ot_number).join(', ')+'</span>':'')+
             '</div>'+
-            '<div style="font-size:10px;color:var(--muted);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap">'+
+            '<div style="font-size:11px;color:var(--muted);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap">'+
               '<span>Precio/pza: $'+(s.precio_kg||0)+'</span>'+
               '<span>Valor: $'+(s.valor_total||0)+'</span>'+
               (s.ubicacion?'<span><svg class="ic"><use href="#ic-map-pin"/></svg> '+s.ubicacion+'</span>':'')+
@@ -8934,24 +8934,24 @@ function renderAlmGeneral(){
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
             '<span style="font-family:DM Mono,monospace;font-size:13px;color:var(--text);font-weight:700">'+(s.longitud_in?stockLongTotal(s)+'"':'--')+'</span>'+'<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--muted)">('+stockLongOrig(s).toFixed(3)+'" c/u)</span>'+
             '<span style="font-size:12px;color:var(--muted)">'+stockBarrasDecimal(s).toFixed(3)+' barra'+(stockBarrasDecimal(s)!==1?'s':'')+' </span>'+
-            '<span class="tag" style="color:'+stColor+';font-size:10px">'+(s.status||'disponible')+'</span>'+
-            (s.lote?'<span style="font-size:10px;color:var(--muted)">Lote: '+s.lote+'</span>':'')+
-            (reservas.length>0?'<span style="font-size:10px;color:var(--warn)"><svg class="ic"><use href="#ic-pin"/></svg> '+reservas.map(r=>r.ot_number).join(', ')+'</span>':'')+
+            '<span class="tag" style="color:'+stColor+';font-size:11px">'+(s.status||'disponible')+'</span>'+
+            (s.lote?'<span style="font-size:11px;color:var(--muted)">Lote: '+s.lote+'</span>':'')+
+            (reservas.length>0?'<span style="font-size:11px;color:var(--warn)"><svg class="ic"><use href="#ic-pin"/></svg> '+reservas.map(r=>r.ot_number).join(', ')+'</span>':'')+
           '</div>'+
           (reservas.length>0?(()=>{
             const longTotal=stockLongTotal(s);
             const longApartado=reservas.reduce((a,r)=>a+(parseFloat(r.longitud_solicitada)||0)*(parseInt(r.cantidad)||1),0);
             const longDisp=Math.max(0,longTotal-longApartado);
-            return '<div style="font-size:10px;color:var(--warn);margin-top:3px;font-family:DM Mono,monospace">'
+            return '<div style="font-size:11px;color:var(--warn);margin-top:3px;font-family:DM Mono,monospace">'
               +longTotal.toFixed(3)+'"  '
               +'<span style="color:var(--muted)">—</span>  '
               +'<span style="color:var(--danger)">'+longApartado.toFixed(3)+'"</span>  '
               +'<span style="color:var(--muted)">=</span>  '
               +'<span style="color:'+( longDisp>0?'var(--green)':'var(--danger)')+'">'+longDisp.toFixed(3)+'"</span>'
-              +'  <span style="color:var(--muted);font-family:Barlow,sans-serif;font-size:9px">disponible</span>'
+              +'  <span style="color:var(--muted);font-family:Barlow,sans-serif;font-size:11px">disponible</span>'
               +'</div>';
           })():'')+
-          '<div style="font-size:10px;color:var(--muted);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap">'+
+          '<div style="font-size:11px;color:var(--muted);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap">'+
             '<span>Kg/barra: '+kgB+'</span>'+
             '<span>Kg total: '+(kgB*(s.cantidad||1)).toFixed(1)+'</span>'+
             '<span>PPP: $'+(s.precio_kg||0)+'/kg</span>'+
@@ -9621,8 +9621,8 @@ function renderAlmMovements(){
   list.innerHTML=`<table class="tbl"><thead><tr>
     <th>Fecha</th><th>Tipo</th><th>Material</th><th>Forma</th><th>Ø</th><th>Long.Total</th><th>Cant.</th><th>Kg</th><th>OT</th><th>Producto</th><th>Origen<svg class="ic"><use href="#ic-arrow-right"/></svg>Destino</th><th style="width:40px"></th>
   </tr></thead><tbody>${items.map(m=>`<tr>
-    <td style="font-size:10px;color:var(--muted)">${new Date(m.recorded_at).toLocaleDateString('es-MX')}</td>
-    <td><span style="font-size:10px;font-weight:700;color:${TIPO_COLOR[m.tipo]||'var(--text)'};text-transform:uppercase">${m.tipo||'--'}</span></td>
+    <td style="font-size:11px;color:var(--muted)">${new Date(m.recorded_at).toLocaleDateString('es-MX')}</td>
+    <td><span style="font-size:11px;font-weight:700;color:${TIPO_COLOR[m.tipo]||'var(--text)'};text-transform:uppercase">${m.tipo||'--'}</span></td>
     <td style="font-size:11px">${m.material||'--'}</td>
     <td style="font-size:11px;color:var(--muted)">${m.forma||'--'}</td>
     <td style="font-size:11px;font-family:'DM Mono',monospace">${m.diametro?parseFloat(m.diametro).toFixed(3):'--'}"</td>
@@ -9631,7 +9631,7 @@ function renderAlmMovements(){
     <td style="font-size:11px;color:var(--accent2)">${m.kg||'--'}</td>
     <td style="font-size:11px;color:var(--accent)">${m.ot_number||'--'}</td>
     <td style="font-size:11px">${m.product_name||'--'}</td>
-    <td style="font-size:10px;color:var(--muted)">${m.origen||''}<svg class="ic"><use href="#ic-arrow-right"/></svg>${m.destino||''}</td>
+    <td style="font-size:11px;color:var(--muted)">${m.origen||''}<svg class="ic"><use href="#ic-arrow-right"/></svg>${m.destino||''}</td>
     <td><button class="btn btn-sm btn-danger" style="padding:2px 6px" onclick="deleteMpMovement('${m.id}')"><svg class="ic"><use href="#ic-trash"/></svg></button></td>
   </tr>`).join('')}</tbody></table>`;
 }
@@ -9714,7 +9714,7 @@ function showSupplierForm(id){
       <div class="field" style="max-width:400px">
         <label>NOMBRE DEL PROVEEDOR</label>
         <input type="text" id="spf-name" value="${s?.name||''}" placeholder="Nombre del proveedor">
-        <small style="color:var(--muted);font-size:10px">El catálogo completo de proveedores se administrará en el módulo de Compras</small>
+        <small style="color:var(--muted);font-size:11px">El catálogo completo de proveedores se administrará en el módulo de Compras</small>
       </div>
       <div style="display:flex;gap:10px;margin-top:12px">
         <button class="btn btn-accent" onclick="saveSupplier('${s?.id||''}')"><svg class="ic"><use href="#ic-save"/></svg> Guardar</button>
@@ -9810,15 +9810,15 @@ function renderAlmReport(){
       const sem=semaforo(cantReal,minimo);
       const prodTag=s.producto_id?(products.find(p=>p.id===s.producto_id)?.name||'Producto'):'';
       return `<tr>
-        <td><span style="font-size:10px;font-weight:700;color:${sem.color}">${sem.label}</span></td>
-        <td style="font-weight:600">${s.material?.toUpperCase()||'--'}${prodTag?'<br><span class="tag" style="color:var(--green);font-size:9px;margin-top:2px"><svg class="ic"><use href="#ic-tag"/></svg> '+prodTag.toUpperCase()+'</span>':''}</td>
-        <td style="font-size:11px;color:var(--muted)">${s.forma||'--'}</td>
-        <td style="font-family:'DM Mono',monospace;font-size:11px">${s.diametro?parseFloat(s.diametro).toFixed(3):'--'}"${s.diametro_int?'/'+parseFloat(s.diametro_int).toFixed(3)+'"':''}</td>
-        <td style="font-family:'DM Mono',monospace;font-size:11px">${s.longitud_in?stockLongTotal(s):'--'}" (${s.longitud_in?stockLongOrig(s).toFixed(3):'--'}" c/u)</td>
-        <td style="font-weight:700;color:${sem.color};font-size:14px">${cantReal.toFixed(3)}${cantApartada>0?` <span style="font-size:9px;color:var(--muted);font-weight:400">(${stockBarrasDecimal(s).toFixed(3)} − ${cantApartada.toFixed(3)} apart.)</span>`:''}</td>
+        <td><span style="font-size:11px;font-weight:700;color:${sem.color}">${sem.label}</span></td>
+        <td style="font-weight:600">${s.material?.toUpperCase()||'--'}${(()=>{const prod=s.producto_id?products.find(p=>p.id===s.producto_id):null;return prod?'<br><span class="tag" style="color:var(--green);font-size:11px;margin-top:2px">'+prod.name.toUpperCase()+' <span style="color:var(--muted);font-family:monospace">'+prod.code+'</span></span>':''})()}</td>
+        <td style="font-size:12px;color:var(--muted)">${s.forma||'--'}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:12px">${s.diametro?parseFloat(s.diametro).toFixed(3):'--'}"${s.diametro_int?'/'+parseFloat(s.diametro_int).toFixed(3)+'"':''}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:12px">${s.longitud_in?stockLongTotal(s):'--'}" (${s.longitud_in?stockLongOrig(s).toFixed(3):'--'}" c/u)</td>
+        <td style="font-weight:700;color:${sem.color};font-size:14px">${cantReal.toFixed(3)}${cantApartada>0?` <span style="font-size:11px;color:var(--muted);font-weight:400">(${stockBarrasDecimal(s).toFixed(3)} − ${cantApartada.toFixed(3)} apart.)</span>`:''}</td>
         <td style="color:var(--muted);font-weight:700">${minimo}</td>
-        <td style="font-size:11px;color:var(--muted)">${s.ubicacion||'--'}</td>
-        <td style="font-size:11px;color:var(--muted)">${s.supplier_name||'--'}</td>
+        <td style="font-size:12px;color:var(--muted)">${s.ubicacion||'--'}</td>
+        <td style="font-size:12px;color:var(--muted)">${s.supplier_name||'--'}</td>
         <td><button class="btn btn-sm btn-danger" onclick="deleteMpStock('${s.id}')"><svg class="ic"><use href="#ic-trash"/></svg></button> <button class="btn btn-sm btn-accent" onclick="showRequiModal('${s.id}')" title="Generar Requisición de Compra"><svg class="ic"><use href="#ic-clipboard"/></svg> Requi</button></td>
       </tr>`;
     }).join('')}</tbody></table>
@@ -9904,9 +9904,9 @@ function renderAlmHabilitar(){
                 +'<span class="tag" style="color:var(--green);background:rgba(16,185,129,.1)"><svg class="ic"><use href="#ic-tag"/></svg> '+piezaLabel+' — sin corte</span>'
               +'</div>'
               +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;margin-bottom:8px">'
-                +'<div style="background:var(--bg3);border-radius:6px;padding:6px 10px"><div style="font-size:9px;color:var(--muted)">MATERIAL</div><div style="font-size:12px;font-weight:700">'+(stock.material||'--').toUpperCase()+'</div></div>'
-                +(dimStr?'<div style="background:var(--bg3);border-radius:6px;padding:6px 10px"><div style="font-size:9px;color:var(--muted)">DIMENSIONES</div><div style="font-size:12px;font-weight:700;font-family:DM Mono,monospace;color:var(--accent)">'+dimStr+(longSol?' × '+longSol.toFixed(3)+'"':'')+'</div></div>':'')
-                +'<div style="background:var(--bg2);border:1px solid rgba(0,212,255,.2);border-radius:6px;padding:6px 10px"><div style="font-size:9px;color:var(--muted)">CANTIDAD</div><div style="font-size:13px;font-weight:700;font-family:DM Mono,monospace;color:var(--accent)">'+cantSol+' pzas</div></div>'
+                +'<div style="background:var(--bg3);border-radius:6px;padding:6px 10px"><div style="font-size:11px;color:var(--muted)">MATERIAL</div><div style="font-size:12px;font-weight:700">'+(stock.material||'--').toUpperCase()+'</div></div>'
+                +(dimStr?'<div style="background:var(--bg3);border-radius:6px;padding:6px 10px"><div style="font-size:11px;color:var(--muted)">DIMENSIONES</div><div style="font-size:12px;font-weight:700;font-family:DM Mono,monospace;color:var(--accent)">'+dimStr+(longSol?' × '+longSol.toFixed(3)+'"':'')+'</div></div>':'')
+                +'<div style="background:var(--bg2);border:1px solid rgba(0,212,255,.2);border-radius:6px;padding:6px 10px"><div style="font-size:11px;color:var(--muted)">CANTIDAD</div><div style="font-size:13px;font-weight:700;font-family:DM Mono,monospace;color:var(--accent)">'+cantSol+' pzas</div></div>'
               +'</div>'
             +'</div>'
             +'<button class="btn btn-green hab-btn-directo" data-resid="'+r.id+'"><svg class="ic"><use href="#ic-check-circle"/></svg> Confirmar Recepción</button>'
@@ -9924,12 +9924,12 @@ function renderAlmHabilitar(){
               +(prod.code?'<span class="tag" style="color:var(--accent);font-family:monospace">'+prod.code+'</span>':'')
             +'</div>'
             +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;margin-bottom:8px">'
-              +'<div style="background:var(--bg3);border-radius:6px;padding:6px 10px"><div style="font-size:9px;color:var(--muted)">MATERIAL</div><div style="font-size:12px;font-weight:700">'+(stock.material||'--').toUpperCase()+'</div></div>'
-              +(forma?'<div style="background:var(--bg3);border-radius:6px;padding:6px 10px"><div style="font-size:9px;color:var(--muted)">FORMA</div><div style="font-size:12px;font-weight:700">'+forma+'</div></div>':'')
-              +(dimStr?'<div style="background:var(--bg3);border-radius:6px;padding:6px 10px"><div style="font-size:9px;color:var(--muted)">DIMENSIONES</div><div style="font-size:12px;font-weight:700;font-family:DM Mono,monospace;color:var(--accent)">'+dimStr+'</div></div>':'')
-              +'<div style="background:var(--bg3);border-radius:6px;padding:6px 10px"><div style="font-size:9px;color:var(--muted)">LONGITUD SOL.</div><div style="font-size:12px;font-weight:700;font-family:DM Mono,monospace;color:var(--accent2)">'+longSol.toFixed(3)+'"</div></div>'
-              +'<div style="background:var(--bg3);border-radius:6px;padding:6px 10px"><div style="font-size:9px;color:var(--muted)">CANTIDAD</div><div style="font-size:12px;font-weight:700">'+cantSol+' barras</div></div>'
-              +'<div style="background:var(--bg2);border:1px solid rgba(0,212,255,.2);border-radius:6px;padding:6px 10px"><div style="font-size:9px;color:var(--muted)">TOTAL LONGITUD</div><div style="font-size:13px;font-weight:700;font-family:DM Mono,monospace;color:var(--accent)">'+totalLong+'"</div></div>'
+              +'<div style="background:var(--bg3);border-radius:6px;padding:6px 10px"><div style="font-size:11px;color:var(--muted)">MATERIAL</div><div style="font-size:12px;font-weight:700">'+(stock.material||'--').toUpperCase()+'</div></div>'
+              +(forma?'<div style="background:var(--bg3);border-radius:6px;padding:6px 10px"><div style="font-size:11px;color:var(--muted)">FORMA</div><div style="font-size:12px;font-weight:700">'+forma+'</div></div>':'')
+              +(dimStr?'<div style="background:var(--bg3);border-radius:6px;padding:6px 10px"><div style="font-size:11px;color:var(--muted)">DIMENSIONES</div><div style="font-size:12px;font-weight:700;font-family:DM Mono,monospace;color:var(--accent)">'+dimStr+'</div></div>':'')
+              +'<div style="background:var(--bg3);border-radius:6px;padding:6px 10px"><div style="font-size:11px;color:var(--muted)">LONGITUD SOL.</div><div style="font-size:12px;font-weight:700;font-family:DM Mono,monospace;color:var(--accent2)">'+longSol.toFixed(3)+'"</div></div>'
+              +'<div style="background:var(--bg3);border-radius:6px;padding:6px 10px"><div style="font-size:11px;color:var(--muted)">CANTIDAD</div><div style="font-size:12px;font-weight:700">'+cantSol+' barras</div></div>'
+              +'<div style="background:var(--bg2);border:1px solid rgba(0,212,255,.2);border-radius:6px;padding:6px 10px"><div style="font-size:11px;color:var(--muted)">TOTAL LONGITUD</div><div style="font-size:13px;font-weight:700;font-family:DM Mono,monospace;color:var(--accent)">'+totalLong+'"</div></div>'
             +'</div>'
           +'</div>'
           +'<button class="btn btn-accent hab-btn" data-resid="'+r.id+'"><svg class="ic"><use href="#ic-check-circle"/></svg> Confirmar Habilitado</button>'
@@ -10003,7 +10003,7 @@ function showHabilitarModal(resId){
           +'<div class="field"><label>LONGITUD REAL (")</label>'
             +'<input type="number" step="0.001" id="hab-long-exacto" value="'+longSol.toFixed(3)+'" oninput="calcHabKg()">'
           +'</div>'
-          +'<div class="field"><label>TOTAL LONG. REAL (")<br><small style="color:var(--muted);font-size:10px;font-weight:400">Editable — descuenta sobrante y kerf</small></label>'
+          +'<div class="field"><label>TOTAL LONG. REAL (")<br><small style="color:var(--muted);font-size:11px;font-weight:400">Editable — descuenta sobrante y kerf</small></label>'
             +'<input type="number" id="hab-total-exacto" step="0.001" value="'+(cantSol*longSol).toFixed(3)+'" title="Editable: mide barras cortadas y descuenta sobrante. El kerf se acumula aquí.">'
           +'</div>'
         +'</div>'
@@ -10063,13 +10063,13 @@ function addHabFila(){
   div.id=id;
   div.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:end';
   div.innerHTML=
-    '<div class="field" style="margin:0"><label style="font-size:10px">CANTIDAD (barras)</label>'
+    '<div class="field" style="margin:0"><label style="font-size:11px">CANTIDAD (barras)</label>'
       +'<input type="number" min="1" value="1" oninput="calcHabFilas()" style="font-size:12px">'
     +'</div>'
-    +'<div class="field" style="margin:0"><label style="font-size:10px">LONGITUD (")</label>'
+    +'<div class="field" style="margin:0"><label style="font-size:11px">LONGITUD (")</label>'
       +'<input type="number" step="0.001" value="" placeholder="0.000" oninput="calcHabFilas()" style="font-size:12px">'
     +'</div>'
-    +'<div class="field" style="margin:0"><label style="font-size:10px">SUBTOTAL (")</label>'
+    +'<div class="field" style="margin:0"><label style="font-size:11px">SUBTOTAL (")</label>'
       +'<input type="number" readonly style="opacity:0.6;font-size:12px" value="0.000">'
     +'</div>'
     +'<button class="btn btn-danger btn-sm" onclick="document.getElementById(\''+id+'\').remove();calcHabFilas()" style="margin-bottom:0"><svg class="ic"><use href="#ic-x"/></svg></button>';
@@ -10482,11 +10482,11 @@ function renderMaterials(){
                   +'<div style="flex:1;display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
                     +(m.forma?'<span class="tag" style="color:'+catDef.color+';background:'+catDef.color+'15;border-color:'+catDef.color+'30;font-size:11px">'+m.forma+'</span>':'')
                     +(medStr?'<span style="font-family:\'DM Mono\',monospace;color:var(--accent);font-weight:700;font-size:13px">'+medStr+'</span>':'')
-                    +'<span style="font-size:10px;color:var(--muted)">ρ '+m.densidad+' lb/in³</span>'
-                    +(m.cantidad_min?'<span class="tag" style="color:var(--green);font-size:10px">Mín: '+m.cantidad_min+'</span>':'')+(m.cantidad_max?'<span class="tag" style="color:var(--accent2);font-size:10px">'+(m.cantidad_max_tipo==='lote'?'<svg class="ic"><use href="#ic-refresh"/></svg> Lote:':'<svg class="ic"><use href="#ic-package"/></svg> Máx:')+' '+m.cantidad_max+'</span>':'')
-                    +(m.codigo_especial?'<span class="tag" style="color:var(--accent2);font-size:10px">'+m.codigo_especial+'</span>':'')+(m.dibujo_url?'<a href="'+m.dibujo_url+'" target="_blank" class="tag" style="color:var(--warn);font-size:10px;text-decoration:none"><svg class="ic"><use href="#ic-image"/></svg> Dibujo</a>':'')+(m.reposicion===false?'<span class="tag" style="color:var(--warn);font-size:10px">Sin reposición auto</span>':'')+(m.reposicion!==false&&m.longitud_reposicion?'<span class="tag" style="color:var(--muted);font-size:10px"><svg class="ic"><use href="#ic-ruler-straight"/></svg> Std: '+parseFloat(m.longitud_reposicion).toFixed(3)+(m.longitud_reposicion_unidad==='m'?'m':'"')+'</span>':'')
-                    +(m.notas?'<span style="font-size:10px;color:var(--muted)"><svg class="ic"><use href="#ic-note"/></svg> '+m.notas+'</span>':'')
-                    +(!m.active?'<span class="tag" style="color:var(--danger);font-size:10px">Inactivo</span>':'')
+                    +'<span style="font-size:11px;color:var(--muted)">ρ '+m.densidad+' lb/in³</span>'
+                    +(m.cantidad_min?'<span class="tag" style="color:var(--green);font-size:11px">Mín: '+m.cantidad_min+'</span>':'')+(m.cantidad_max?'<span class="tag" style="color:var(--accent2);font-size:11px">'+(m.cantidad_max_tipo==='lote'?'<svg class="ic"><use href="#ic-refresh"/></svg> Lote:':'<svg class="ic"><use href="#ic-package"/></svg> Máx:')+' '+m.cantidad_max+'</span>':'')
+                    +(m.codigo_especial?'<span class="tag" style="color:var(--accent2);font-size:11px">'+m.codigo_especial+'</span>':'')+(m.dibujo_url?'<a href="'+m.dibujo_url+'" target="_blank" class="tag" style="color:var(--warn);font-size:11px;text-decoration:none"><svg class="ic"><use href="#ic-image"/></svg> Dibujo</a>':'')+(m.reposicion===false?'<span class="tag" style="color:var(--warn);font-size:11px">Sin reposición auto</span>':'')+(m.reposicion!==false&&m.longitud_reposicion?'<span class="tag" style="color:var(--muted);font-size:11px"><svg class="ic"><use href="#ic-ruler-straight"/></svg> Std: '+parseFloat(m.longitud_reposicion).toFixed(3)+(m.longitud_reposicion_unidad==='m'?'m':'"')+'</span>':'')
+                    +(m.notas?'<span style="font-size:11px;color:var(--muted)"><svg class="ic"><use href="#ic-note"/></svg> '+m.notas+'</span>':'')
+                    +(!m.active?'<span class="tag" style="color:var(--danger);font-size:11px">Inactivo</span>':'')
                   +'</div>'
                   +'<div style="display:flex;gap:5px;flex-shrink:0">'
                     +'<button class="btn btn-sm btn-accent" onclick="showMaterialForm(\''+m.id+'\')"><svg class="ic"><use href="#ic-pencil"/></svg></button>'
@@ -10532,7 +10532,7 @@ function showMaterialForm(id){
         +'<div class="field"><label>FORMA</label><select id="matf-forma" onchange="onMatfFormaChange()">'+formaOpts+'</select></div>'
         +'<div class="field"><label>DENSIDAD (lb/in³)</label>'
           +'<input type="number" step="0.0001" id="matf-dens" value="'+densDefault+'" placeholder="0.2836">'
-          +'<small style="color:var(--muted);font-size:10px">Acero=0.2836 · Inox=0.2898 · Latón=0.3075 · Bronce=0.295 · Al=0.0975 · Nyl=0.0423</small>'
+          +'<small style="color:var(--muted);font-size:11px">Acero=0.2836 · Inox=0.2898 · Latón=0.3075 · Bronce=0.295 · Al=0.0975 · Nyl=0.0423</small>'
         +'</div>'
       +'</div>'
       +'<div id="matf-medidas" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:12px"></div>'
@@ -10545,7 +10545,7 @@ function showMaterialForm(id){
             +'<option value="maximo" '+((m?.cantidad_max_tipo||'maximo')==='maximo'?'selected':'')+'>Stock máximo</option>'
             +'<option value="lote" '+(m?.cantidad_max_tipo==='lote'?'selected':'')+'>Lote de compra</option>'
           +'</select>'
-          +'<small style="color:var(--muted);font-size:10px">'+(m?.cantidad_max_tipo==='lote'?'Cantidad fija que se compra cada vez que se repone':'Límite superior del inventario')+'</small>'
+          +'<small style="color:var(--muted);font-size:11px">'+(m?.cantidad_max_tipo==='lote'?'Cantidad fija que se compra cada vez que se repone':'Límite superior del inventario')+'</small>'
         +'</div>'
         +'<div class="field"><label>REPOSICIÓN AUTOMÁTICA</label>'
           +'<select id="matf-repos" onchange="onMatfReposChange()">'
@@ -10630,7 +10630,7 @@ function onMatfFormaChange(){
         +'<input type="file" id="matf-dibujo-file" accept=".pdf,.dwg,.dxf,image/*" style="display:none" onchange="uploadMaterialDrawing(this)">'
         +'<button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById(\'matf-dibujo-file\').click()"><svg class="ic"><use href="#ic-folder"/></svg> Subir PDF o imagen</button>'
         +'<span id="matf-dibujo-status" style="font-size:11px">'
-          +(dibUrl?'<a href="'+dibUrl+'" target="_blank" style="color:var(--accent2);font-weight:600">Ver dibujo actual <svg class="ic"><use href="#ic-link"/></svg></a>&nbsp;<button onclick="deleteMaterialDrawing()" class="btn btn-danger btn-sm" style="font-size:10px;padding:2px 7px"><svg class="ic"><use href="#ic-trash"/></svg> Eliminar</button>':'Sin dibujo cargado')
+          +(dibUrl?'<a href="'+dibUrl+'" target="_blank" style="color:var(--accent2);font-weight:600">Ver dibujo actual <svg class="ic"><use href="#ic-link"/></svg></a>&nbsp;<button onclick="deleteMaterialDrawing()" class="btn btn-danger btn-sm" style="font-size:11px;padding:2px 7px"><svg class="ic"><use href="#ic-trash"/></svg> Eliminar</button>':'Sin dibujo cargado')
         +'</span>'
       +'</div>'
       +'<input type="hidden" id="matf-dibujo-url" value="'+dibUrl+'">'  
@@ -10652,7 +10652,7 @@ function onMatfFormaChange(){
           +'<option value="m" '+(unitVal==='m'?'selected':'')+'>m metros</option>'
         +'</select>'
       +'</div>'
-      +'<small style="color:var(--muted);font-size:10px">Longitud a la que normalmente se compra este material</small>'
+      +'<small style="color:var(--muted);font-size:11px">Longitud a la que normalmente se compra este material</small>'
     +'</div>';
   }
 
@@ -10762,7 +10762,7 @@ function showMpStockForm(id){
           </div>
         </div>
         <div id="mpf-bom-confirm" style="display:none;margin-top:8px;padding:8px 12px;border-radius:6px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);font-size:13px"></div>
-        <small style="color:var(--muted);font-size:10px">Material o pieza ya habilitado/pre-cortado por el proveedor para este producto — no pasará por el proceso de corte/habilitado en Almacén.</small>
+        <small style="color:var(--muted);font-size:11px">Material o pieza ya habilitado/pre-cortado por el proveedor para este producto — no pasará por el proceso de corte/habilitado en Almacén.</small>
       </div>
 
       <div id="mpf-fields-wrap" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
@@ -10874,22 +10874,22 @@ function showMpStockForm(id){
         <!-- Resumen kg y valor -->
         <div id="mpf-resumen-barra" style="background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.25);border-radius:8px;padding:12px;grid-column:1/-1">
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;text-align:center">
-            <div><div style="font-size:10px;color:var(--muted)">LONG. TOTAL</div>
+            <div><div style="font-size:11px;color:var(--muted)">LONG. TOTAL</div>
               <div id="mpf-long-total" style="font-family:'DM Mono',monospace;font-weight:700;color:var(--accent);font-size:16px">--</div></div>
-            <div><div style="font-size:10px;color:var(--muted)">KG / PIEZA</div>
+            <div><div style="font-size:11px;color:var(--muted)">KG / PIEZA</div>
               <div id="mpf-kg-unit" style="font-family:'DM Mono',monospace;font-weight:700;color:var(--accent2);font-size:16px">--</div></div>
-            <div><div style="font-size:10px;color:var(--muted)">KG TOTAL</div>
+            <div><div style="font-size:11px;color:var(--muted)">KG TOTAL</div>
               <div id="mpf-kg-total" style="font-family:'DM Mono',monospace;font-weight:700;color:var(--accent2);font-size:16px">--</div></div>
-            <div><div style="font-size:10px;color:var(--muted)">VALOR TOTAL</div>
+            <div><div style="font-size:11px;color:var(--muted)">VALOR TOTAL</div>
               <div id="mpf-valor" style="font-family:'DM Mono',monospace;font-weight:700;color:var(--green);font-size:16px">--</div></div>
           </div>
         </div>
         <!-- Resumen pieza (sin kg) -->
         <div id="mpf-resumen-pieza" style="display:none;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.25);border-radius:8px;padding:12px;grid-column:1/-1">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center">
-            <div><div style="font-size:10px;color:var(--muted)">CANTIDAD (PIEZAS)</div>
+            <div><div style="font-size:11px;color:var(--muted)">CANTIDAD (PIEZAS)</div>
               <div id="mpf-p-cant-display" style="font-family:'DM Mono',monospace;font-weight:700;color:var(--accent2);font-size:16px">--</div></div>
-            <div><div style="font-size:10px;color:var(--muted)">VALOR TOTAL</div>
+            <div><div style="font-size:11px;color:var(--muted)">VALOR TOTAL</div>
               <div id="mpf-p-valor" style="font-family:'DM Mono',monospace;font-weight:700;color:var(--green);font-size:16px">--</div></div>
           </div>
         </div>
@@ -11229,7 +11229,7 @@ function renderRmtStock(){
             <span>Kg total: <strong style="color:var(--accent2)">${s.kg_total||0}</strong></span>
             ${s.ubicacion?`<span><svg class="ic"><use href="#ic-map-pin"/></svg> ${s.ubicacion}</span>`:''}
           </div>
-          ${reservas.length>0?`<div style="margin-top:6px;font-size:10px;color:var(--warn)">
+          ${reservas.length>0?`<div style="margin-top:6px;font-size:11px;color:var(--warn)">
             ${reservas.map(r=>`<svg class="ic"><use href="#ic-pin"/></svg> ${r.ot_number} — ${r.product_name}: ${r.cantidad_apt} barras`).join(' · ')}
           </div>`:''}
         </div>
@@ -11471,15 +11471,15 @@ async function renderRmtProd(){
         </div>
         <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center">
           ${esPiezaGrupo?'':`<div style="text-align:center">
-            <div style="font-size:9px;color:var(--muted)">LONG. BARRA</div>
+            <div style="font-size:11px;color:var(--muted)">LONG. BARRA</div>
             <div style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:700">${g.longTotal.toFixed(3)}"</div>
           </div>`}
           <div style="text-align:center">
-            <div style="font-size:9px;color:var(--muted)">${esPiezaGrupo?'PIEZAS':'KG NETO'}</div>
+            <div style="font-size:11px;color:var(--muted)">${esPiezaGrupo?'PIEZAS':'KG NETO'}</div>
             <div style="font-family:'DM Mono',monospace;color:var(--accent2);font-weight:700">${esPiezaGrupo?g.kgTotal.toFixed(0)+' pzas':g.kgTotal.toFixed(3)+' kg'}</div>
           </div>
           <div style="text-align:center">
-            <div style="font-size:9px;color:var(--muted)">VALOR</div>
+            <div style="font-size:11px;color:var(--muted)">VALOR</div>
             <div style="font-family:'DM Mono',monospace;color:var(--green);font-weight:700">$${g.valorTotal.toFixed(2)}</div>
           </div>
         </div>
@@ -11903,7 +11903,7 @@ async function showInfoOTDetail(otId){
       html+=`<div style="color:var(--muted);font-size:12px;margin-bottom:16px">Sin registros de materia prima.</div>`;
     } else {
       html+=`<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px">
-        <thead><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">
+        <thead><tr style="color:var(--muted);font-size:11px;text-transform:uppercase;border-bottom:1px solid var(--border)">
           <th style="padding:5px 8px;text-align:left">Material</th>
           <th style="padding:5px 8px;text-align:left">Forma</th>
           <th style="padding:5px 8px;text-align:center">Kg</th>
@@ -11928,7 +11928,7 @@ async function showInfoOTDetail(otId){
       html+=`<div style="color:var(--muted);font-size:12px;margin-bottom:16px">Sin sesiones registradas aún.</div>`;
     } else {
       html+=`<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px">
-        <thead><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">
+        <thead><tr style="color:var(--muted);font-size:11px;text-transform:uppercase;border-bottom:1px solid var(--border)">
           <th style="padding:5px 8px;text-align:left">Operación</th>
           <th style="padding:5px 8px;text-align:left">Máquina</th>
           <th style="padding:5px 8px;text-align:left">Operador</th>
@@ -11957,7 +11957,7 @@ async function showInfoOTDetail(otId){
       html+=`<div style="color:var(--muted);font-size:12px;margin-bottom:16px">Sin servicios externos registrados.</div>`;
     } else {
       html+=`<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px">
-        <thead><tr style="color:var(--muted);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)">
+        <thead><tr style="color:var(--muted);font-size:11px;text-transform:uppercase;border-bottom:1px solid var(--border)">
           <th style="padding:5px 8px;text-align:left">Proveedor</th>
           <th style="padding:5px 8px;text-align:left">Concepto</th>
           <th style="padding:5px 8px;text-align:center">Costo</th>
@@ -12324,11 +12324,11 @@ function renderPTGeneral(){
   }
 
   let html=`<table style="width:100%;border-collapse:collapse;font-size:13px">
-    <thead><tr style="border-bottom:2px solid var(--border);color:var(--muted);font-size:11px;text-transform:uppercase">
-      <th style="padding:8px 10px;text-align:left;width:24px"></th>
-      <th style="padding:8px 10px;text-align:left">#</th>
-      <th style="padding:8px 10px;text-align:left">Código</th>
-      <th style="padding:8px 10px;text-align:left">Producto</th>
+    <thead><tr style="border-bottom:2px solid var(--border);color:#374151;font-size:12px;text-transform:uppercase">
+      <th style="padding:8px 6px;text-align:left;width:24px"></th>
+      <th style="padding:8px 6px;text-align:left;width:40px">#</th>
+      <th style="padding:8px 8px;text-align:left;min-width:120px">Código</th>
+      <th style="padding:8px 8px;text-align:left;min-width:160px">Producto</th>
       <th style="padding:8px 10px;text-align:left">Familia</th>
       <th style="padding:8px 10px;text-align:center">Tipo</th>
       <th style="padding:8px 10px;text-align:left">Ubicación</th>
@@ -12355,9 +12355,9 @@ function renderPTGeneral(){
     window._ptProductMap[g.producto_id]=g;
     html+=`<tr style="border-bottom:1px solid var(--border);${hasLotes?'cursor:pointer':''}" class="${hasLotes?'ptg-toggle':''}" data-gid="${gid}">
       <td style="padding:8px 10px;color:var(--muted)" id="${gid}-arrow">${hasLotes?'▶':''}</td>
-      <td style="padding:8px 10px;color:var(--muted)">${g.sort_number??'—'}</td>
-      <td style="padding:8px 10px;font-weight:700;color:var(--accent)">${g.codigo}</td>
-      <td style="padding:8px 10px;font-weight:600">${g.nombre}</td>
+      <td style="padding:8px 6px;color:var(--muted)">${g.sort_number??'—'}</td>
+      <td style="padding:8px 8px;font-weight:700;color:var(--accent);min-width:120px;white-space:nowrap">${g.codigo}</td>
+      <td style="padding:8px 8px;font-weight:600;min-width:160px">${g.nombre}</td>
       <td style="padding:8px 10px;color:var(--muted);font-size:12px">${g.familia||'—'}</td>
       <td style="padding:8px 10px;text-align:center;font-size:12px">${tipoLabel}</td>
       <td style="padding:8px 10px;color:var(--muted)">${g.ubicacion||'—'}</td>
@@ -12378,7 +12378,7 @@ function renderPTGeneral(){
       html+=`<tr id="${gid}-detail" style="display:none;background:var(--bg3)">
         <td colspan="16" style="padding:0">
           <table style="width:100%;border-collapse:collapse;font-size:12px">
-          <thead><tr style="color:var(--muted);font-size:10px;text-transform:uppercase">
+          <thead><tr style="color:var(--muted);font-size:11px;text-transform:uppercase">
             <th style="padding:6px 10px 6px 40px;text-align:left">OT</th>
             <th style="padding:6px 10px;text-align:center">Cantidad</th>
             <th style="padding:6px 10px;text-align:center">Costo Fab. /pza</th>
@@ -12807,13 +12807,13 @@ function ptAddCampoConfig(existente){
   row.style.cssText='display:flex;flex-direction:column;gap:6px;background:var(--bg3);border-radius:6px;padding:10px 12px;border:1px solid var(--border)';
   row.innerHTML=`
     <div class="field" style="margin:0">
-      <label style="font-size:10px">NOMBRE DEL CAMPO</label>
+      <label style="font-size:11px">NOMBRE DEL CAMPO</label>
       <input type="text" placeholder="Ej: Número de Remisión" value="${existente?.nombre_campo||''}" 
         style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:6px 8px;font-size:13px" class="ptcfg-nombre">
     </div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <div class="field" style="margin:0;flex:1;min-width:110px">
-        <label style="font-size:10px">TIPO</label>
+        <label style="font-size:11px">TIPO</label>
         <select style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:6px 8px;font-size:13px" class="ptcfg-tipo">
           <option value="texto" ${existente?.tipo==='texto'?'selected':''}>Texto</option>
           <option value="numero" ${existente?.tipo==='numero'?'selected':''}>Número</option>
@@ -13019,7 +13019,7 @@ function renderComprasRequisiciones(){
           ${r.solicitante?`<span style="font-size:11px;color:var(--muted);margin-left:6px">· ${r.solicitante}</span>`:''}
         </div>
         <div style="display:flex;gap:8px;align-items:center">
-          <span style="font-size:10px;font-weight:700;color:${statusColor[r.status]||'var(--muted)'};border:1px solid ${statusColor[r.status]||'var(--muted)'};background:${statusColor[r.status]||'var(--muted)'}22;border-radius:4px;padding:2px 8px">${statusLabel[r.status]||r.status}</span>
+          <span style="font-size:11px;font-weight:700;color:${statusColor[r.status]||'var(--muted)'};border:1px solid ${statusColor[r.status]||'var(--muted)'};background:${statusColor[r.status]||'var(--muted)'}22;border-radius:4px;padding:2px 8px">${statusLabel[r.status]||r.status}</span>
           <select onchange="cambiarStatusRequi('${r.id}',this.value)" style="font-size:11px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:3px 8px">
             <option value="pendiente" ${r.status==='pendiente'?'selected':''}>Pendiente</option>
             <option value="en_proceso" ${r.status==='en_proceso'?'selected':''}>En proceso</option>
@@ -13067,7 +13067,7 @@ function renderComprasHistorial(){
         <td style="color:var(--muted)">${fecha}</td>
         <td>${r.producto_nombre||'—'}</td>
         <td style="color:var(--muted)">${items.length} material(es)</td>
-        <td><span style="font-size:10px;font-weight:700;color:${r.status==='completada'?'var(--green)':'var(--muted)'}">${r.status==='completada'?'COMPLETADA':'CANCELADA'}</span></td>
+        <td><span style="font-size:11px;font-weight:700;color:${r.status==='completada'?'var(--green)':'var(--muted)'}">${r.status==='completada'?'COMPLETADA':'CANCELADA'}</span></td>
       </tr>`;
     }).join('')}
   </tbody></table></div>`;
@@ -13127,7 +13127,7 @@ function renderComprasSuppliers(){
       <div style="flex:1;min-width:220px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
           <span style="font-family:var(--font-display,sans-serif);font-size:15px;color:var(--accent)">${s.name||'—'}</span>
-          <span style="font-size:10px;color:var(--muted);background:var(--bg3);padding:2px 8px;border-radius:6px">${s.code||'—'}</span>
+          <span style="font-size:11px;color:var(--muted);background:var(--bg3);padding:2px 8px;border-radius:6px">${s.code||'—'}</span>
         </div>
         <div style="font-size:11px;color:var(--muted)">
           ${s.rfc?`RFC: ${s.rfc} · `:''}${s.payment_type?`Pago: ${s.payment_type} · `:''}${s.credit_days?`Crédito: ${s.credit_days} días`:''}
@@ -13341,7 +13341,7 @@ function renderVentasClientes(){
       <div style="flex:1;min-width:220px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
           <span style="font-family:var(--font-display,sans-serif);font-size:15px;color:var(--accent)">${c.name||'—'}</span>
-          <span style="font-size:10px;color:var(--muted);background:var(--bg3);padding:2px 8px;border-radius:6px">${c.code||'—'}</span>
+          <span style="font-size:11px;color:var(--muted);background:var(--bg3);padding:2px 8px;border-radius:6px">${c.code||'—'}</span>
         </div>
         <div style="font-size:11px;color:var(--muted)">
           ${c.rfc?`RFC: ${c.rfc} · `:''}${c.credit_days?`Crédito: ${c.credit_days} días · `:''}${c.credit_limit?`Límite: $${Number(c.credit_limit).toLocaleString('es-MX',{minimumFractionDigits:2})}`:''}
@@ -13519,7 +13519,7 @@ function renderVentasFacturas(){
         <div style="font-size:11px;color:var(--muted)">Fecha: ${i.fecha||'—'} ${i.vencimiento?'· Vence: '+i.vencimiento:''}</div>
       </div>
       <div style="font-weight:700;font-size:15px;color:var(--accent2)">$${Number(i.monto||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
-      <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:6px;background:var(--bg3);color:${statusColor[i.status]||'var(--muted)'}">${(i.status||'').toUpperCase()}</span>
+      <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;background:var(--bg3);color:${statusColor[i.status]||'var(--muted)'}">${(i.status||'').toUpperCase()}</span>
       <div style="display:flex;gap:6px">
         ${i.status!=='pagada'&&i.status!=='cancelada'?`<button class="btn btn-sm btn-accent" onclick="openPaymentReceivedModal('${i.id}')"><svg class="ic"><use href="#ic-banknote"/></svg> Registrar Pago</button>`:''}
         <button class="btn btn-sm btn-ghost" onclick="showVenInvoiceForm('${i.id}')"><svg class="ic"><use href="#ic-pencil-thin"/></svg></button>
@@ -13729,7 +13729,7 @@ function renderCobCxp(){
         <div style="font-size:11px;color:var(--muted)">Fecha: ${p.fecha||'—'} ${p.vencimiento?'· Vence: '+p.vencimiento:''}</div>
       </div>
       <div style="font-weight:700;font-size:15px;color:var(--danger)">$${Number(p.monto||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
-      <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:6px;background:var(--bg3);color:${statusColor[p.status]||'var(--muted)'}">${(p.status||'').toUpperCase()}</span>
+      <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;background:var(--bg3);color:${statusColor[p.status]||'var(--muted)'}">${(p.status||'').toUpperCase()}</span>
       <div style="display:flex;gap:6px">
         <button class="btn btn-sm btn-ghost" onclick="showPayableForm('${p.id}')"><svg class="ic"><use href="#ic-pencil-thin"/></svg></button>
         <button class="btn btn-sm btn-danger" onclick="deletePayable('${p.id}')"><svg class="ic"><use href="#ic-trash"/></svg></button>
@@ -13875,7 +13875,7 @@ function renderCobSuppliers(){
     <div class="card">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
         <span style="font-family:var(--font-display,sans-serif);font-size:14px;color:var(--accent)">${s.name||'—'}</span>
-        <span style="font-size:10px;color:var(--muted);background:var(--bg3);padding:2px 8px;border-radius:6px">${s.code||'—'}</span>
+        <span style="font-size:11px;color:var(--muted);background:var(--bg3);padding:2px 8px;border-radius:6px">${s.code||'—'}</span>
       </div>
       <div style="font-size:11px;color:var(--muted)">${s.rfc?'RFC: '+s.rfc+' · ':''}${s.payment_type?'Pago: '+s.payment_type:''}</div>
       ${s.contact_name?`<div style="font-size:11px;color:var(--muted);margin-top:2px"><svg class="ic"><use href="#ic-user"/></svg> ${s.contact_name}${s.contact_phone?' · <svg class="ic"><use href="#ic-phone"/></svg> '+s.contact_phone:''}</div>`:''}
@@ -14225,9 +14225,9 @@ function showRequiModal(stockId){
         <div>
           <span style="font-weight:700;font-size:13px">${it.material_nombre}</span>
           ${it.forma&&it.forma!=='pieza'?`<span style="font-size:11px;color:var(--muted);margin-left:8px">${it.forma}${it.diametro?' Ø'+parseFloat(it.diametro).toFixed(3)+'"':''}</span>`:''}
-          ${esBajoPedido?'<span style="font-size:10px;font-weight:700;color:var(--warn);margin-left:8px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);border-radius:4px;padding:1px 6px">BAJO PEDIDO ESPECIAL</span>':''}
+          ${esBajoPedido?'<span style="font-size:11px;font-weight:700;color:var(--warn);margin-left:8px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);border-radius:4px;padding:1px 6px">BAJO PEDIDO ESPECIAL</span>':''}
         </div>
-        <span style="font-size:10px;color:var(--muted)">${it.unidad}</span>
+        <span style="font-size:11px;color:var(--muted)">${it.unidad}</span>
       </div>
       ${esMultiplo?`
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
