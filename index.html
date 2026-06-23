@@ -5001,7 +5001,7 @@ function renderOperators(){
   if(!operators.length){ list.innerHTML=`<div class="card" style="color:var(--muted);text-align:center;padding:40px">Sin operadores registrados. Usa el botón + Nuevo Operador para agregar.</div>`; return; }
   try{
     list.innerHTML=`<div class="card" style="padding:0;overflow:hidden"><table class="tbl"><thead><tr><th>Nombre</th><th>Código</th><th>Área</th><th>Costo/Hora</th><th style="width:100px">Acciones</th></tr></thead><tbody>
-      ${operators.map(o=>`<tr><td style="font-weight:600">${o.name||''}</td><td><span class="tag" style="background:rgba(124,58,237,.15);color:var(--accent2);border:1px solid rgba(124,58,237,.3)">${o.code||''}</span></td><td style="color:var(--muted)">${o.area||''}</td><td style="color:var(--green);font-family:'DM Mono',monospace">${o.costo_hora?'$'+parseFloat(o.costo_hora).toFixed(2):'—'}</td>
+      ${operators.map(o=>`<tr><td style="font-weight:600">${o.name||''}</td><td><span class="tag" style="background:rgba(124,58,237,.15);color:var(--accent2);border:1px solid rgba(124,58,237,.3)">${o.code||''}</span></td><td style="color:var(--muted)">${o.area||''}</td><td style="color:var(--green);font-family:'DM Mono',monospace"><span style="letter-spacing:2px">••••</span> <button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:10px;padding:2px 6px;border-radius:4px;border:1px solid var(--border)" onclick="revealCostoHora('${o.id}','ch-${o.id}')">Ver</button><span id="ch-${o.id}" style="display:none;color:var(--green);font-family:'DM Mono',monospace"></span></td>
       <td><div style="display:flex;gap:5px"><button class="btn btn-ghost btn-sm" onclick="showOperatorForm('${o.id}')"><svg class="ic"><use href="#ic-pencil"/></svg></button><button class="btn btn-sm btn-danger" onclick="deleteOperator('${o.id}')"><svg class="ic"><use href="#ic-trash"/></svg></button></div></td></tr>`).join('')}
     </tbody></table></div>`;
   }catch(e){ console.error('renderOperators error:',e); list.innerHTML='<div style="color:red;padding:20px">Error: '+e.message+'</div>'; }
@@ -5017,7 +5017,7 @@ function showOperatorForm(id){
         <div class="field"><label>Nombre Completo</label><input id="of-name" value="${o.name}" placeholder="Nombre del operador"></div>
         <div class="field"><label>Código / No. Empleado</label><input id="of-code" value="${o.code}" placeholder="ej. OP-01"></div>
         <div class="field"><label>Área</label><input id="of-area" value="${o.area||''}" placeholder="ej. Maquinado"></div>
-        <div class="field"><label>Costo por Hora (MXN)</label><input id="of-costo-hora" type="number" step="0.01" value="${o.costo_hora||''}" placeholder="ej. 80.00"></div>
+        <div cclass="field"><label>Costo por Hora (MXN) <span style="font-size:10px;color:var(--warn)">&#128274; Protegido</span></label><div style="display:flex;gap:8px;align-items:center"><input id="of-costo-hora" type="number" step="0.01" value="" placeholder="ej. 80.00" style="display:none" data-real="${o.costo_hora||0}"><span id="of-costo-hora-masked" style="font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:3px">••••••</span><button type="button" class="btn btn-sm btn-ghost" style="font-size:11px" onclick="unlockCostoHora(this)">&#128275; Desbloquear</button></div></div>/div>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button class="btn btn-ghost" onclick="document.getElementById('operator-form-wrap').innerHTML=''">Cancelar</button>
@@ -5025,6 +5025,30 @@ function showOperatorForm(id){
       </div>
     </div>`;
 }
+
+function revealCostoHora(opId, spanId){
+  const pwd=prompt('Contraseña de Administrador:');
+  if(pwd!==PASS_ADMIN){ alert('Contraseña incorrecta.'); return; }
+  const op=operators.find(o=>o.id===opId);
+  const span=document.getElementById(spanId);
+  if(span&&op) span.innerHTML='$'+parseFloat(op.costo_hora||0).toFixed(2);
+  if(span) span.style.display='inline';
+}
+window.revealCostoHora=revealCostoHora;
+
+function unlockCostoHora(btn){
+  const pwd=prompt('Contraseña de Administrador:');
+  if(pwd!==PASS_ADMIN){ alert('Contraseña incorrecta.'); return; }
+  const input=document.getElementById('of-costo-hora');
+  const masked=document.getElementById('of-costo-hora-masked');
+  if(input){
+    input.value=input.getAttribute('data-real')||'';
+    input.style.display='';
+  }
+  if(masked) masked.style.display='none';
+  if(btn) btn.style.display='none';
+}
+window.unlockCostoHora=unlockCostoHora;
 
 async function saveOperator(id,isNew){
   const name=document.getElementById('of-name').value.trim();
