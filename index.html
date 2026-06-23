@@ -6518,7 +6518,7 @@ function renderReleasedOTs(){
             </div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <span style="font-weight:700;font-size:14px">${p?.name||'Sin producto'}</span>
-              ${(()=>{const qr=(otQualityRecords||[]).filter(q=>q.ot_id===o.id);return qr.length?`<span class="tag" style="background:rgba(245,158,11,.15);color:var(--warn);border:1px solid rgba(245,158,11,.3);cursor:pointer;font-size:10px" onclick="toggleQualityPanel('prog-q-${o.id}')">&#10003; ${qr.length} reg. calidad</span>`:''})()}
+              ${(()=>{const qr=(otQualityRecords||[]).filter(q=>q.ot_id===o.id);return qr.length?`<span class="tag" style="background:rgba(245,158,11,.15);color:var(--warn);border:1px solid rgba(245,158,11,.3);cursor:pointer;font-size:10px" data-qpanel="prog-q-${o.id}" onclick="var p=document.getElementById(this.dataset.qpanel);if(p)p.style.display=p.style.display==='none'?'block':'none'">&#10003; ${qr.length} reg. calidad</span>`:''})()}
             </div>
             <div style="font-size:11px;color:var(--muted);margin-top:2px">Lote: <strong style="color:var(--text)">${o.qty} pzas</strong></div>
             ${(()=>{
@@ -11328,11 +11328,15 @@ window.renderRmtTransit=renderRmtTransit;
 async function renderRmtProd(){
   const list=document.getElementById('rmt-prod-list');
   if(!list) return;
-  // Refrescar mpTransit desde Supabase para tener longitudes reales
+  // Refrescar mpTransit y mpMaterials desde Supabase
   try{
-    const fresh=await sbSelect('mp_transit','select=*&order=moved_at.desc');
+    const [fresh, freshMats]=await Promise.all([
+      sbSelect('mp_transit','select=*&order=moved_at.desc'),
+      sbSelect('mp_materials','select=*&active=eq.true')
+    ]);
     if(fresh) mpTransit=fresh;
-  }catch(e){ console.warn('renderRmtProd: no se pudo refrescar mp_transit',e); }
+    if(freshMats&&freshMats.length) mpMaterials=freshMats;
+  }catch(e){ console.warn('renderRmtProd: no se pudo refrescar datos',e); }
 
   // OTs liberadas (status='released')
   const otsReleased=workOrders.filter(o=>o.status==='released');
@@ -11364,10 +11368,11 @@ async function renderRmtProd(){
       const longNeta=parseFloat(Math.max(0,longTotal-longScrap).toFixed(3));
       const kgNeta=parseFloat(Math.max(0,kgTotal-kgScrap).toFixed(3));
       const precioKg=parseFloat(t.precio_kg)||0;
-      // Para piezas: usar t.valor directamente si precio_kg es 0
-      const valorNeto=precioKg>0
-        ? parseFloat((kgNeta*precioKg).toFixed(2))
-        : parseFloat(t.valor||0)*(totalPzas>0?Math.max(0,totalPzas-scrapsOT)/totalPzas:1);
+      const tValor=parseFloat(t.valor)||0;
+      // Para piezas (precio_kg=0): el valor viene de t.valor directamente
+      // Para barras: valor = kg * precio_kg
+      const valorBase=precioKg>0?(kgTotal*precioKg):tValor;
+      const valorNeto=parseFloat(Math.max(0,valorBase*(totalPzas>0?Math.max(0,totalPzas-scrapsOT)/totalPzas:1)).toFixed(2));
 
       // Resolver nombre/forma/grupo desde catálogo si el tránsito los tiene null
       const matCatTrans=(mpMaterials||[]).find(m=>m.id===t.material_id);
