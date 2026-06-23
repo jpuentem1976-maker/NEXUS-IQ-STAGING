@@ -105,6 +105,8 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
 .ptab.active{background:var(--accent2);border-color:var(--accent2);color:#fff}
 /* TABLE — grid completo tipo hoja de cálculo */
 .tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl-compact{font-size:12.5px}
+.tbl-compact th,.tbl-compact td{padding:7px 6px}
 .tbl th{text-align:left;padding:9px 10px;font-size:13px;font-weight:700;color:#1F2937;text-transform:uppercase;letter-spacing:.4px;background:#E8EAED;border:1px solid var(--border)}
 .tbl td{padding:9px 10px;border:1px solid #E5E7EB;vertical-align:middle;font-weight:500;font-size:13px}
 .tbl tr:nth-child(even) td{background:#FAFBFC}
@@ -7589,14 +7591,14 @@ function renderMachineLoad(){
 
     // Headers según tipo de máquina
     const thead = isTT
-      ? `<tr><th>Pri.</th><th style="min-width:80px">O.T.</th><th style="min-width:130px">Producto</th><th>Lote</th><th style="min-width:150px">Operación</th><th>Exist.</th><th>Días</th><th>Envío</th><th>Recolección</th><th>Proveedor</th><th></th></tr>`
-      : `<tr><th>Pri.</th><th style="min-width:80px">O.T.</th><th style="min-width:130px">Producto</th><th>Lote</th><th style="min-width:150px">Operación</th><th>Mont.</th><th>Unit.</th><th>Total</th><th>Exist.</th><th>Días</th><th>Inicio</th><th>Est.Fin</th><th>Ef.Mont.</th><th>Ef.Prod.</th><th>Estado</th><th></th></tr>`;
+      ? `<tr><th>Pri.</th><th style="width:72px">O.T.</th><th style="width:110px">Producto</th><th>Lote</th><th style="width:120px">Operación</th><th>Exist.</th><th>Días</th><th>Envío</th><th>Recolección</th><th>Proveedor</th><th></th></tr>`
+      : `<tr><th>Pri.</th><th style="width:72px">O.T.</th><th style="width:110px">Producto</th><th>Lote</th><th style="width:120px">Operación</th><th>Mont.</th><th>Unit.</th><th>Total</th><th>Exist.</th><th>Días</th><th>Inicio</th><th>Est.Fin</th><th>Ef.Mont.</th><th>Ef.Prod.</th><th>Estado</th><th></th></tr>`;
 
     html2+=`<div class="card" style="margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
         <span style="font-family:var(--font-display,sans-serif);font-size:20px;color:var(--accent2)">${machine}</span>
       </div>
-      <table class="tbl"><thead>${thead}</thead><tbody>${rows}</tbody></table>
+      <table class="tbl tbl-compact"><thead>${thead}</thead><tbody>${rows}</tbody></table>
     </div>`;
   }});
   body.innerHTML=html2;
@@ -8047,11 +8049,11 @@ function renderConsulta(){
           }
         });
         const thead3 = isTT2
-          ? '<tr><th>Pri.</th><th style="min-width:80px">O.T.</th><th style="min-width:130px">Producto</th><th>Lote</th><th style="min-width:150px">Operación</th><th>Exist.</th><th>Días</th><th>Envío</th><th>Recolección</th><th>Proveedor</th></tr>'
-          : '<tr><th>Pri.</th><th style="min-width:80px">O.T.</th><th style="min-width:130px">Producto</th><th>Lote</th><th style="min-width:150px">Operación</th><th>Mont.</th><th>Unit.</th><th>Total</th><th>Exist.</th><th>Días</th><th>Inicio</th><th>Est.Fin</th><th>Ef.Mont.</th><th>Ef.Prod.</th><th>Estado</th></tr>';
+          ? '<tr><th>Pri.</th><th style="width:72px">O.T.</th><th style="width:110px">Producto</th><th>Lote</th><th style="width:120px">Operación</th><th>Exist.</th><th>Días</th><th>Envío</th><th>Recolección</th><th>Proveedor</th></tr>'
+          : '<tr><th>Pri.</th><th style="width:72px">O.T.</th><th style="width:110px">Producto</th><th>Lote</th><th style="width:120px">Operación</th><th>Mont.</th><th>Unit.</th><th>Total</th><th>Exist.</th><th>Días</th><th>Inicio</th><th>Est.Fin</th><th>Ef.Mont.</th><th>Ef.Prod.</th><th>Estado</th></tr>';
         html3+='<div class="card" style="margin-bottom:14px">'
           +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:var(--accent2);margin-bottom:10px">'+machine+'</div>'
-          +'<table class="tbl"><thead>'+thead3+'</thead><tbody>'+rows3+'</tbody></table></div>';
+          +'<table class="tbl tbl-compact"><thead>'+thead3+'</thead><tbody>'+rows3+'</tbody></table></div>';
       }});
       machList.innerHTML=html3;
     }
