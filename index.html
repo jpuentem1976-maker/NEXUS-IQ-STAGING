@@ -6518,7 +6518,7 @@ function renderReleasedOTs(){
             </div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <span style="font-weight:700;font-size:14px">${p?.name||'Sin producto'}</span>
-              ${(()=>{const qr=(otQualityRecords||[]).filter(q=>q.ot_id===o.id);return qr.length?`<span class="tag" style="background:rgba(245,158,11,.15);color:var(--warn);border:1px solid rgba(245,158,11,.3);cursor:pointer;font-size:10px" data-qpanel="prog-q-${o.id}" onclick="var p=document.getElementById(this.dataset.qpanel);if(p)p.style.display=p.style.display==='none'?'block':'none'">&#10003; ${qr.length} reg. calidad</span>`:''})()}
+              ${(()=>{const qr=(otQualityRecords||[]).filter(q=>q.ot_id===o.id);return qr.length?`<span class="tag" style="background:rgba(245,158,11,.15);color:var(--warn);border:1px solid rgba(245,158,11,.3);cursor:pointer;font-size:10px" data-qpanel="prog-q-${o.id}">&#10003; ${qr.length} reg. calidad</span>`:''})()}
             </div>
             <div style="font-size:11px;color:var(--muted);margin-top:2px">Lote: <strong style="color:var(--text)">${o.qty} pzas</strong></div>
             ${(()=>{
@@ -6564,6 +6564,15 @@ function renderReleasedOTs(){
     }catch(err){ console.error('Error rendering OT '+o.number+':', err); }
   }
   list.innerHTML=html_parts.join('');
+
+  // Wire quality badge clicks via event delegation
+  list.querySelectorAll('[data-qpanel]').forEach(function(badge){
+    badge.addEventListener('click',function(){
+      var panelId=this.getAttribute('data-qpanel');
+      var panel=document.getElementById(panelId);
+      if(panel) panel.style.display=panel.style.display==='none'?'block':'none';
+    });
+  });
 
   // Cargar costeo en vivo por OT (MP, MOD, GIF, MOE, Total, Unitario)
   released.forEach(async o=>{
@@ -11367,12 +11376,21 @@ async function renderRmtProd(){
       const kgScrap=parseFloat((scrapsOT*kgPorPza).toFixed(3));
       const longNeta=parseFloat(Math.max(0,longTotal-longScrap).toFixed(3));
       const kgNeta=parseFloat(Math.max(0,kgTotal-kgScrap).toFixed(3));
-      const precioKg=parseFloat(t.precio_kg)||0;
-      const tValor=parseFloat(t.valor)||0;
-      // Para piezas (precio_kg=0): el valor viene de t.valor directamente
-      // Para barras: valor = kg * precio_kg
-      const valorBase=precioKg>0?(kgTotal*precioKg):tValor;
-      const valorNeto=parseFloat(Math.max(0,valorBase*(totalPzas>0?Math.max(0,totalPzas-scrapsOT)/totalPzas:1)).toFixed(2));
+      let precioKg=parseFloat(t.precio_kg)||0;
+      let tValor=parseFloat(t.valor)||0;
+      // Si precio_kg=0 y valor=0, intentar recuperar precio del lote actual en mpStock
+      if(precioKg===0&&tValor===0&&t.mp_stock_id){
+        const loteActual=mpStock.find(s=>s.id===t.mp_stock_id);
+        if(loteActual) precioKg=parseFloat(loteActual.precio_kg)||0;
+      }
+      // Si aún no hay precio, buscar por material_id en otros lotes del mismo producto
+      if(precioKg===0&&tValor===0&&t.material_id){
+        const otroLote=mpStock.find(s=>s.material_id===t.material_id&&parseFloat(s.precio_kg)>0);
+        if(otroLote) precioKg=parseFloat(otroLote.precio_kg)||0;
+      }
+      const kgUsados=Math.max(0,kgTotal-kgScrap);
+      const valorBase=precioKg>0?(kgUsados*precioKg):tValor;
+      const valorNeto=parseFloat(valorBase.toFixed(2));
 
       // Resolver nombre/forma/grupo desde catálogo si el tránsito los tiene null
       const matCatTrans=(mpMaterials||[]).find(m=>m.id===t.material_id);
