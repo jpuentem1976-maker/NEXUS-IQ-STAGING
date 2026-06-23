@@ -6392,19 +6392,27 @@ function renderReleasedOTs(){
   });
 
   // Renderizar estado BOM por OT (materiales faltantes con opción de solicitar)
-  released.forEach(async o=>{
-    const cell=document.getElementById('bom-status-'+o.id);
-    if(!cell) return;
-    const p=getProduct(o.product_id);
-    if(!p||(p.materials||[]).length===0) return;
-    // Cargar todos los transits de esta OT (incluyendo consumidos, no solo 'listo')
+  // Refrescar mpStock una sola vez antes del loop para que EN ALMACÉN muestre stock real
+  (async()=>{
     try{
-      const transitFresh=await sbSelect('mp_transit','select=*&ot_id=eq.'+encodeURIComponent(o.id));
-      renderBomStatusOTLiberada(o, p, cell, transitFresh||[]);
-    }catch(e){
-      renderBomStatusOTLiberada(o, p, cell, mpTransit.filter(t=>t.ot_id===o.id));
-    }
-  });
+      const freshStock=await sbSelect('mp_stock','select=*&order=material.asc');
+      if(freshStock) mpStock=freshStock;
+    }catch(e){ console.warn('No se pudo refrescar mpStock en liberadas:', e); }
+
+    released.forEach(async o=>{
+      const cell=document.getElementById('bom-status-'+o.id);
+      if(!cell) return;
+      const p=getProduct(o.product_id);
+      if(!p||(p.materials||[]).length===0) return;
+      // Cargar todos los transits de esta OT (incluyendo consumidos, no solo 'listo')
+      try{
+        const transitFresh=await sbSelect('mp_transit','select=*&ot_id=eq.'+encodeURIComponent(o.id));
+        renderBomStatusOTLiberada(o, p, cell, transitFresh||[]);
+      }catch(e){
+        renderBomStatusOTLiberada(o, p, cell, mpTransit.filter(t=>t.ot_id===o.id));
+      }
+    });
+  })();
 }
 
 // ── Estado BOM en OT Liberada: muestra materiales y permite solicitar faltantes ──
