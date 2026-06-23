@@ -7589,8 +7589,8 @@ function renderMachineLoad(){
 
     // Headers según tipo de máquina
     const thead = isTT
-      ? `<tr><th>Pri.</th><th>O.T.</th><th>Producto</th><th>Lote</th><th>Operación</th><th>Exist.</th><th>Días</th><th>Envío</th><th>Recolección</th><th>Proveedor</th><th></th></tr>`
-      : `<tr><th>Pri.</th><th>O.T.</th><th>Producto</th><th>Lote</th><th>Operación</th><th>Mont.</th><th>Unit.</th><th>Total</th><th>Exist.</th><th>Días</th><th>Inicio</th><th>Est.Fin</th><th>Ef.Mont.</th><th>Ef.Prod.</th><th>Estado</th><th></th></tr>`;
+      ? `<tr><th>Pri.</th><th style="min-width:80px">O.T.</th><th style="min-width:130px">Producto</th><th>Lote</th><th style="min-width:150px">Operación</th><th>Exist.</th><th>Días</th><th>Envío</th><th>Recolección</th><th>Proveedor</th><th></th></tr>`
+      : `<tr><th>Pri.</th><th style="min-width:80px">O.T.</th><th style="min-width:130px">Producto</th><th>Lote</th><th style="min-width:150px">Operación</th><th>Mont.</th><th>Unit.</th><th>Total</th><th>Exist.</th><th>Días</th><th>Inicio</th><th>Est.Fin</th><th>Ef.Mont.</th><th>Ef.Prod.</th><th>Estado</th><th></th></tr>`;
 
     html2+=`<div class="card" style="margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
@@ -8047,8 +8047,8 @@ function renderConsulta(){
           }
         });
         const thead3 = isTT2
-          ? '<tr><th>Pri.</th><th>O.T.</th><th>Producto</th><th>Lote</th><th>Operación</th><th>Exist.</th><th>Días</th><th>Envío</th><th>Recolección</th><th>Proveedor</th></tr>'
-          : '<tr><th>Pri.</th><th>O.T.</th><th>Producto</th><th>Lote</th><th>Operación</th><th>Mont.</th><th>Unit.</th><th>Total</th><th>Exist.</th><th>Días</th><th>Inicio</th><th>Est.Fin</th><th>Ef.Mont.</th><th>Ef.Prod.</th><th>Estado</th></tr>';
+          ? '<tr><th>Pri.</th><th style="min-width:80px">O.T.</th><th style="min-width:130px">Producto</th><th>Lote</th><th style="min-width:150px">Operación</th><th>Exist.</th><th>Días</th><th>Envío</th><th>Recolección</th><th>Proveedor</th></tr>'
+          : '<tr><th>Pri.</th><th style="min-width:80px">O.T.</th><th style="min-width:130px">Producto</th><th>Lote</th><th style="min-width:150px">Operación</th><th>Mont.</th><th>Unit.</th><th>Total</th><th>Exist.</th><th>Días</th><th>Inicio</th><th>Est.Fin</th><th>Ef.Mont.</th><th>Ef.Prod.</th><th>Estado</th></tr>';
         html3+='<div class="card" style="margin-bottom:14px">'
           +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:var(--accent2);margin-bottom:10px">'+machine+'</div>'
           +'<table class="tbl"><thead>'+thead3+'</thead><tbody>'+rows3+'</tbody></table></div>';
