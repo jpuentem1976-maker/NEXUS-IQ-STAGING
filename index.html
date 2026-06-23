@@ -6565,14 +6565,16 @@ function renderReleasedOTs(){
   }
   list.innerHTML=html_parts.join('');
 
-  // Wire quality badge clicks via event delegation
-  list.querySelectorAll('[data-qpanel]').forEach(function(badge){
-    badge.addEventListener('click',function(){
-      var panelId=this.getAttribute('data-qpanel');
-      var panel=document.getElementById(panelId);
-      if(panel) panel.style.display=panel.style.display==='none'?'block':'none';
+  // Wire quality badge clicks - do after a tick so DOM is settled
+  setTimeout(function(){
+    list.querySelectorAll('[data-qpanel]').forEach(function(badge){
+      badge.addEventListener('click',function(){
+        var panelId=this.getAttribute('data-qpanel');
+        var panel=document.getElementById(panelId);
+        if(panel) panel.style.display=panel.style.display==='none'?'block':'none';
+      });
     });
-  });
+  },100);
 
   // Cargar costeo en vivo por OT (MP, MOD, GIF, MOE, Total, Unitario)
   released.forEach(async o=>{
@@ -11447,7 +11449,7 @@ async function renderRmtProd(){
   list.innerHTML=bannerGlobal+keys.map(key=>{
     const g=grupos[key];
     const diam=g.diametro?parseFloat(g.diametro).toFixed(3)+'"':'--';
-    const esPiezaGrupo=['pieza','corte','forja','fundicion'].includes((g.grupo||'').toLowerCase())||(g.forma||'').toLowerCase()==='n/a';
+    const esPiezaGrupo=['pieza','corte','forja','fundicion'].includes((g.grupo||'').toLowerCase())||(g.forma||'').toLowerCase()==='n/a'||g.longTotal===0;
     return `<div class="card" style="margin-bottom:12px">
       <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
         <div style="flex:1;min-width:220px">
