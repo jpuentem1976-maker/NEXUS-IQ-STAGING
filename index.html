@@ -6559,7 +6559,32 @@ function renderReleasedOTs(){
           <button class="btn btn-sm btn-danger" onclick="deleteReleasedOT('${o.id}','${o.number}')"><svg class="ic"><use href="#ic-trash"/></svg> Eliminar</button>
         </div>
         <div id="bom-status-${o.id}" style="margin-top:10px"></div>
-        <div id="prog-q-${o.id}" style="display:none;margin-top:8px;border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:10px;background:rgba(245,158,11,.04)"></div>
+        ${(()=>{
+          const qr=(otQualityRecords||[]).filter(q=>q.ot_id===o.id);
+          if(!qr.length) return '';
+          const rows=qr.map(q=>{
+            const d=JSON.parse(q.datos||'{}');
+            const rc=q.resultado==='aprobado'?'var(--green)':q.resultado==='rechazado'?'var(--danger)':'var(--warn)';
+            return '<div style="background:var(--bg3);border-radius:6px;padding:10px;margin-bottom:6px;font-size:11px">'
+              +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">'
+              +'<span style="font-weight:700;color:var(--accent2)">'+q.tipo_inspeccion.replace(/_/g,' ').toUpperCase()+'</span>'
+              +'<span style="color:var(--muted)">'+new Date(q.fecha).toLocaleDateString('es-MX')+'</span>'
+              +'<span style="font-weight:700;color:'+rc+'">'+q.resultado.toUpperCase()+'</span>'
+              +'<span style="color:var(--muted)">Inspector: '+(q.inspector||'—')+'</span>'
+              +'</div>'
+              +'<div style="display:flex;gap:16px;flex-wrap:wrap">'
+              +(d.c_superficial!=null?'<span>%C Superficial: <strong style="color:var(--accent)">'+d.c_superficial+'</strong></span>':'')
+              +(d.capa_carburizado!=null?' <span>Capa: <strong style="color:var(--accent)">'+d.capa_carburizado+' mm</strong></span>':'')
+              +(d.dureza_hrc!=null?' <span>Dureza: <strong style="color:var(--accent)">'+d.dureza_hrc+' HRC</strong></span>':'')
+              +(d.lote_muestra?' <span>Lote: <strong style="color:var(--accent)">'+d.lote_muestra+'</strong></span>':'')
+              +'</div>'
+              +(q.notas?'<div style="color:var(--muted);margin-top:4px;font-style:italic">'+q.notas+'</div>':'')
+              +'</div>';
+          }).join('');
+          return '<div id="prog-q-'+o.id+'" style="display:none;margin-top:8px;border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:10px;background:rgba(245,158,11,.04)">'
+            +'<div style="font-size:11px;font-weight:700;color:var(--warn);margin-bottom:8px;text-transform:uppercase">Registros de Calidad</div>'
+            +rows+'</div>';
+        })()}
       </div>`);
     }catch(err){ console.error('Error rendering OT '+o.number+':', err); }
   }
@@ -6605,31 +6630,7 @@ function renderReleasedOTs(){
       }catch(e){
         renderBomStatusOTLiberada(o, p, cell, mpTransit.filter(t=>t.ot_id===o.id));
       }
-      // Poblar panel de registros de calidad
-      const qPanel=document.getElementById('prog-q-'+o.id);
-      if(!qPanel) return;
-      const qRecs=(otQualityRecords||[]).filter(q=>q.ot_id===o.id);
-      if(!qRecs.length){ qPanel.style.display='none'; return; }
-      qPanel.innerHTML=`<div style="font-size:11px;font-weight:700;color:var(--warn);margin-bottom:8px;text-transform:uppercase">Registros de Calidad</div>`
-        +qRecs.map(q=>{
-          const d=JSON.parse(q.datos||'{}');
-          const rc=q.resultado==='aprobado'?'var(--green)':q.resultado==='rechazado'?'var(--danger)':'var(--warn)';
-          return `<div style="background:var(--bg3);border-radius:6px;padding:10px;margin-bottom:6px;font-size:11px">
-            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
-              <span style="font-weight:700;color:var(--accent2)">${q.tipo_inspeccion.replace(/_/g,' ').toUpperCase()}</span>
-              <span style="color:var(--muted)">${new Date(q.fecha).toLocaleDateString('es-MX')}</span>
-              <span style="font-weight:700;color:${rc}">${q.resultado.toUpperCase()}</span>
-              <span style="color:var(--muted)">Inspector: ${q.inspector||'—'}</span>
-            </div>
-            <div style="display:flex;gap:16px;flex-wrap:wrap">
-              ${d.c_superficial!=null?`<span>%C Superficial: <strong style="color:var(--accent)">${d.c_superficial}</strong></span>`:''}
-              ${d.capa_carburizado!=null?`<span>Capa: <strong style="color:var(--accent)">${d.capa_carburizado} mm</strong></span>`:''}
-              ${d.dureza_hrc!=null?`<span>Dureza: <strong style="color:var(--accent)">${d.dureza_hrc} HRC</strong></span>`:''}
-              ${d.lote_muestra?`<span>Lote muestra: <strong style="color:var(--accent)">${d.lote_muestra}</strong></span>`:''}
-            </div>
-            ${q.notas?`<div style="color:var(--muted);margin-top:4px;font-style:italic">${q.notas}</div>`:''}
-          </div>`;
-        }).join('');
+      // Quality panel ya poblado inline en el template
     });
   })();
 }
@@ -6703,12 +6704,13 @@ function renderBomStatusOTLiberada(o, p, cell, transitOT){
     const consumidoAlLiberar = yaConsumidoEnLiberar(matTipo, matLabel, esBarra);
 
     // ── Determinar estado real ──
-    // Para barras: cubierto si ya hay transit consumido (se descuentó al liberar o se solicitó)
-    // Para piezas: cubierto si ya hay transit consumido para este material en esta OT
+    // Para barras: cubierto si hay transit consumido O en tránsito activo
+    // Para piezas: cubierto si hay transit consumido o stock PP disponible
+    // yaConsumidoEnLiberar detecta status='consumido' en transitOT (cargado fresco con todos los status)
     const yaCubierto = consumidoAlLiberar
       || (esBarra
         ? (cantTransit >= totalReq*0.99 || cubiertoTotal)
-        : (cantTransit >= reqLote || cubiertoTotal));
+        : (cantTransit >= reqLote || cubiertoTotal || b.cubierto>=1));
 
     let estadoTag, puedeSolicitar=false;
     if(yaCubierto){
