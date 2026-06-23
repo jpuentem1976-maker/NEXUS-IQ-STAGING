@@ -2680,7 +2680,7 @@ async function loadAlmDataSilent(){
 }
 
 async function loadAllData(){
-  const [prods,ops,ots,opsList,sess,sessComplete,mc,oc,ml,rm,del,scr,ext,prodMats,mpMatsData,recursosProdData,secOps,qualRecs]=await Promise.all([
+  const [prods,ops,ots,opsList,sess,sessComplete,mc,oc,ml,rm,del,scr,ext,prodMats,mpMatsData,recursosProdData,secOps,qualRecs,mpRes,mpTrn]=await Promise.all([
     sbSelect('products','select=*&order=name.asc'),
     sbSelect('operations','select=*&order=sort_order'),
     sbSelect('work_orders','select=*&order=created_at.desc'),
@@ -2699,6 +2699,8 @@ async function loadAllData(){
     sbSelect('recursos_produccion','select=*&order=familia.asc,subfamilia.asc,nombre.asc'),
     sbSelect('secondary_ops_active','select=*&status=eq.en_curso&order=started_at.asc'),
     sbSelect('ot_quality_records','select=*&order=created_at.desc'),
+    sbSelect('mp_reservations','select=*&status=in.(apartado,parcial,en_transito)'),
+    sbSelect('mp_transit','select=*&status=in.(listo,liberado)&order=moved_at.desc'),
   ]);
   products=prods.map(p=>({...p,operations:(ops||[]).filter(o=>o.product_id===p.id).sort((a,b)=>a.sort_order-b.sort_order),materials:(prodMats||[]).filter(m=>m.product_id===p.id)}));
   operators=(opsList||[]);
@@ -2717,6 +2719,9 @@ async function loadAllData(){
   otScrap=scr||[];
   otExternalServices=ext||[];
   otQualityRecords=qualRecs||[];
+  // Solo actualizar si Almacén no los cargó más recientemente
+  if(!(mpReservations&&mpReservations.length)) mpReservations=mpRes||[];
+  if(!(mpTransit&&mpTransit.length)) mpTransit=mpTrn||[];
   // Catálogo de materiales dinámico
   mpMaterials=mpMatsData||[];
   if(mpMaterials.length){
@@ -3241,11 +3246,28 @@ function startSecondaryStep(){
   if(existingSpecial) existingSpecial.remove();
 
   if(isTTOp){
-    // TT: solo timer + campos de inspección + Operación Concluida
+    // TT: timer arranca automático + campos de inspección + Operación Concluida
     document.getElementById('sec-btn-start').classList.add('hidden');
     document.getElementById('sec-btn-finish').classList.add('hidden');
-    // Hide piezas field
     document.getElementById('sec-piezas').closest('.field').style.display='none';
+    // Arrancar timer automáticamente
+    ctx.secStart=Date.now(); ctx.secStartedAt=Date.now();
+    document.getElementById('sec-timer').style.color='var(--accent)';
+    clearInterval(tickInterval);
+    tickInterval=setInterval(()=>{
+      const el=Math.floor((Date.now()-ctx.secStartedAt)/1000);
+      document.getElementById('sec-timer').textContent=fmtSec(el);
+    },500);
+    // Persistir inicio en BD
+    (async()=>{
+      const rec={id:uid(),session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,
+        product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,
+        operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,
+        machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,
+        qty:ctx.wo.qty,started_at:new Date().toISOString(),status:'en_curso',created_at:new Date().toISOString()};
+      ctx.secActiveId=rec.id;
+      try{ await sbInsert('secondary_ops_active',rec); secOpsActive.unshift(rec); }catch(e){ console.error(e); }
+    })();
     const panel=document.createElement('div');
     panel.id='sec-special-panel';
     panel.innerHTML=`
