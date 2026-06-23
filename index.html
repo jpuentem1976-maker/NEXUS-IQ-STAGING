@@ -6466,9 +6466,17 @@ function renderBomStatusOTLiberada(o, p, cell, transitOT){
 
     // Stock disponible en Almacén General (match robusto)
     const stockGen=stockGeneral(matTipo, matLabel);
+    // Para piezas, sumar también lotes Por Producto de este renglón del BOM
+    const stockPP=esBarra?[]:mpStock.filter(s=>
+      s.producto_id===o.product_id &&
+      String(s.bom_item_id)===String(bomId) &&
+      (s.status==='disponible'||s.status==='parcial') &&
+      (parseInt(s.cantidad)||0)>0
+    );
     const dispGeneral=esBarra
       ? stockGen.reduce((a,s)=>a+stockLongTotal(s),0)
-      : stockGen.reduce((a,s)=>a+(parseInt(s.cantidad)||0),0);
+      : stockGen.reduce((a,s)=>a+(parseInt(s.cantidad)||0),0)
+        + stockPP.reduce((a,s)=>a+(parseInt(s.cantidad)||0),0);
 
     // Cuánto ya tiene asignado esta OT en mp_transit
     const cantTransit=cantEnTransit(matTipo, matLabel, esBarra);
