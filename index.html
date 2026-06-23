@@ -38,6 +38,19 @@
 .dot-purple{background:#7C3AED}
 .dot-black{background:#111827}
 body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;overflow-x:hidden}
+/* ── ANTI-TENUE GLOBAL: ningún texto visible debe ser tenue ── */
+*{-webkit-font-smoothing:antialiased}
+span,div,td,th,p,label,small,li,a{color:inherit}
+.sec-sub{color:var(--text)!important;font-weight:600}
+.info-key{color:var(--text)!important;font-weight:600}
+.stat-label{color:var(--text)!important;font-weight:700}
+.field label{color:var(--text)!important}
+/* Boost inline font-size:11px/12px elements — override via specificity */
+[style*="font-size:11px"]{font-size:13px!important;font-weight:600!important}
+[style*="font-size:12px"]{font-size:13px!important}
+[style*="font-size:12px"][style*="font-weight:700"]{font-size:13px!important;font-weight:700!important}
+/* Keep large decorative sizes intact */
+[style*="font-size:22px"],[style*="font-size:24px"],[style*="font-size:28px"],[style*="font-size:32px"],[style*="font-size:44px"],[style*="font-size:56px"],[style*="font-size:18px"],[style*="font-size:20px"],[style*="font-size:16px"],[style*="font-size:15px"],[style*="font-size:14px"]{font-size:revert!important}
 input,select,textarea{background:#fff;border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;padding:9px 13px;width:100%;outline:none;transition:border-color .2s,box-shadow .2s}
 input:focus,select:focus,textarea:focus{border-color:var(--accent2);box-shadow:0 0 0 2px rgba(15,123,63,.18)}
 input::placeholder,textarea::placeholder{color:#6B7280}
@@ -760,28 +773,28 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
     <div id="c-dashboard-list"></div>
   </div>
   <div id="c-programacion" class="subpage fade">
-    <div style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--muted)"><svg class="ic"><use href="#ic-clipboard"/></svg> Órdenes en Programación <span style="font-size:11px">(Solo lectura)</span></div>
+    <div style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text)"><svg class="ic"><use href="#ic-clipboard"/></svg> Órdenes en Programación <span style="font-size:11px">(Solo lectura)</span></div>
     <div id="c-prog-list"></div>
   </div>
   <div id="c-liberadas" class="subpage">
-    <div style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--muted)"><svg class="ic"><use href="#ic-check-circle"/></svg> O.T. Liberadas <span style="font-size:11px">(Solo lectura)</span></div>
+    <div style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text)"><svg class="ic"><use href="#ic-check-circle"/></svg> O.T. Liberadas <span style="font-size:11px">(Solo lectura)</span></div>
     <div id="c-lib-list"></div>
   </div>
   <div id="c-maquinas" class="subpage">
-    <div style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--muted)"><svg class="ic"><use href="#ic-gear"/></svg> Carga de Máquinas <span style="font-size:11px">(Solo lectura)</span></div>
+    <div style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text)"><svg class="ic"><use href="#ic-gear"/></svg> Carga de Máquinas <span style="font-size:11px">(Solo lectura)</span></div>
     <div id="c-mach-list"></div>
   </div>
   <div id="c-productos" class="subpage">
-    <div style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--muted)"><svg class="ic"><use href="#ic-folder-index"/></svg> Productos <span style="font-size:11px">(Solo lectura)</span></div>
+    <div style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text)"><svg class="ic"><use href="#ic-folder-index"/></svg> Productos <span style="font-size:11px">(Solo lectura)</span></div>
     <div id="c-prod-list"></div>
   </div>
   <div id="c-drawings" class="subpage">
-    <div style="font-size:15px;font-weight:700;margin-bottom:4px;color:var(--muted)"><svg class="ic"><use href="#ic-ruler"/></svg> Dibujos <span style="font-size:11px">(Solo lectura)</span></div>
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px;color:var(--text)"><svg class="ic"><use href="#ic-ruler"/></svg> Dibujos <span style="font-size:11px">(Solo lectura)</span></div>
     <div id="c-drawings-body"></div>
   </div>
 
   <div id="c-herramental" class="subpage">
-    <div style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--muted)"><svg class="ic"><use href="#ic-wrench"/></svg> Herramental por Máquina <span style="font-size:11px">(Solo lectura)</span></div>
+    <div style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text)"><svg class="ic"><use href="#ic-wrench"/></svg> Herramental por Máquina <span style="font-size:11px">(Solo lectura)</span></div>
     <div id="c-tool-list"></div>
   </div>
 </div>
@@ -6111,10 +6124,10 @@ function checkOTMaterialDisponible(p){
       html+='<div style="background:var(--bg3);border-radius:6px;padding:8px 12px;margin-bottom:6px">';
       html+=icon+' <strong>'+(matCat.label||m.tipo)+(dimStr?' — '+dimStr:'')+'</strong><br>';
       html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px;font-size:11px">';
-      html+='<div><div style="color:var(--muted)">Existencia total</div><strong>'+totalDisp.toFixed(3)+'"</strong></div>';
-      html+='<div><div style="color:var(--muted)">Ya apartado</div><strong style="color:var(--warn)">'+yaApartado.toFixed(3)+'"</strong></div>';
-      html+='<div><div style="color:var(--muted)">Disponible real</div><strong style="color:'+colorReal+'">'+dispReal.toFixed(3)+'"</strong></div>';
-      html+='<div><div style="color:var(--muted)">Esta OT necesita</div><strong style="color:var(--accent2)">'+totalReq.toFixed(3)+'"</strong></div>';
+      html+='<div><div style="color:var(--text);font-weight:600">Existencia total</div><strong>'+totalDisp.toFixed(3)+'"</strong></div>';
+      html+='<div><div style="color:var(--text);font-weight:600">Ya apartado</div><strong style="color:var(--warn)">'+yaApartado.toFixed(3)+'"</strong></div>';
+      html+='<div><div style="color:var(--text);font-weight:600">Disponible real</div><strong style="color:'+colorReal+'">'+dispReal.toFixed(3)+'"</strong></div>';
+      html+='<div><div style="color:var(--text);font-weight:600">Esta OT necesita</div><strong style="color:var(--accent2)">'+totalReq.toFixed(3)+'"</strong></div>';
       html+='</div>';
       if(cubierto>0){
         html+='<div style="font-size:11px;color:var(--green);margin-top:4px"><svg class="ic"><use href="#ic-tag"/></svg> Cubierto por Material Pre-habilitado: '+cubierto.toFixed(3)+'" (de '+totalReqOriginal.toFixed(3)+'" originales)</div>';
@@ -6139,7 +6152,7 @@ function checkOTMaterialDisponible(p){
       html+=icon+' <strong>'+(matCat?.name||'--').toUpperCase()+'</strong> <span class="tag" style="color:var(--muted)">'+(m.unidad||'pzas')+'</span><br>';
       html+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px;font-size:11px">';
       html+='<div><div style="color:var(--muted)">Existencia</div><strong>'+totalCant+'</strong></div>';
-      html+='<div><div style="color:var(--muted)">Ya apartado</div><strong style="color:var(--warn)">'+yaApartado+'</strong></div>';
+      html+='<div><div style="color:var(--text);font-weight:600">Ya apartado</div><strong style="color:var(--warn)">'+yaApartado+'</strong></div>';
       html+='<div><div style="color:var(--muted)">Disponible / Lote requiere</div><strong style="color:'+(okQty?'var(--green)':'var(--danger)')+'">'+dispReal+' / '+reqLote+'</strong></div>';
       html+='</div>';
       html+='<div style="font-size:12px;color:#1F2937;margin-top:4px">Recepción directa en "OT por Habilitar" — no requiere corte.</div>';
@@ -6561,7 +6574,7 @@ function renderReleasedOTs(){
             })()}
             <div style="margin-top:8px">
               <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
-                <span style="color:var(--muted)">Avance</span>
+                <span style="color:var(--text);font-weight:700">Avance</span>
                 <span style="color:var(--accent);font-weight:700">${o.progress_pct||0}%</span>
               </div>
               <div class="ot-pbar"><div class="ot-pbar-fill" style="width:${o.progress_pct||0}%"></div></div>
@@ -7827,9 +7840,9 @@ function renderConsulta(){
             +'<span style="font-weight:700;color:'+dc+'">'+em+' '+sc+' pzas</span>'
             +' <span style="font-size:11px;color:'+dc+';font-weight:700">· '+days+' días soporte</span></div>':'')
           +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">'
-          +'<span style="color:var(--muted)">Avance</span><span style="color:var(--accent);font-weight:700">'+pct+'%</span></div>'
+          +'<span style="color:var(--text);font-weight:700">Avance</span><span style="color:var(--accent);font-weight:700">'+pct+'%</span></div>'
           +'<div class="ot-pbar"><div class="ot-pbar-fill" style="width:'+pct+'%"></div></div>'
-          +'<div style="font-size:12px;color:#1F2937;margin-top:6px">MP:$'+cMP.toFixed(0)+' MOD:$'+cMOD.toFixed(0)+' GIF:$'+cGIF.toFixed(0)+' MOE:$'+cMOE.toFixed(0)+' <strong style="color:var(--green)">Total:$'+cTotal.toFixed(2)+'</strong> · Unit:$'+cUnit.toFixed(2)+'</div>'
+          +'<div style="font-size:13px;font-weight:600;color:var(--text);margin-top:6px">MP:$'+cMP.toFixed(0)+' MOD:$'+cMOD.toFixed(0)+' GIF:$'+cGIF.toFixed(0)+' MOE:$'+cMOE.toFixed(0)+' <strong style="color:var(--green)">Total:$'+cTotal.toFixed(2)+'</strong> · Unit:$'+cUnit.toFixed(2)+'</div>'
           +qPanel
           +'</div>'
           +'<div style="display:flex;gap:16px;text-align:center;flex-shrink:0">'
