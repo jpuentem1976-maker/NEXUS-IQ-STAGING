@@ -768,6 +768,7 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
     <button class="ptab" onclick="setConsultaTab('c-productos',this)"><svg class="ic"><use href="#ic-folder-index"/></svg> Productos</button>
     <button class="ptab" onclick="setConsultaTab('c-herramental',this)"><svg class="ic"><use href="#ic-wrench"/></svg> Herramental</button>
     <button class="ptab" onclick="setConsultaTab('c-drawings',this)"><svg class="ic"><use href="#ic-ruler"/></svg> Dibujos</button>
+    <button class="ptab" onclick="setConsultaTab('c-control',this)"><svg class="ic"><use href="#ic-check-circle"/></svg> Control Diario</button>
   </div>
   <div id="c-dashboard" class="subpage active fade">
     <div id="c-dashboard-list"></div>
@@ -793,6 +794,9 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
     <div id="c-drawings-body"></div>
   </div>
 
+  <div id="c-control" class="subpage">
+    <div id="c-control-body"></div>
+  </div>
   <div id="c-herramental" class="subpage">
     <div style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--text)"><svg class="ic"><use href="#ic-wrench"/></svg> Herramental por Máquina <span style="font-size:13px">(Solo lectura)</span></div>
     <div id="c-tool-list"></div>
@@ -5466,6 +5470,124 @@ window.renderDrawings = renderDrawings;
 function renderConsultaDrawings(){ buildDrawingsGrid(products, 'c-drawings-body'); }
 window.renderConsultaDrawings = renderConsultaDrawings;
 
+// ── CONTROL DIARIO — Checklist inteligente Programación ──────────────────
+function renderControlDiario(){
+  const el = document.getElementById('c-control-body');
+  if(!el) return;
+
+  const hoy = new Date().toISOString().substring(0,10);
+
+  // A1: carga de máquinas actualizada hoy
+  const mlCambiosHoy = machineLoad.some(m =>
+    (m.completed_at && m.completed_at.substring(0,10)===hoy) ||
+    (m.updated_at && m.updated_at.substring(0,10)===hoy) ||
+    (m.created_at && m.created_at.substring(0,10)===hoy)
+  );
+  const mlCompHoy = machineLoad.filter(m=>m.completed_at&&m.completed_at.substring(0,10)===hoy).length;
+
+  // A2: existencias actualizadas hoy
+  const existActHoy = workOrders.some(o=>o.updated_at&&o.updated_at.substring(0,10)===hoy&&o.stock_current!==undefined);
+
+  // B1: productos bajo mínimo + OT creada hoy
+  const prodsBajoMin = products.filter(p=>p.tipo_producto==='stock'&&p.stock_min>0&&(p.stock_current??0)<p.stock_min);
+  const otCreadaHoy = workOrders.some(o=>o.created_at&&o.created_at.substring(0,10)===hoy);
+  const b1Aplica=prodsBajoMin.length>0; const b1Hecho=b1Aplica&&otCreadaHoy;
+
+  // B2: OTs listas para liberar + liberada hoy
+  const otsListas=workOrders.filter(o=>o.status==='programming'&&o.raw_material_ok);
+  const otLibHoy=workOrders.some(o=>o.released_at&&o.released_at.substring(0,10)===hoy);
+  const b2Aplica=otsListas.length>0||otLibHoy; const b2Hecho=otLibHoy;
+
+  // B3: piezas en tránsito + entrega hoy
+  const entregaHoy=otDeliveries.some(d=>d.delivered_at&&d.delivered_at.substring(0,10)===hoy);
+  const hayPT=workOrders.some(o=>o.status==='released'&&(o.delivered_qty??0)<o.qty);
+  const b3Aplica=hayPT||entregaHoy; const b3Hecho=entregaHoy;
+
+  // B4: OTs al 100% + cerrada hoy
+  const otsPend100=workOrders.filter(o=>o.status==='released'&&o.progress_pct>=100);
+  const otCerHoy=workOrders.some(o=>o.closed_at&&o.closed_at.substring(0,10)===hoy);
+  const b4Aplica=otsPend100.length>0||otCerHoy; const b4Hecho=otCerHoy;
+
+  // B5: servicios externos activos (manual)
+  const extActivos=otExternalServices.filter(s=>{const wo=workOrders.find(o=>o.id===s.ot_id);return wo&&wo.status==='released';});
+  const b5Aplica=extActivos.length>0;
+  const b5Confirmado=localStorage.getItem('cd_prog_b5_'+hoy)==='1';
+
+  // Calcular %
+  let hechas=(mlCambiosHoy?1:0)+(existActHoy?1:0); let aplicables=2;
+  if(b1Aplica){aplicables++;if(b1Hecho)hechas++;}
+  if(b2Aplica){aplicables++;if(b2Hecho)hechas++;}
+  if(b3Aplica){aplicables++;if(b3Hecho)hechas++;}
+  if(b4Aplica){aplicables++;if(b4Hecho)hechas++;}
+  if(b5Aplica){aplicables++;if(b5Confirmado)hechas++;}
+  const pct=Math.round((hechas/aplicables)*100);
+  const pctC=pct>=80?'var(--accent2)':pct>=50?'var(--warn)':'var(--danger)';
+
+  function itemRow(ic,nom,desc,tipo,aplica,hecho,manual){
+    const noAp=!aplica&&tipo==='B';
+    const bg=noAp?'var(--bg4)':hecho?'#EAF3DE':'#FCEBEB';
+    const ic2=noAp?'var(--border)':hecho?'var(--accent2)':'var(--danger)';
+    const bdg=tipo==='A'?'background:#EAF3DE;color:#3B6D11':aplica?'background:#E6F1FB;color:#0C447C':'background:#F3F2F1;color:#888780';
+    const bLabel=tipo==='A'?'Obligatorio':aplica?'Aplica hoy':'No aplica';
+    const manBtn=manual&&aplica&&!hecho?'<button onclick="confirmarServExt()" style="margin-top:6px;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 10px;border-radius:var(--r);font-size:13px;cursor:pointer">Confirmar revisión</button>':'';
+    const manOk=manual&&aplica&&hecho?'<span style="color:var(--accent2);font-size:13px;font-weight:700;display:block;margin-top:4px">Confirmado hoy</span>':'';
+    return '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);margin-bottom:8px'+(noAp?';opacity:.5':'')+'">'
+      +'<div style="width:32px;height:32px;border-radius:50%;background:'+bg+';display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px"><svg class="ic" style="color:'+ic2+'"><use href="#ic-'+ic+'"/></svg></div>'
+      +'<div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px">'+nom+'</div>'
+      +'<div style="font-size:13px;color:var(--text);line-height:1.5">'+desc+'</div>'+manBtn+manOk+'</div>'
+      +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">'
+      +'<span style="font-size:12px;font-weight:600;padding:2px 8px;border-radius:20px;'+bdg+'">'+bLabel+'</span>'
+      +'<div style="width:10px;height:10px;border-radius:50%;background:'+(noAp?'var(--border)':hecho?'var(--accent2)':'var(--danger)')+'" title="'+(noAp?'No aplica':hecho?'Completado':'Pendiente')+'"></div>'
+      +'</div></div>';
+  }
+
+  const fecha=new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+
+  el.innerHTML=
+    '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px">'
+    +'<div><div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:3px"><svg class="ic"><use href="#ic-check-circle"/></svg> Control Diario — Programación</div>'
+    +'<div style="font-size:13px;color:var(--text)">Detección automática · '+fecha+'</div></div>'
+    +'<div style="text-align:center"><div style="font-size:36px;font-weight:700;color:'+pctC+';line-height:1">'+pct+'%</div>'
+    +'<div style="font-size:12px;color:var(--text);margin-top:2px">'+hechas+' de '+aplicables+' actividades</div>'
+    +'<div style="height:6px;background:var(--bg4);border-radius:3px;margin-top:6px;width:120px">'
+    +'<div style="height:100%;width:'+pct+'%;background:'+pctC+';border-radius:3px"></div></div></div></div>'
+
+    +'<div style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px">Tipo A — Revisión diaria obligatoria</div>'
+    +itemRow('cpu','Revisar y actualizar carga de máquinas',
+      mlCambiosHoy?'Hecho — '+mlCompHoy+' operación(es) completada(s) registradas hoy':'Pendiente — Sin cambios en Carga de Máquinas hoy (prioridades, cierres, eliminaciones)',
+      'A',true,mlCambiosHoy,false)
+    +itemRow('package','Actualizar existencias de productos',
+      existActHoy?'Hecho — Existencias actualizadas hoy':'Pendiente — Ir a Programación → Actualizar Existencias y guardar',
+      'A',true,existActHoy,false)
+
+    +'<div style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.05em;margin:16px 0 8px">Tipo B — Condicionales (solo si aplica hoy)</div>'
+    +itemRow('file-plus','Crear nueva OT',
+      b1Aplica?(b1Hecho?'Hecho — OT creada hoy':'Pendiente — '+prodsBajoMin.length+' producto(s) bajo mínimo: '+prodsBajoMin.slice(0,3).map(p=>p.name).join(', ')):'No aplica — Todos los productos están sobre su stock mínimo',
+      'B',b1Aplica,b1Hecho,false)
+    +itemRow('lock-open','Liberar OT',
+      b2Aplica?(b2Hecho?'Hecho — OT liberada hoy':'Pendiente — '+otsListas.length+' OT(s) con MP listo esperando liberación'):'No aplica — No hay OTs con materia prima confirmada pendientes',
+      'B',b2Aplica,b2Hecho,false)
+    +itemRow('truck-delivery','Registrar entregas PT',
+      b3Aplica?(b3Hecho?'Hecho — Entrega registrada hoy':'Pendiente — Hay piezas en tránsito PT sin entregar'):'No aplica — No hay piezas pendientes de entrega',
+      'B',b3Aplica,b3Hecho,false)
+    +itemRow('circle-check','Cerrar OT',
+      b4Aplica?(b4Hecho?'Hecho — OT cerrada hoy':'Pendiente — '+otsPend100.length+' OT(s) al 100% sin cerrar'):'No aplica — Ninguna OT ha llegado al 100%',
+      'B',b4Aplica,b4Hecho,false)
+    +itemRow('flame','Cargar información de servicio externo',
+      b5Aplica?(b5Confirmado?'Revisado y confirmado manualmente hoy':'Pendiente — '+extActivos.length+' servicio(s) externo(s) activo(s) requieren revisión de precio/fecha'):'No aplica — Sin servicios externos activos',
+      'B',b5Aplica,b5Confirmado,true)
+
+    +'<div style="margin-top:16px;padding:12px 14px;background:var(--bg3);border-radius:var(--r2);font-size:13px;color:var(--text)">'
+    +'<strong>Fórmula:</strong> (Tipo A hechas + Tipo B aplicables hechas) ÷ (2 + Tipo B que aplican hoy) &nbsp;·&nbsp; Se resetea cada día a las 00:00</div>';
+}
+window.renderControlDiario = renderControlDiario;
+
+window.confirmarServExt = function(){
+  const hoy=new Date().toISOString().substring(0,10);
+  localStorage.setItem('cd_prog_b5_'+hoy,'1');
+  renderControlDiario();
+};
+
 function buildDrawingsMpGrid(mats, containerId){
   const body=document.getElementById(containerId);
   if(!body) return;
@@ -7766,7 +7888,7 @@ window.setConsultaTab = function setConsultaTab(id,btn){
   const el=document.getElementById(id);
   if(el){el.classList.add('active');el.classList.add('fade');}
   if(btn) btn.classList.add('active');
-  loadAllData().then(function(){ if(id==='c-drawings') renderConsultaDrawings(); });
+  loadAllData().then(function(){ if(id==='c-drawings') renderConsultaDrawings(); if(id==='c-control') renderControlDiario(); });
 }
 
 function renderConsulta(){
