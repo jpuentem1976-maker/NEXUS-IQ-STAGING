@@ -2720,13 +2720,15 @@ async function loadAllData(){
   otScrap=scr||[];
   otExternalServices=ext||[];
   otQualityRecords=qualRecs||[];
-  // Solo actualizar si Almacén no los cargó más recientemente
-  if(!(mpReservations&&mpReservations.length)) mpReservations=mpRes||[];
-  if(!(mpTransit&&mpTransit.length)) mpTransit=mpTrn||[];
-  // Merge lotes PP en mpStock sin sobreescribir lotes completos si ya están cargados
+  // Siempre actualizar reservaciones y transit desde loadAllData
+  mpReservations=mpRes||[];
+  // Merge transit: preservar lotes completos si Almacén los cargó, pero siempre tener los activos
+  if(mpTrn&&mpTrn.length) mpTransit=mpTrn;
+  // Siempre reemplazar mpStock PP con datos frescos
   if(mpStockPP&&mpStockPP.length){
-    const existIds=new Set((mpStock||[]).map(s=>s.id));
-    mpStockPP.forEach(s=>{ if(!existIds.has(s.id)) mpStock.push(s); });
+    // Remover lotes PP anteriores y reemplazar con los frescos
+    mpStock=mpStock.filter(s=>!s.producto_id);
+    mpStockPP.forEach(s=>mpStock.push(s));
   }
   // Catálogo de materiales dinámico
   mpMaterials=mpMatsData||[];
@@ -5850,13 +5852,27 @@ function renderProgrammingList(){
     const apartadoO=resO.some(r=>r.status==='apartado'||r.status==='parcial');
     // Verificar si todos los renglones del BOM están cubiertos por lotes Por Producto
     const bomMats=(p?.materials||[]).filter(m=>(parseInt(m.cantidad)||0)>0);
-    const cubiertoPorProducto=bomMats.length>0&&bomMats.every(m=>{
-      const bomId=m.id;
-      const stockPP=mpStock.filter(s=>s.producto_id===o.product_id&&String(s.bom_item_id)===String(bomId)&&(s.status==='disponible'||s.status==='apartado'||s.status==='parcial'));
-      const dispPP=stockPP.reduce((a,s)=>a+(parseInt(s.cantidad)||0),0);
+    // Separar renglones barra vs pieza
+    const bomPiezas=bomMats.filter(m=>{
       const matCat=MAT_TYPES.find(t=>t.val===m.tipo);
       const esBarra=matCat?.grupo==='barra'||matCat?.grupo==='tubing'||['Redondo','Hexagonal','Barra Hueca','Cuadrado/Solera','Tubo'].includes(matCat?.forma||'');
-      return !esBarra&&dispPP>=(parseInt(m.cantidad)||0);
+      return !esBarra;
+    });
+    const bomBarras=bomMats.filter(m=>{
+      const matCat=MAT_TYPES.find(t=>t.val===m.tipo);
+      return matCat?.grupo==='barra'||matCat?.grupo==='tubing'||['Redondo','Hexagonal','Barra Hueca','Cuadrado/Solera','Tubo'].includes(matCat?.forma||'');
+    });
+    // Cubierto PP: todas las piezas tienen stock PP suficiente Y no hay barras pendientes
+    const cubiertoPorProducto=bomPiezas.length>0&&bomBarras.length===0&&bomPiezas.every(m=>{
+      const bomId=String(m.id||'');
+      // Buscar en mpStock cargado o en los datos del producto directamente
+      const stockPP=mpStock.filter(s=>
+        String(s.producto_id||'')===String(o.product_id||'')&&
+        String(s.bom_item_id||'')===bomId&&
+        (s.status==='disponible'||s.status==='apartado'||s.status==='parcial')
+      );
+      const dispPP=stockPP.reduce((a,s)=>a+(parseInt(s.cantidad)||0),0);
+      return dispPP>=(parseInt(m.cantidad)||0);
     });
     let badgeMP='<span class="tag" style="color:var(--muted);font-size:10px"><svg class="ic"><use href="#ic-dot-red"/></svg> Sin apartar</span>';
     if(enTransitoO) badgeMP='<span class="tag" style="color:var(--warn);font-size:10px">⏳ En Habilitado</span>';
