@@ -5815,6 +5815,25 @@ function updateNextOTDisplay(){
 }
 window.updateNextOTDisplay = updateNextOTDisplay;
 
+async function toggleRawMaterialOK(id, current){
+  const newVal=!current;
+  try{
+    await sbFetch('work_orders','id=eq.'+encodeURIComponent(id),'PATCH',{raw_material_ok:newVal});
+    const wo=workOrders.find(w=>w.id===id);
+    if(wo) wo.raw_material_ok=newVal;
+    renderProgrammingList();
+  }catch(e){ alert('Error al actualizar: '+e.message); }
+}
+window.toggleRawMaterialOK=toggleRawMaterialOK;
+
+async function autoMarkRawMaterialOK(id){
+  try{
+    await sbFetch('work_orders','id=eq.'+encodeURIComponent(id),'PATCH',{raw_material_ok:true});
+    const wo=workOrders.find(w=>w.id===id);
+    if(wo) wo.raw_material_ok=true;
+  }catch(e){ console.warn('autoMarkRawMaterialOK error:',e); }
+}
+
 function renderProgrammingList(){
   updateNextOTDisplay();
   const pending=workOrders.filter(o=>o.status==='programming');
@@ -5856,6 +5875,8 @@ function renderProgrammingList(){
     // Una OT está cubierta si todos sus renglones críticos tienen cubiertoTotal=true
     const estadoBOM=p?getOTBomMaterialStatus(o,p):[];
     const cubiertoPorProducto=estadoBOM.length>0&&estadoBOM.filter(b=>b.critico!==false).every(b=>b.cubiertoTotal);
+    // Auto-marcar raw_material_ok si está cubierto por PP y aún no está marcado
+    if(cubiertoPorProducto&&!o.raw_material_ok) autoMarkRawMaterialOK(o.id);
     let badgeMP='<span class="tag" style="color:var(--muted);font-size:10px"><svg class="ic"><use href="#ic-dot-red"/></svg> Sin apartar</span>';
     if(enTransitoO) badgeMP='<span class="tag" style="color:var(--warn);font-size:10px">⏳ En Habilitado</span>';
     else if(apartadoO) badgeMP='<span class="tag" style="color:var(--green);font-size:10px"><svg class="ic"><use href="#ic-dot-green"/></svg> Apartado</span>';
