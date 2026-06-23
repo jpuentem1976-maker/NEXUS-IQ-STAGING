@@ -11834,14 +11834,19 @@ async function calcOTCosting(otId){
     await new Promise(r=>setTimeout(r,400));
     mpRows = await sbSelect('mp_transit','select=*&ot_id=eq.'+encodeURIComponent(otId))||[];
   }
+  // Asegurar que mpStock esté cargado antes de calcular fallback de precio
+  let stockLocal = mpStock;
+  if(!stockLocal.length){
+    try{ stockLocal = await sbSelect('mp_stock','select=id,precio_kg,material,kg_total')||[]; }catch(e){}
+  }
   const totalMP=mpRows.reduce((a,t)=>{
-    // Usar valor si existe y es >0; si no, calcular desde kg_real*precio_kg
-    // Si precio_kg también es 0, buscar precio actual en mpStock como fallback
+    // 1. Usar valor guardado si existe y es >0
     let v=(t.valor!=null&&t.valor!==''&&parseFloat(t.valor)>0)
       ? parseFloat(t.valor)
       : ((parseFloat(t.kg_real)||0)*(parseFloat(t.precio_kg)||0));
+    // 2. Si precio_kg=0 en el registro, buscar precio actual en mpStock
     if(!v && (parseFloat(t.kg_real)||0)>0 && t.mp_stock_id){
-      const stock=mpStock.find(s=>s.id===t.mp_stock_id);
+      const stock=stockLocal.find(s=>s.id===t.mp_stock_id);
       if(stock) v=(parseFloat(t.kg_real)||0)*(parseFloat(stock.precio_kg)||0);
     }
     return a+(v||0);
