@@ -5485,8 +5485,8 @@ function renderControlDiario(){
   );
   const mlCompHoy = machineLoad.filter(m=>m.completed_at&&m.completed_at.substring(0,10)===hoy).length;
 
-  // A2: existencias actualizadas hoy
-  const existActHoy = workOrders.some(o=>o.updated_at&&o.updated_at.substring(0,10)===hoy&&o.stock_current!==undefined);
+  // A2: existencias actualizadas hoy (detectado via localStorage flag)
+  const existActHoy = localStorage.getItem('cd_exist_'+hoy)==='1';
 
   // B1: productos bajo mínimo + OT creada hoy
   const prodsBajoMin = products.filter(p=>p.tipo_producto==='stock'&&p.stock_min>0&&(p.stock_current??0)<p.stock_min);
@@ -6765,7 +6765,7 @@ function renderReleasedOTs(){
     try{
       const c=await calcOTCosting(o.id);
       const {totalMP,totalMOD,totalGIF,totalMOE,totalDel,costoTotal,costoUnitario}=c;
-      if(totalMP===0&&totalMOD===0&&totalGIF===0&&totalMOE===0) return; // sin datos aún, no mostrar fila vacía
+      // Mostrar costeo siempre que haya datos de MP transit, aunque sea $0
       cell.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:13px">
         <span style="color:var(--text);text-transform:uppercase;font-size:13px;font-weight:700"><svg class="ic"><use href="#ic-money-bag"/></svg> Costeo en vivo:</span>
         <span>MP: <b style="color:var(--accent2)">$${totalMP.toFixed(2)}</b></span>
@@ -8282,7 +8282,7 @@ window.saveAllExistencias = async function saveAllExistencias(){
       renderConsulta();
     }
     hideLoading();
-    alert('✅ Existencias actualizadas correctamente');
+    localStorage.setItem('cd_exist_'+new Date().toISOString().substring(0,10),'1'); alert('✅ Existencias actualizadas correctamente');
   }catch(e){hideLoading();alert('Error: '+e.message);}
 }
 
@@ -11828,7 +11828,15 @@ async function calcOTCosting(otId){
   // 1. Materia prima consumida (mp_transit, sin filtro de status)
   const mpRows=await sbSelect('mp_transit','select=*&ot_id=eq.'+encodeURIComponent(otId))||[];
   const totalMP=mpRows.reduce((a,t)=>{
-    const v=(t.valor!=null&&t.valor!=='')?parseFloat(t.valor):((parseFloat(t.kg_real)||0)*(parseFloat(t.precio_kg)||0));
+    // Usar valor si existe y es >0; si no, calcular desde kg_real*precio_kg
+    // Si precio_kg también es 0, buscar precio actual en mpStock como fallback
+    let v=(t.valor!=null&&t.valor!==''&&parseFloat(t.valor)>0)
+      ? parseFloat(t.valor)
+      : ((parseFloat(t.kg_real)||0)*(parseFloat(t.precio_kg)||0));
+    if(!v && (parseFloat(t.kg_real)||0)>0 && t.mp_stock_id){
+      const stock=mpStock.find(s=>s.id===t.mp_stock_id);
+      if(stock) v=(parseFloat(t.kg_real)||0)*(parseFloat(stock.precio_kg)||0);
+    }
     return a+(v||0);
   },0);
 
