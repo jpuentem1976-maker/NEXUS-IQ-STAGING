@@ -7078,10 +7078,13 @@ function getMachineLoadSessionData(otId, opId, machineName){
   return {status,setupEff,prodEff,prodPcs,setupPcs,isActive:mlStatus==='in_progress'};
 }
 
+const MACHINE_ORDER=['Torno CNC Crown','Torno CNC Cadet','Torno CNC Viwa','Torno Paralelo SN50','Centro de Maquinado Viwa','Centro de Maquinado V3016','Fresadora Lagun','Fresadora FA-4AU','Cepillo Cincinnati','Brochadora Colonial','Prensa Hidráulica','Mesa de Trabajo','Esmeril','Sander','Marcadora Kuntai','Tratamientos Térmicos','Soldadora','Rectificadora Bryant','Rectificadora BU-28','Rectificadora Heald','Rectificadora Cincinnati','Honeadora Sunnen','Control de Calidad'];
+
 function renderMachineLoad(){
   const filter=document.getElementById('ml-machine-filter')?.value||'';
   const mlFilter=document.getElementById('ml-machine-filter');
-  const mlMachines=[...new Set(machineLoad.map(m=>m.machine_name).filter(Boolean))].sort();
+  const machinesWithWork=[...new Set(machineLoad.map(m=>m.machine_name).filter(Boolean))];
+  const mlMachines=[...MACHINE_ORDER.filter(m=>machinesWithWork.includes(m)),...machinesWithWork.filter(m=>!MACHINE_ORDER.includes(m)).sort()];
   if(mlFilter){
     const cur=mlFilter.value;
     mlFilter.innerHTML='<option value="">Todas las máquinas</option>'+mlMachines.map(m=>`<option value="${m}" ${m===cur?'selected':''}>${m}</option>`).join('');
@@ -7103,7 +7106,9 @@ function renderMachineLoad(){
   };
 
   let html2='';
-  Object.entries(byMachine).forEach(([machine,ops])=>{
+  // Iterar en orden fijo MACHINE_ORDER, luego máquinas no listadas
+  const orderedMachineKeys=[...MACHINE_ORDER.filter(m=>byMachine[m]),...Object.keys(byMachine).filter(m=>!MACHINE_ORDER.includes(m)).sort()];
+  orderedMachineKeys.forEach(machine=>{ const ops=byMachine[machine]; {
     const mSafe=machine.replace(/['"<>]/g,'');
     const isTT = machine === 'Tratamientos Térmicos';
     let rows='';
@@ -7200,7 +7205,7 @@ function renderMachineLoad(){
       </div>
       <table class="tbl"><thead>${thead}</thead><tbody>${rows}</tbody></table>
     </div>`;
-  });
+  }});
   body.innerHTML=html2;
   if(typeof setupMLDrag==='function') setupMLDrag();
 }
@@ -8745,7 +8750,8 @@ function renderAlmGeneralPorProducto(items,list){
     const prodHeader=document.createElement('div');
     prodHeader.style.cssText='padding:10px 16px;background:var(--bg2);display:flex;align-items:center;gap:8px;flex-wrap:wrap';
     const totalValorProd=grp.items.reduce((a,s)=>a+(parseFloat(s.valor_total)||0),0);
-    prodHeader.innerHTML='<span style="font-weight:700;font-size:14px">'+(prod?.name||'(producto no encontrado)').toUpperCase()+'</span>'
+    const prodSortNum=(prod?.sort_number!==null&&prod?.sort_number!==undefined)?prod.sort_number+'. ':'';
+    prodHeader.innerHTML=(prodSortNum?'<span style="font-weight:700;font-size:14px;color:var(--muted);margin-right:2px">'+prodSortNum+'</span>':'')+'<span style="font-weight:700;font-size:14px">'+(prod?.name||'(producto no encontrado)').toUpperCase()+'</span>'
       +(prod?.code?'<span class="tag" style="color:var(--accent);font-family:monospace">'+prod.code+'</span>':'')
       +'<span style="margin-left:auto;font-size:12px;color:var(--green)">Valor: $'+totalValorProd.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2})+'</span>';
     prodCard.appendChild(prodHeader);
@@ -11153,6 +11159,7 @@ async function renderRmtProd(){
   list.innerHTML=bannerGlobal+keys.map(key=>{
     const g=grupos[key];
     const diam=g.diametro?parseFloat(g.diametro).toFixed(3)+'"':'--';
+    const esPiezaGrupo=['pieza','corte','forja','fundicion'].includes((g.grupo||'').toLowerCase())||(g.forma||'').toLowerCase()==='n/a';
     return `<div class="card" style="margin-bottom:12px">
       <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
         <div style="flex:1;min-width:220px">
@@ -11160,13 +11167,13 @@ async function renderRmtProd(){
           <div style="font-size:11px;color:var(--muted)">${g.forma} — Ø ${diam}${g.grupo?' — '+g.grupo:''}</div>
         </div>
         <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center">
-          <div style="text-align:center">
-            <div style="font-size:9px;color:var(--muted)">LONGITUD NETA</div>
+          ${esPiezaGrupo?'':`<div style="text-align:center">
+            <div style="font-size:9px;color:var(--muted)">LONG. BARRA</div>
             <div style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:700">${g.longTotal.toFixed(3)}"</div>
-          </div>
+          </div>`}
           <div style="text-align:center">
-            <div style="font-size:9px;color:var(--muted)">KG NETO</div>
-            <div style="font-family:'DM Mono',monospace;color:var(--accent2);font-weight:700">${g.kgTotal.toFixed(3)} kg</div>
+            <div style="font-size:9px;color:var(--muted)">${esPiezaGrupo?'PIEZAS':'KG NETO'}</div>
+            <div style="font-family:'DM Mono',monospace;color:var(--accent2);font-weight:700">${esPiezaGrupo?g.kgTotal.toFixed(0)+' pzas':g.kgTotal.toFixed(3)+' kg'}</div>
           </div>
           <div style="text-align:center">
             <div style="font-size:9px;color:var(--muted)">VALOR</div>
@@ -11179,8 +11186,8 @@ async function renderRmtProd(){
           <thead><tr style="color:var(--muted)">
             <th style="text-align:left;padding:3px 6px">O.T.</th>
             <th style="text-align:left;padding:3px 6px">Producto</th>
-            <th style="text-align:right;padding:3px 6px">Long. Neta</th>
-            <th style="text-align:right;padding:3px 6px">Kg Neto</th>
+            ${esPiezaGrupo?'':`<th style="text-align:right;padding:3px 6px">Long. Barra</th>`}
+            <th style="text-align:right;padding:3px 6px">${esPiezaGrupo?'Piezas':'Kg Neto'}</th>
             <th style="text-align:right;padding:3px 6px">Valor</th>
             <th style="text-align:center;padding:3px 6px">Scrap</th>
           </tr></thead>
@@ -11188,8 +11195,8 @@ async function renderRmtProd(){
             ${g.ots.map(o=>`<tr style="border-top:1px solid rgba(255,255,255,.04)">
               <td style="padding:3px 6px;font-family:'DM Mono',monospace;color:var(--accent)">${o.ot_number}</td>
               <td style="padding:3px 6px"><span style="font-weight:600">${o.product_name}</span> <span style="color:var(--muted)">${o.product_code}</span></td>
-              <td style="padding:3px 6px;text-align:right;font-family:'DM Mono',monospace">${o.longNeta.toFixed(3)}"</td>
-              <td style="padding:3px 6px;text-align:right;font-family:'DM Mono',monospace;color:var(--accent2)">${o.kgNeta.toFixed(3)}</td>
+              ${esPiezaGrupo?'':`<td style="padding:3px 6px;text-align:right;font-family:'DM Mono',monospace">${o.longNeta.toFixed(3)}"</td>`}
+              <td style="padding:3px 6px;text-align:right;font-family:'DM Mono',monospace;color:var(--accent2)">${esPiezaGrupo?o.kgNeta.toFixed(0)+' pzas':o.kgNeta.toFixed(3)+' kg'}</td>
               <td style="padding:3px 6px;text-align:right;font-family:'DM Mono',monospace;color:var(--green)">$${o.valorNeto.toFixed(2)}</td>
               <td style="padding:3px 6px;text-align:center;color:${o.scraps>0?'var(--danger)':'var(--muted)'}">${o.scraps>0?o.scraps+' pzas':'—'}</td>
             </tr>`).join('')}
@@ -12717,6 +12724,7 @@ function renderComprasRequisiciones(){
             <option value="cancelada" ${r.status==='cancelada'?'selected':''}>Cancelada</option>
           </select>
           <button class="btn btn-sm btn-ghost" onclick="imprimirRequi('${r.id}')"><svg class="ic"><use href="#ic-printer"/></svg> PDF</button>
+          <button class="btn btn-sm btn-danger" onclick="eliminarRequi('${r.id}',this.dataset.num)" data-num="${(r.numero||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" title="Eliminar requisición"><svg class="ic"><use href="#ic-trash"/></svg></button>
         </div>
       </div>
       ${r.producto_nombre?`<div style="font-size:12px;color:var(--green);margin-bottom:8px"><svg class="ic"><use href="#ic-tag"/></svg> ${r.producto_nombre}${r.producto_codigo?' ('+r.producto_codigo+')':''}</div>`:''}
@@ -12772,6 +12780,19 @@ async function cambiarStatusRequi(id,newStatus){
   }catch(e){ alert('Error al actualizar: '+e.message); }
 }
 window.cambiarStatusRequi=cambiarStatusRequi;
+
+async function eliminarRequi(id, numero){
+  if(!confirm('¿Eliminar la requisición '+(numero||id)+'? Esta acción no se puede deshacer.')) return;
+  try{
+    await sbDelete('purchase_request_items',{request_id:id});
+    await sbDelete('purchase_requests',{id});
+    purchaseRequests=purchaseRequests.filter(r=>r.id!==id);
+    purchaseRequestItems=purchaseRequestItems.filter(i=>i.request_id!==id);
+    renderComprasRequisiciones();
+    renderComprasBanner();
+  }catch(e){ alert('Error al eliminar: '+e.message); }
+}
+window.eliminarRequi=eliminarRequi;
 
 /* ══════════════════════════════════════════
    CATÁLOGO DE PROVEEDORES (ampliado, vive en mp_suppliers)
