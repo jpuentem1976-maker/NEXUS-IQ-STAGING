@@ -6594,18 +6594,7 @@ function renderReleasedOTs(){
     }catch(e){ console.warn('No se pudo refrescar mpStock en liberadas:', e); }
 
     released.forEach(async o=>{
-      const cell=document.getElementById('bom-status-'+o.id);
-      if(!cell) return;
-      const p=getProduct(o.product_id);
-      if(!p||(p.materials||[]).length===0) return;
-      // Cargar todos los transits de esta OT (incluyendo consumidos, no solo 'listo')
-      try{
-        const transitFresh=await sbSelect('mp_transit','select=*&ot_id=eq.'+encodeURIComponent(o.id));
-        renderBomStatusOTLiberada(o, p, cell, transitFresh||[]);
-      }catch(e){
-        renderBomStatusOTLiberada(o, p, cell, mpTransit.filter(t=>t.ot_id===o.id));
-      }
-      // Poblar panel de registros de calidad
+      // Poblar panel de registros de calidad PRIMERO (independiente del BOM)
       const qPanel=document.getElementById('prog-q-'+o.id);
       if(qPanel){
         const qRecs=(otQualityRecords||[]).filter(q=>q.ot_id===o.id);
@@ -6638,6 +6627,19 @@ function renderReleasedOTs(){
           qPanel.style.padding='10px';
           qPanel.style.background='rgba(245,158,11,.04)';
           qPanel.style.marginTop='8px';
+        }
+      }
+      // Renderizar BOM status (materiales faltantes)
+      const cell=document.getElementById('bom-status-'+o.id);
+      if(cell){
+        const p=getProduct(o.product_id);
+        if(p&&(p.materials||[]).length>0){
+          try{
+            const transitFresh=await sbSelect('mp_transit','select=*&ot_id=eq.'+encodeURIComponent(o.id));
+            renderBomStatusOTLiberada(o, p, cell, transitFresh||[]);
+          }catch(e){
+            renderBomStatusOTLiberada(o, p, cell, mpTransit.filter(t=>t.ot_id===o.id));
+          }
         }
       }
     });
@@ -11362,16 +11364,25 @@ async function renderRmtProd(){
       const longNeta=parseFloat(Math.max(0,longTotal-longScrap).toFixed(3));
       const kgNeta=parseFloat(Math.max(0,kgTotal-kgScrap).toFixed(3));
       const precioKg=parseFloat(t.precio_kg)||0;
-      const valorNeto=parseFloat((kgNeta*precioKg).toFixed(2));
+      // Para piezas: usar t.valor directamente si precio_kg es 0
+      const valorNeto=precioKg>0
+        ? parseFloat((kgNeta*precioKg).toFixed(2))
+        : parseFloat(t.valor||0)*(totalPzas>0?Math.max(0,totalPzas-scrapsOT)/totalPzas:1);
 
+      // Resolver nombre/forma/grupo desde catálogo si el tránsito los tiene null
+      const matCatTrans=(mpMaterials||[]).find(m=>m.id===t.material_id);
+      const tMaterial=t.material||matCatTrans?.name||'--';
+      const tForma=t.forma||matCatTrans?.forma||'--';
+      const tDiametro=t.diametro||matCatTrans?.diametro||'';
+      const tGrupo=t.grupo||matCatTrans?.grupo||'';
       // Clave de agrupación: material+forma+diametro
-      const key=(t.material||'')+'|'+(t.forma||'')+'|'+(t.diametro||'');
+      const key=tMaterial+'|'+tForma+'|'+tDiametro;
       if(!grupos[key]){
         grupos[key]={
-          material:t.material||'--',
-          forma:t.forma||'--',
-          diametro:t.diametro||'',
-          grupo:t.grupo||'',
+          material:tMaterial,
+          forma:tForma,
+          diametro:tDiametro,
+          grupo:tGrupo,
           longTotal:0,kgTotal:0,valorTotal:0,
           ots:[]
         };
