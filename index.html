@@ -6767,7 +6767,7 @@ function renderReleasedOTs(){
     try{
       const c=await calcOTCosting(o.id);
       const {totalMP,totalMOD,totalGIF,totalMOE,totalDel,costoTotal,costoUnitario}=c;
-      // Mostrar costeo siempre que haya datos de MP transit, aunque sea $0
+      if(mpRows.length===0&&totalMOD===0&&totalGIF===0&&totalMOE===0) return; // sin datos aún
       cell.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:13px">
         <span style="color:var(--text);text-transform:uppercase;font-size:13px;font-weight:700"><svg class="ic"><use href="#ic-money-bag"/></svg> Costeo en vivo:</span>
         <span>MP: <b style="color:var(--accent2)">$${totalMP.toFixed(2)}</b></span>
@@ -7591,14 +7591,14 @@ function renderMachineLoad(){
 
     // Headers según tipo de máquina
     const thead = isTT
-      ? `<tr><th>Pri.</th><th style="width:72px">O.T.</th><th style="width:110px">Producto</th><th>Lote</th><th style="width:120px">Operación</th><th>Exist.</th><th>Días</th><th>Envío</th><th>Recolección</th><th>Proveedor</th><th></th></tr>`
-      : `<tr><th>Pri.</th><th style="width:72px">O.T.</th><th style="width:110px">Producto</th><th>Lote</th><th style="width:120px">Operación</th><th>Mont.</th><th>Unit.</th><th>Total</th><th>Exist.</th><th>Días</th><th>Inicio</th><th>Est.Fin</th><th>Ef.Mont.</th><th>Ef.Prod.</th><th>Estado</th><th></th></tr>`;
+      ? `<tr><th>Pri.</th><th style="width:90px">O.T.</th><th style="width:150px">Producto</th><th>Lote</th><th style="width:130px">Operación</th><th>Exist.</th><th>Días</th><th>Envío</th><th>Recolección</th><th>Proveedor</th><th></th></tr>`
+      : `<tr><th>Pri.</th><th style="width:90px">O.T.</th><th style="width:150px">Producto</th><th>Lote</th><th style="width:130px">Operación</th><th>Mont.</th><th>Unit.</th><th>Total</th><th>Exist.</th><th>Días</th><th>Inicio</th><th>Est.Fin</th><th>Ef.Mont.</th><th>Ef.Prod.</th><th>Estado</th><th></th></tr>`;
 
     html2+=`<div class="card" style="margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
         <span style="font-family:var(--font-display,sans-serif);font-size:20px;color:var(--accent2)">${machine}</span>
       </div>
-      <table class="tbl tbl-compact"><thead>${thead}</thead><tbody>${rows}</tbody></table>
+      <div style="overflow-x:auto"><table class="tbl tbl-compact" style="min-width:900px"><thead>${thead}</thead><tbody>${rows}</tbody></table></div>
     </div>`;
   }});
   body.innerHTML=html2;
@@ -8049,11 +8049,11 @@ function renderConsulta(){
           }
         });
         const thead3 = isTT2
-          ? '<tr><th>Pri.</th><th style="width:72px">O.T.</th><th style="width:110px">Producto</th><th>Lote</th><th style="width:120px">Operación</th><th>Exist.</th><th>Días</th><th>Envío</th><th>Recolección</th><th>Proveedor</th></tr>'
-          : '<tr><th>Pri.</th><th style="width:72px">O.T.</th><th style="width:110px">Producto</th><th>Lote</th><th style="width:120px">Operación</th><th>Mont.</th><th>Unit.</th><th>Total</th><th>Exist.</th><th>Días</th><th>Inicio</th><th>Est.Fin</th><th>Ef.Mont.</th><th>Ef.Prod.</th><th>Estado</th></tr>';
+          ? '<tr><th>Pri.</th><th style="width:90px">O.T.</th><th style="width:150px">Producto</th><th>Lote</th><th style="width:130px">Operación</th><th>Exist.</th><th>Días</th><th>Envío</th><th>Recolección</th><th>Proveedor</th></tr>'
+          : '<tr><th>Pri.</th><th style="width:90px">O.T.</th><th style="width:150px">Producto</th><th>Lote</th><th style="width:130px">Operación</th><th>Mont.</th><th>Unit.</th><th>Total</th><th>Exist.</th><th>Días</th><th>Inicio</th><th>Est.Fin</th><th>Ef.Mont.</th><th>Ef.Prod.</th><th>Estado</th></tr>';
         html3+='<div class="card" style="margin-bottom:14px">'
           +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:var(--accent2);margin-bottom:10px">'+machine+'</div>'
-          +'<table class="tbl tbl-compact"><thead>'+thead3+'</thead><tbody>'+rows3+'</tbody></table></div>';
+          +'<div style="overflow-x:auto"><table class="tbl tbl-compact" style="min-width:900px"><thead>'+thead3+'</thead><tbody>'+rows3+'</tbody></table></div></div>';
       }});
       machList.innerHTML=html3;
     }
@@ -11828,7 +11828,12 @@ async function calcOTCosting(otId){
   const prodOps=(prod?.operations||[]).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
 
   // 1. Materia prima consumida (mp_transit, sin filtro de status)
-  const mpRows=await sbSelect('mp_transit','select=*&ot_id=eq.'+encodeURIComponent(otId))||[];
+  // Con retry: a veces Supabase devuelve vacío en primera llamada
+  let mpRows = await sbSelect('mp_transit','select=*&ot_id=eq.'+encodeURIComponent(otId))||[];
+  if(!mpRows.length){
+    await new Promise(r=>setTimeout(r,400));
+    mpRows = await sbSelect('mp_transit','select=*&ot_id=eq.'+encodeURIComponent(otId))||[];
+  }
   const totalMP=mpRows.reduce((a,t)=>{
     // Usar valor si existe y es >0; si no, calcular desde kg_real*precio_kg
     // Si precio_kg también es 0, buscar precio actual en mpStock como fallback
