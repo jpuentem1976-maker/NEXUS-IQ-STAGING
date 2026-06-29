@@ -3059,16 +3059,18 @@ function goDirectProduction(){
   buildCtx();
   ctx.prodStart=Date.now();
   if(ctx.operation.op_type!=='machining'){
-    // ¿Ya hay una operación secundaria en curso de este operador para esta OT/operación?
     const existing=(secOpsActive||[]).find(s=>s.status==='en_curso'&&s.ot_id===ctx.wo.id&&s.operation_id===ctx.operation.id&&s.operator_id===ctx.operator.id);
     if(existing){ reopenSecondaryOp(existing.id); return; }
     startSecondaryStep();
     return;
   }
+  // Limpiar inputs de montaje — este operador NO hizo montaje
+  const spEl=document.getElementById('setup-piezas'); if(spEl) spEl.value='0';
+  const ssEl=document.getElementById('setup-scrap');  if(ssEl) ssEl.value='0';
   goProduction();
 }
 
-function backToSelect(){ clearInterval(tickInterval); const s=document.getElementById('sec-summary'); if(s) s.innerHTML=''; showStep('step-select'); }
+function backToSelect(){ clearInterval(tickInterval); const s=document.getElementById('sec-summary'); if(s) s.innerHTML=''; const spEl=document.getElementById('setup-piezas'); if(spEl) spEl.value='0'; const ssEl=document.getElementById('setup-scrap'); if(ssEl) ssEl.value='0'; showStep('step-select'); }
 
 // Botón "Atrás" desde step-secondary: si la operación está corriendo (secActiveId activo),
 // el registro queda en_curso en secondary_ops_active — no se pierde nada, solo se libera
@@ -3146,17 +3148,15 @@ async function goProduction(){
   let prevPiecesFetched=0, prevScrapFetched=0;
   try{
     const [prevSessDB, prevScrapDB]=await Promise.all([
-      sbSelect('sessions','select=type,pieces_produced,session_id,id,recorded_at&ot_id=eq.'+ctx.wo.id+'&operation_id=eq.'+ctx.operation.id+'&recorded_at=lt.'+encodeURIComponent(thisProdStartISO)+'&is_op_complete=neq.true&order=recorded_at.asc'),
+      sbSelect('sessions','select=type,pieces_produced,setup_pieces,session_id,id,recorded_at&ot_id=eq.'+ctx.wo.id+'&operation_id=eq.'+ctx.operation.id+'&recorded_at=lt.'+encodeURIComponent(thisProdStartISO)+'&is_op_complete=neq.true&order=recorded_at.asc'),
       sbSelect('ot_scrap','select=qty,session_id,recorded_at&ot_id=eq.'+ctx.wo.id+'&operation_id=eq.'+ctx.operation.id+'&recorded_at=lt.'+encodeURIComponent(thisProdStartISO))
     ]);
     const prevDB=prevSessDB||[];
-    // Preferir summaries (fin de turno guardado por FINALIZAR TURNO); si no hay, contar piezas individuales
-    const summaries=prevDB.filter(s=>s.type==='summary');
-    if(summaries.length){
-      prevPiecesFetched=summaries.reduce((a,s)=>a+(parseInt(s.pieces_produced)||0),0);
-    } else {
-      prevPiecesFetched=prevDB.filter(s=>s.type==='piece').length;
-    }
+    // Contar piezas de producción pura (type='piece') de sesiones anteriores
+    const prevProdPieces=prevDB.filter(s=>s.type==='piece').length;
+    // Contar piezas buenas de montaje de sesiones anteriores (setup_pieces en type='setup')
+    const prevSetupPieces=prevDB.filter(s=>s.type==='setup').reduce((a,s)=>a+(parseInt(s.setup_pieces)||0),0);
+    prevPiecesFetched=prevProdPieces+prevSetupPieces;
     prevScrapFetched=(prevScrapDB||[]).reduce((a,s)=>a+(parseInt(s.qty)||0),0);
     // Sincronizar array local
     (prevSessDB||[]).forEach(s=>{ if(!sessions.find(x=>x.id===s.id)) sessions.push(s); });
@@ -3784,6 +3784,8 @@ async function finishProduction(){
   try{ await sbInsert('sessions',sum); }catch(er){ console.error(er); }
   sessions.unshift(sum);
   saveMachineStatus('stopped','Fin de turno');
+  const _spEl=document.getElementById('setup-piezas'); if(_spEl) _spEl.value='0';
+  const _ssEl=document.getElementById('setup-scrap');  if(_ssEl) _ssEl.value='0';
   showStep('step-select');
 }
 
