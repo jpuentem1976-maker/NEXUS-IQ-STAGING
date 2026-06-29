@@ -3191,10 +3191,10 @@ function goProduction(){
   if(pendingEl) pendingEl.textContent=Math.max(0,adjustedQty-(ctx.prevPieces||0)-setupPzs-setupScrap);
   document.getElementById('prod-sub').textContent=`${ctx.product.name} · Op.${ctx.operation.op_number} ${ctx.operation.name} · OT: ${ctx.wo.number}`;
   saveMachineStatus('running','Producción iniciada');
-  // Mostrar contador incluyendo piezas de turnos anteriores
-  const startCount=setupPzs+(ctx.prevPieces||0);
+  // Mostrar contador incluyendo piezas de turnos anteriores (buenas + scrap de montaje)
+  const startCount=setupPzs+setupScrap+(ctx.prevPieces||0);
   document.getElementById('prod-count').textContent=String(startCount);
-  document.getElementById('prod-qty-total').textContent=adjustedQty;
+  document.getElementById('prod-qty-total').textContent=ctx.wo.qty;
   // Mostrar aviso de piezas previas si hay
   const prevInfo=document.getElementById('prev-pieces-info');
   if(prevInfo){
@@ -3554,17 +3554,18 @@ async function registerPiece(){
   ctx.pieceTimes.push(net);
   const totalCount=count+1+(ctx.setupPieces||0);
   const e=effCalc(ctx.operation.unit_time,pieceNet);
-  const rec={id:uid(),session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,op_type:'machining',machine_id:ctx.operation.machine_id,machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:1,type:'piece',std_time:ctx.operation.unit_time,actual_sec:pieceNet,efficiency:e,piece_num:count+1,recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
+  const pieceOffset=(ctx.setupPieces||0)+(ctx.setupScrap||0);
+  const rec={id:uid(),session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,op_type:'machining',machine_id:ctx.operation.machine_id,machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:1,type:'piece',std_time:ctx.operation.unit_time,actual_sec:pieceNet,efficiency:e,piece_num:count+1+pieceOffset,recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
   sessions.unshift(rec);
   try{ await sbInsert('sessions',rec); }catch(er){ console.error(er); }
-  const newCount=ctx.pieceTimes.length+(ctx.setupPieces||0);
+  const newCount=ctx.pieceTimes.length+(ctx.setupPieces||0)+(ctx.setupScrap||0);
   const prodPcs=ctx.pieceTimes.length;
-  const totalPcs=prodPcs+(ctx.setupPieces||0);
-  const scrapTotal=(ctx.scrapCount||0);
+  const scrapTotal=(ctx.scrapCount||0); // includes setupScrap + prod scrap
+  const totalPcs=prodPcs+(ctx.setupPieces||0)+scrapTotal; // ALL pieces touched
   const lote=ctx.wo.qty;
-  const pending=Math.max(0,(ctx.adjustedQty||lote)-totalPcs-scrapTotal);
+  const pending=Math.max(0,lote-totalPcs);
   document.getElementById('prod-count').textContent=totalPcs;
-  document.getElementById('prod-qty-bar').style.width=Math.min((totalPcs/(ctx.adjustedQty||lote))*100,100)+'%';
+  document.getElementById('prod-qty-bar').style.width=Math.min((totalPcs/lote)*100,100)+'%';
   const dispProd=document.getElementById('disp-prod-pcs'); if(dispProd) dispProd.textContent=prodPcs;
   const dispScrap=document.getElementById('disp-scrap'); if(dispScrap) dispScrap.textContent=scrapTotal;
   const dispPend=document.getElementById('disp-pending'); if(dispPend) dispPend.textContent=pending;
@@ -3577,9 +3578,10 @@ async function registerPiece(){
   document.getElementById('prod-eff-val').style.textShadow='0 0 40px '+gc+'44';
   document.getElementById('prod-eff-label').textContent=effLabel(prodEff);
   document.getElementById('prod-eff-label').style.color=gc;
-  // Stop clocks when lote is complete
+  // Lote completado cuando buenas producidas = piezas disponibles (ajustadas por scrap de ops anteriores)
+  const buenasTotal=prodPcs+(ctx.setupPieces||0);
   const loteEff=ctx.adjustedQty||lote;
-  if(totalPcs>=loteEff){
+  if(buenasTotal>=loteEff){
     clearInterval(tickInterval);
     document.getElementById('btn-register-piece').disabled=true;
     document.getElementById('btn-register-piece').innerHTML='<svg class="ic"><use href="#ic-check-circle"/></svg> LOTE COMPLETADO';
@@ -3605,10 +3607,12 @@ window.reportScrap = async function reportScrap(){
   // Update display
   const dispScrap=document.getElementById('disp-scrap'); if(dispScrap) dispScrap.textContent=ctx.scrapCount;
   const prodPcsNow=ctx.pieceTimes?ctx.pieceTimes.length:0;
-  const totalPcsNow=prodPcsNow+(ctx.setupPieces||0);
-  const pendNow=Math.max(0,(ctx.wo?.qty||0)-totalPcsNow-ctx.scrapCount);
+  const totalPcsNow=prodPcsNow+(ctx.setupPieces||0)+ctx.scrapCount; // buenas prod + buenas montaje + todo scrap
+  const pendNow=Math.max(0,(ctx.wo?.qty||0)-totalPcsNow);
   const dispPend=document.getElementById('disp-pending'); if(dispPend) dispPend.textContent=pendNow;
-  alert('Scrap registrado: '+qty+' pza(s). Total: '+ctx.scrapCount+' | Pendiente: '+pendNow);
+  // Actualizar contador principal
+  document.getElementById('prod-count').textContent=totalPcsNow;
+  alert('Scrap registrado: '+qty+' pza(s). Total scrap: '+ctx.scrapCount+' | Pendiente: '+pendNow);
 }
 
 function toggleLunch(){
@@ -3742,17 +3746,20 @@ async function finishProduction(){
   clearInterval(tickInterval);
   const net=getNetElapsed();
   const count=ctx.pieceTimes.length;
-  const totalProduced=count+(ctx.setupPieces||0);
+  const buenasProducidas=count+(ctx.setupPieces||0);
+  const scrapTotal=ctx.scrapCount||0;
+  const totalProduced=buenasProducidas; // para eficiencia y summary: solo buenas
+  const totalTocadas=buenasProducidas+scrapTotal; // total material consumido
   const lote=ctx.wo.qty;
-  // Validate lot quantity
-  if(totalProduced!==lote){
-    const diff=totalProduced-lote;
+  const adjustedLote=ctx.adjustedQty||lote; // piezas disponibles esta operación
+  // Validar: buenas + scrap debe cuadrar con el lote disponible
+  if(totalTocadas!==adjustedLote){
+    const diff=totalTocadas-adjustedLote;
     const msg=diff>0
-      ? '<svg class="ic"><use href="#ic-warning"/></svg> Se produjeron '+diff+' piezas DE MÁS ('+totalProduced+' vs '+lote+' del lote).\n¿Es correcto? ¿Deseas continuar y cerrar este proceso?'
-      : '<svg class="ic"><use href="#ic-warning"/></svg> Faltan '+Math.abs(diff)+' piezas ('+totalProduced+' de '+lote+' del lote).\n¿Deseas terminar el turno sin completar el lote?';
+      ? 'Se procesaron '+diff+' piezas DE MÁS ('+buenasProducidas+' buenas + '+scrapTotal+' scrap = '+totalTocadas+' vs '+adjustedLote+' disponibles).\n¿Es correcto? ¿Deseas continuar?'
+      : 'Faltan '+Math.abs(diff)+' piezas ('+buenasProducidas+' buenas + '+scrapTotal+' scrap = '+totalTocadas+' de '+adjustedLote+' disponibles).\n¿Deseas terminar sin completar el lote?';
     if(!confirm(msg)){
       clearInterval(tickInterval);
-      // Restart timer so they can keep going
       tickInterval=setInterval(tickProduction,500);
       return;
     }
