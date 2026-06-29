@@ -9203,7 +9203,16 @@ function renderAlmGeneralPorProducto(items,list){
     byProd[pid].items.push(s);
   });
 
-  Object.values(byProd).forEach(grp=>{
+  // Ordenar grupos por sort_number del producto (igual que en Ingeniería)
+  const sortedGroups=Object.values(byProd).sort((a,b)=>{
+    const pa=products.find(p=>p.id===a.producto_id);
+    const pb=products.find(p=>p.id===b.producto_id);
+    const na=pa?.sort_number??99999;
+    const nb=pb?.sort_number??99999;
+    return na!==nb?na-nb:(pa?.name||'').localeCompare(pb?.name||'');
+  });
+
+  sortedGroups.forEach(grp=>{
     const prod=products.find(p=>p.id===grp.producto_id);
     const prodCard=document.createElement('div');
     prodCard.className='card';
