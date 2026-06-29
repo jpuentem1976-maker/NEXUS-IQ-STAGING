@@ -3554,7 +3554,7 @@ async function registerPiece(){
   ctx.pieceTimes.push(net);
   const totalCount=count+1+(ctx.setupPieces||0);
   const e=effCalc(ctx.operation.unit_time,pieceNet);
-  const rec={id:uid(),session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,op_type:'machining',machine_id:ctx.operation.machine_id,machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:ctx.wo.qty,type:'piece',std_time:ctx.operation.unit_time,actual_sec:pieceNet,efficiency:e,piece_num:count+1,recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
+  const rec={id:uid(),session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,op_type:'machining',machine_id:ctx.operation.machine_id,machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:1,type:'piece',std_time:ctx.operation.unit_time,actual_sec:pieceNet,efficiency:e,piece_num:count+1,recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
   sessions.unshift(rec);
   try{ await sbInsert('sessions',rec); }catch(er){ console.error(er); }
   const newCount=ctx.pieceTimes.length+(ctx.setupPieces||0);
