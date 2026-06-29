@@ -6761,12 +6761,17 @@ function renderReleasedOTs(){
   },100);
 
   // Cargar costeo en vivo por OT (MP, MOD, GIF, MOE, Total, Unitario)
-  released.forEach(async o=>{
+  // Primero asegurar mpStock cargado para que el fallback de precio funcione
+  (async()=>{
+  if(!mpStock.length){
+    try{ const fresh=await sbSelect('mp_stock','select=id,precio_kg,material,kg_total,grupo,forma'); if(fresh) mpStock=fresh; }catch(e){}
+  }
+  for(const o of released){
     const cell=document.getElementById('ot-costing-'+o.id);
-    if(!cell) return;
+    if(!cell) continue;
     try{
       const c=await calcOTCosting(o.id);
-      if(!c) return;
+      if(!c) continue;
       const {totalMP=0,totalMOD=0,totalGIF=0,totalMOE=0,totalDel=0,costoTotal=0,costoUnitario=0}=c;
       // Mostrar siempre el costeo si hay datos (aunque sea $0)
       cell.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:13px">
@@ -6779,7 +6784,8 @@ function renderReleasedOTs(){
         <span>Unitario: <b style="color:var(--green);font-size:13px">${c.wo?.qty>0?'$'+costoUnitario.toFixed(2):'—'}</b></span>
       </div>`;
     }catch(e){ console.warn('costeo error OT '+o.number+':', e); }
-  });
+  }
+  })();
 
   // Renderizar estado BOM por OT (materiales faltantes con opción de solicitar)
   // Refrescar mpStock una sola vez antes del loop para que EN ALMACÉN muestre stock real
