@@ -6766,7 +6766,8 @@ function renderReleasedOTs(){
     if(!cell) return;
     try{
       const c=await calcOTCosting(o.id);
-      const {totalMP,totalMOD,totalGIF,totalMOE,totalDel,costoTotal,costoUnitario}=c;
+      if(!c) return;
+      const {totalMP=0,totalMOD=0,totalGIF=0,totalMOE=0,totalDel=0,costoTotal=0,costoUnitario=0}=c;
       // Mostrar siempre el costeo si hay datos (aunque sea $0)
       cell.innerHTML=`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:13px">
         <span style="color:var(--text);text-transform:uppercase;font-size:13px;font-weight:700"><svg class="ic"><use href="#ic-money-bag"/></svg> Costeo en vivo:</span>
@@ -6777,7 +6778,7 @@ function renderReleasedOTs(){
         <span style="margin-left:auto">Total: <b style="color:var(--accent);font-size:13px">$${costoTotal.toFixed(2)}</b></span>
         <span>Unitario: <b style="color:var(--green);font-size:13px">${c.wo?.qty>0?'$'+costoUnitario.toFixed(2):'—'}</b></span>
       </div>`;
-    }catch(e){ /* silencioso, no bloquea la vista */ }
+    }catch(e){ console.warn('costeo error OT '+o.number+':', e); }
   });
 
   // Renderizar estado BOM por OT (materiales faltantes con opción de solicitar)
