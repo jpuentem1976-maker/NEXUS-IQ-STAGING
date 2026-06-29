@@ -7638,8 +7638,8 @@ function renderMachineLoad(){
     });
 
     // Headers según tipo de máquina
-    const colsTT=`<colgroup><col style="width:60px"><col style="width:80px"><col style="width:180px"><col style="width:60px"><col style="width:130px"><col style="width:55px"><col style="width:50px"><col style="width:110px"><col style="width:110px"><col style="width:150px"><col style="width:40px"></colgroup>`;
-    const colsNormal=`<colgroup><col style="width:60px"><col style="width:80px"><col style="width:180px"><col style="width:60px"><col style="width:130px"><col style="width:60px"><col style="width:60px"><col style="width:65px"><col style="width:55px"><col style="width:45px"><col style="width:70px"><col style="width:70px"><col style="width:70px"><col style="width:70px"><col style="width:100px"><col style="width:40px"></colgroup>`;
+    const colsTT=`<colgroup><col style="width:55px"><col style="width:75px"><col style="width:160px"><col style="width:55px"><col style="width:125px"><col style="width:55px"><col style="width:50px"><col style="width:110px"><col style="width:110px"><col style="width:145px"><col style="width:38px"></colgroup>`;
+    const colsNormal=`<colgroup><col style="width:55px"><col style="width:75px"><col style="width:160px"><col style="width:55px"><col style="width:125px"><col style="width:55px"><col style="width:55px"><col style="width:60px"><col style="width:50px"><col style="width:45px"><col style="width:65px"><col style="width:65px"><col style="width:65px"><col style="width:65px"><col style="width:95px"><col style="width:38px"></colgroup>`;
     const thead = isTT
       ? `<tr><th>Pri.</th><th>O.T.</th><th>Producto</th><th>Lote</th><th>Operación</th><th>Exist.</th><th>Días</th><th>Envío</th><th>Recolección</th><th>Proveedor</th><th></th></tr>`
       : `<tr><th>Pri.</th><th>O.T.</th><th>Producto</th><th>Lote</th><th>Operación</th><th>Mont.</th><th>Unit.</th><th>Total</th><th>Exist.</th><th>Días</th><th>Inicio</th><th>Est.Fin</th><th>Ef.Mont.</th><th>Ef.Prod.</th><th>Estado</th><th></th></tr>`;
@@ -7648,7 +7648,7 @@ function renderMachineLoad(){
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
         <span style="font-family:var(--font-display,sans-serif);font-size:20px;color:var(--accent2)">${machine}</span>
       </div>
-      <div style="overflow-x:auto"><table class="tbl tbl-compact" style="min-width:${isTT?'1025px':'1215px'};table-layout:fixed;width:100%">${isTT?colsTT:colsNormal}<thead>${thead}</thead><tbody>${rows}</tbody></table></div>
+      <div style="overflow-x:auto"><table class="tbl tbl-compact" style="min-width:${isTT?'978px':'1128px'};table-layout:fixed;width:100%">${isTT?colsTT:colsNormal}<thead>${thead}</thead><tbody>${rows}</tbody></table></div>
     </div>`;
   }});
   body.innerHTML=html2;
