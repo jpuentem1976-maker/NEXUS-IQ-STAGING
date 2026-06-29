@@ -3134,7 +3134,7 @@ async function finishSetup(){
   document.getElementById('setup-result').classList.remove('hidden');
   const recId=uid();
   ctx.setupRecordId=recId; // store for update in goProduction
-  const rec={id:recId,session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,op_type:ctx.operation.op_type,machine_id:ctx.operation.machine_id,machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:ctx.wo.qty,type:'setup',std_time:ctx.operation.setup_time,actual_sec:actualSec,efficiency:e,setup_pieces:0,recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
+  const rec={id:recId,session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,op_type:ctx.operation.op_type,machine_id:ctx.operation.machine_id,machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:ctx.wo.qty,type:'setup',std_time:ctx.operation.setup_time,actual_sec:actualSec,efficiency:e,setup_pieces:0,downtimes:ctx.setupDowntimes||[],recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
   sessions.unshift(rec);
   try{ await sbInsert('sessions',rec); updateMachineLoadStart(); }catch(e2){ console.error(e2); }
 }
@@ -8690,17 +8690,18 @@ function renderDowntimeReport(){
   const to=document.getElementById('rdt-to')?.value||'';
   const operFilter=document.getElementById('rdt-oper')?.value||'';
 
-  // Extraer paros de los summaries guardados en sessions
-  const summaries=sessions.filter(s=>
-    s.type==='summary' &&
+  // Extraer paros de summaries (producción) Y de setup (montaje)
+  const relevantSess=sessions.filter(s=>
+    (s.type==='summary' || s.type==='setup') &&
     inRange(s.date_label, from, to) &&
     (!operFilter||s.operator_name===operFilter)
   );
 
   // Recolectar todos los paros de los summaries
   const allDowntimes=[];
-  summaries.forEach(s=>{
+  relevantSess.forEach(s=>{
     const dts=Array.isArray(s.downtimes)?s.downtimes:(typeof s.downtimes==='string'&&s.downtimes?JSON.parse(s.downtimes):[]);
+    const phase=s.type==='setup'?'Montaje':'Producción';
     dts.forEach(d=>{
       allDowntimes.push({
         cat:d.cat||d.category||'Otro',
@@ -8708,7 +8709,7 @@ function renderDowntimeReport(){
         operator:s.operator_name||'--',
         ot:s.ot_number||'--',
         product:s.product_name||'--',
-        operation:s.operation_name||'--',
+        operation:(s.operation_name||'--')+' ('+phase+')',
         date:s.date_label||'--'
       });
     });
