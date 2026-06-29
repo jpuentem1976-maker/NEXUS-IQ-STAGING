@@ -3205,7 +3205,7 @@ async function goProduction(){
   // PZAS PROD siempre arranca en 0 — solo cuenta lo de ESTA sesión
   const dispProdInit=document.getElementById('disp-prod-pcs'); if(dispProdInit) dispProdInit.textContent='0';
   // SCRAP muestra el scrap de montaje de esta sesión (0 si no hubo montaje en este turno)
-  const scrapEl=document.getElementById('disp-scrap'); if(scrapEl) scrapEl.textContent=setupScrap;
+  const scrapEl=document.getElementById('disp-scrap'); if(scrapEl) scrapEl.textContent=(ctx.prevScrapPieces||0)+setupScrap;
   // Mostrar aviso de piezas previas si hay
   const prevInfo=document.getElementById('prev-pieces-info');
   if(prevInfo){
@@ -3581,7 +3581,7 @@ async function registerPiece(){
   document.getElementById('prod-count').textContent=totalPcs;
   document.getElementById('prod-qty-bar').style.width=Math.min((totalPcs/lote)*100,100)+'%';
   const dispProd=document.getElementById('disp-prod-pcs'); if(dispProd) dispProd.textContent=prodPcs;
-  const dispScrap=document.getElementById('disp-scrap'); if(dispScrap) dispScrap.textContent=scrapTotal;
+  const dispScrap=document.getElementById('disp-scrap'); if(dispScrap) dispScrap.textContent=scrapTotal+(ctx.prevScrapPieces||0);
   const dispPend=document.getElementById('disp-pending'); if(dispPend) dispPend.textContent=pending;
   // Update production efficiency (only production pieces vs production time)
   const netNow=getNetElapsed();
@@ -3619,7 +3619,7 @@ window.reportScrap = async function reportScrap(){
   const rec={id:uid(),session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:qty,reason:reason,recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
   try{ await sbInsert('ot_scrap',rec); }catch(er){ console.error(er); }
   // Update display
-  const dispScrap=document.getElementById('disp-scrap'); if(dispScrap) dispScrap.textContent=ctx.scrapCount;
+  const dispScrap=document.getElementById('disp-scrap'); if(dispScrap) dispScrap.textContent=ctx.scrapCount+(ctx.prevScrapPieces||0);
   const prodPcsNow=ctx.pieceTimes?ctx.pieceTimes.length:0;
   const totalPcsNow=prodPcsNow+(ctx.setupPieces||0)+ctx.scrapCount+(ctx.prevPieces||0)+(ctx.prevScrapPieces||0);
   const pendNow=Math.max(0,(ctx.wo?.qty||0)-totalPcsNow);
