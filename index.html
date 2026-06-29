@@ -3030,8 +3030,9 @@ function buildCtx(){
   const prod=getProduct(wo.product_id);
   const op=prod.operations.find(o=>o.id===opId);
   const oper=operators.find(o=>o.id===operId);
-  const existing=sessions.filter(s=>s.ot_id===woId&&s.operation_id===opId);
-  const sessId=existing.length?existing[0].session_id:uid();
+  // sessionId SIEMPRE único por turno — nunca reutilizar el de sesiones anteriores
+  // Las piezas previas se detectan por registros en BD, no por session_id compartido
+  const sessId=uid();
   ctx={wo,product:prod,operation:op,operator:oper,setupStart:null,setupEnd:null,setupEff:0,prodStart:null,pieceTimes:[],elapsed:0,lunchStart:null,totalLunch:0,dtStart:null,dtCat:'',downtimes:[],sessionId:sessId,secStart:null,secStartedAt:null,secActiveId:null,setupLunchStart:null,setupTotalLunch:0,setupDtStart:null,setupDtCat:'',setupDowntimes:[]};
 }
 
@@ -3136,27 +3137,32 @@ async function finishSetup(){
   try{ await sbInsert('sessions',rec); updateMachineLoadStart(); }catch(e2){ console.error(e2); }
 }
 
-function goProduction(){
+async function goProduction(){
   ctx.prodStart=Date.now(); ctx.pieceTimes=[]; ctx.elapsed=0; ctx.totalLunch=0; ctx.downtimes=[];
   ctx.setupPieces=0; ctx.setupScrap=0; ctx.scrapCount=0; ctx.adjustedQty=null;
   // Calcular piezas ya producidas en sesiones ANTERIORES de esta misma operación
-  // (turnos previos del mismo o diferente operador)
-  const prevSessions=sessions.filter(s=>
-    s.ot_id===ctx.wo.id &&
-    s.operation_id===ctx.operation.id &&
-    s.session_id!==ctx.sessionId &&
-    !s.is_op_complete
-  );
-  // Sumar piezas de summaries anteriores (fin de turno)
-  const prevPiecesBySummary=prevSessions
-    .filter(s=>s.type==='summary')
-    .reduce((a,s)=>a+(parseInt(s.pieces_produced)||0),0);
-  // Si no hay summaries, contar registros type='piece' de otras sesiones
-  const prevPiecesByCount=prevSessions.filter(s=>s.type==='piece').length;
-  ctx.prevPieces=prevPiecesBySummary||prevPiecesByCount||0;
-  // Scrap de sesiones anteriores de esta misma operación (para piece_num continuo)
-  const prevScrapForOffset=(otScrap||[]).filter(s=>s.ot_id===ctx.wo.id&&s.operation_id===ctx.operation.id&&s.session_id!==ctx.sessionId).reduce((a,s)=>a+(parseInt(s.qty)||0),0);
-  ctx.prevScrapPieces=prevScrapForOffset;
+  // Usar timestamp de inicio de esta sesión como separador confiable
+  const thisProdStartISO=new Date(ctx.prodStart).toISOString();
+  let prevPiecesFetched=0, prevScrapFetched=0;
+  try{
+    const [prevSessDB, prevScrapDB]=await Promise.all([
+      sbSelect('sessions','select=type,pieces_produced,session_id,id,recorded_at&ot_id=eq.'+ctx.wo.id+'&operation_id=eq.'+ctx.operation.id+'&recorded_at=lt.'+encodeURIComponent(thisProdStartISO)+'&is_op_complete=neq.true&order=recorded_at.asc'),
+      sbSelect('ot_scrap','select=qty,session_id,recorded_at&ot_id=eq.'+ctx.wo.id+'&operation_id=eq.'+ctx.operation.id+'&recorded_at=lt.'+encodeURIComponent(thisProdStartISO))
+    ]);
+    const prevDB=prevSessDB||[];
+    // Preferir summaries (fin de turno guardado por FINALIZAR TURNO); si no hay, contar piezas individuales
+    const summaries=prevDB.filter(s=>s.type==='summary');
+    if(summaries.length){
+      prevPiecesFetched=summaries.reduce((a,s)=>a+(parseInt(s.pieces_produced)||0),0);
+    } else {
+      prevPiecesFetched=prevDB.filter(s=>s.type==='piece').length;
+    }
+    prevScrapFetched=(prevScrapDB||[]).reduce((a,s)=>a+(parseInt(s.qty)||0),0);
+    // Sincronizar array local
+    (prevSessDB||[]).forEach(s=>{ if(!sessions.find(x=>x.id===s.id)) sessions.push(s); });
+  }catch(e){ console.error('prevPieces fetch error:',e); }
+  ctx.prevPieces=prevPiecesFetched;
+  ctx.prevScrapPieces=prevScrapFetched;
   // Pick up pieces made during setup
   const setupPzs=parseInt(document.getElementById('setup-piezas')?.value)||0;
   const setupScrap=parseInt(document.getElementById('setup-scrap')?.value)||0;
