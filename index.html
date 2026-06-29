@@ -2994,14 +2994,24 @@ function checkSelectReady(){
   const ok=document.getElementById('sel-ot').value&&document.getElementById('sel-op').value&&document.getElementById('sel-operator').value;
   document.getElementById('btn-go-setup').disabled=!ok;
   document.getElementById('btn-go-prod').disabled=!ok;
-  // Only machining ops show setup button enabled
   const opId=document.getElementById('sel-op').value;
   const woId=document.getElementById('sel-ot').value;
   if(ok&&woId){
     const wo=getWO(woId); const prod=getProduct(wo.product_id);
     const op=prod?.operations.find(o=>o.id===opId);
+    // Solo machining tiene montaje
     if(op&&op.op_type!=='machining'){
       document.getElementById('btn-go-setup').disabled=true;
+    }
+    // Si ya existe sesión de setup completada para esta OT+operación, ocultar montaje
+    const yaHizoSetup=sessions.some(s=>
+      s.ot_id===woId &&
+      s.operation_id===opId &&
+      s.type==='setup'
+    );
+    if(yaHizoSetup){
+      document.getElementById('btn-go-setup').disabled=true;
+      document.getElementById('btn-go-setup').title='Montaje ya realizado para esta operación';
     }
   }
 }
