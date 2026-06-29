@@ -3006,12 +3006,18 @@ function checkSelectReady(){
     // Si ya existe sesión de setup completada para esta OT+operación, ocultar montaje
     const yaHizoSetup=sessions.some(s=>
       s.ot_id===woId &&
-      s.operation_id===opId &&
+      (s.operation_id===opId || (op && s.op_number===op.op_number)) &&
       s.type==='setup'
     );
     if(yaHizoSetup){
-      document.getElementById('btn-go-setup').disabled=true;
-      document.getElementById('btn-go-setup').title='Montaje ya realizado para esta operación';
+      const btnSetup=document.getElementById('btn-go-setup');
+      btnSetup.disabled=true;
+      btnSetup.style.opacity='0.4';
+      btnSetup.title='Montaje ya realizado para esta operación';
+    } else {
+      const btnSetup=document.getElementById('btn-go-setup');
+      btnSetup.style.opacity='';
+      btnSetup.title='';
     }
   }
 }
