@@ -605,7 +605,7 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
           <div style="display:flex;align-items:center;gap:10px">
             <input type="number" id="setup-piezas" value="0" min="0"
               style="text-align:center;font-size:26px;font-family:'DM Mono',monospace;font-weight:700;color:var(--accent);max-width:140px">
-            <div style="font-size:13px;color:#1F2937;text-align:left">Estas piezas<br>se suman al<br>conteo total</div>
+            <div style="font-size:13px;color:#1F2937;text-align:left">Total de piezas que<br>maquinaste (buenas<br>Y con scrap)</div>
           </div>
         </div>
         <div style="margin-top:10px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);border-radius:var(--r);padding:14px">
@@ -613,7 +613,7 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
           <div style="display:flex;align-items:center;gap:10px">
             <input type="number" id="setup-scrap" value="0" min="0"
               style="text-align:center;font-size:26px;font-family:'DM Mono',monospace;font-weight:700;color:var(--danger);max-width:140px">
-            <div style="font-size:13px;color:#1F2937;text-align:left">Piezas de<br>scrap en<br>montaje</div>
+            <div style="font-size:13px;color:#1F2937;text-align:left">De las piezas de arriba,<br>cuántas salieron mal.<br>No se suma aparte</div>
           </div>
         </div>
         <button class="btn btn-green btn-xl" style="margin-top:16px" onclick="goProduction()">INICIAR PRODUCCIÓN <svg class="ic"><use href="#ic-arrow-right"/></svg></button>
@@ -723,7 +723,9 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
           </div>
           <div class="pbar-wrap"><div class="pbar" id="prod-qty-bar" style="width:0%;background:var(--accent)"></div></div>
           <button class="btn btn-accent btn-xl" style="margin-top:10px;font-size:20px" id="btn-register-piece" onclick="registerPiece()"><svg class="ic"><use href="#ic-plus-heavy"/></svg> REGISTRAR PIEZA</button>
+          <div style="font-size:13px;color:#1F2937;text-align:center;margin-top:4px">Presiona al terminar cada pieza, antes de medirla</div>
           <button class="btn btn-danger" style="margin-top:8px;font-size:14px;width:100%" onclick="reportScrap()"><svg class="ic"><use href="#ic-warning"/></svg> REPORTAR SCRAP</button>
+          <div style="font-size:13px;color:#1F2937;text-align:center;margin-top:4px">Si al medir una pieza ya registrada sale mal — no la registres dos veces</div>
         </div>
         <div class="g2">
           <button class="btn btn-ghost btn-lg" id="btn-lunch" onclick="toggleLunch()" style="width:100%"><svg class="ic"><use href="#ic-plate"/></svg> LONCHE</button>
@@ -3330,16 +3332,17 @@ async function goProduction(){
   const setupPcsEl=document.getElementById('disp-setup-pcs');
   if(setupPcsEl) setupPcsEl.textContent=setupPzs;
   const pendingEl=document.getElementById('disp-pending');
-  if(pendingEl) pendingEl.textContent=Math.max(0,adjustedQty-(ctx.prevPieces||0)-(ctx.prevScrapPieces||0)-setupPzs-setupScrap);
+  if(pendingEl) pendingEl.textContent=Math.max(0,adjustedQty-(ctx.prevPieces||0)-(ctx.prevScrapPieces||0)-setupPzs);
   document.getElementById('prod-sub').textContent=`${ctx.product.name} · Op.${ctx.operation.op_number} ${ctx.operation.name} · OT: ${ctx.wo.number}`;
   saveMachineStatus('running','Producción iniciada');
-  // Contador: todas las piezas tocadas ANTES de esta sesión (prev buenas + prev scrap + montaje buenas + montaje scrap)
-  const startCount=(ctx.prevPieces||0)+(ctx.prevScrapPieces||0)+setupPzs+setupScrap;
+  // Contador: todas las piezas tocadas ANTES de esta sesión.
+  // setupPzs YA ES EL TOTAL (buenas+scrap de montaje) según criterio confirmado por Jorge — no sumar setupScrap aparte
+  const startCount=(ctx.prevPieces||0)+(ctx.prevScrapPieces||0)+setupPzs;
   document.getElementById('prod-count').textContent=String(startCount);
   document.getElementById('prod-qty-total').textContent=adjustedQty;
   // PZAS PROD siempre arranca en 0 — solo cuenta lo de ESTA sesión
   const dispProdInit=document.getElementById('disp-prod-pcs'); if(dispProdInit) dispProdInit.textContent='0';
-  // SCRAP muestra el scrap de montaje de esta sesión (0 si no hubo montaje en este turno)
+  // SCRAP muestra el scrap de montaje de esta sesión (solo informativo, ya incluido en setupPzs)
   const scrapEl=document.getElementById('disp-scrap'); if(scrapEl) scrapEl.textContent=(ctx.prevScrapPieces||0)+setupScrap;
   // Mostrar aviso de piezas previas si hay
   const prevInfo=document.getElementById('prev-pieces-info');
@@ -3702,15 +3705,16 @@ async function registerPiece(){
   const totalCount=count+1+(ctx.setupPieces||0);
   const e=effCalc(ctx.operation.unit_time,pieceNet);
   // piece_num continuo: cuenta todo lo tocado antes de esta sesión
-  const pieceOffset=(ctx.setupPieces||0)+(ctx.setupScrap||0)+(ctx.prevPieces||0)+(ctx.prevScrapPieces||0);
+  // piece_num continuo: setupPieces YA es el total de montaje (incluye scrap), no sumar setupScrap aparte
+  const pieceOffset=(ctx.setupPieces||0)+(ctx.prevPieces||0)+(ctx.prevScrapPieces||0);
   const rec={id:uid(),session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,op_type:'machining',machine_id:ctx.operation.machine_id,machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:1,type:'piece',std_time:ctx.operation.unit_time,actual_sec:pieceNet,efficiency:e,piece_num:count+1+pieceOffset,recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
   sessions.unshift(rec);
   try{ await sbInsert('sessions',rec); }catch(er){ console.error(er); }
-  const newCount=ctx.pieceTimes.length+(ctx.setupPieces||0)+(ctx.setupScrap||0)+(ctx.prevPieces||0)+(ctx.prevScrapPieces||0);
+  const newCount=ctx.pieceTimes.length+(ctx.setupPieces||0)+(ctx.prevPieces||0)+(ctx.prevScrapPieces||0);
   const prodPcs=ctx.pieceTimes.length;
-  const scrapTotal=(ctx.scrapCount||0); // setupScrap + scrap prod esta sesión
-  // totalPcs = todo lo tocado: prev buenas + prev scrap + montaje buenas + montaje scrap + prod esta sesión + scrap esta sesión
-  const totalPcs=prodPcs+(ctx.setupPieces||0)+scrapTotal+(ctx.prevPieces||0)+(ctx.prevScrapPieces||0);
+  const scrapTotal=(ctx.scrapCount||0); // solo informativo — setupScrap + scrap prod esta sesión
+  // totalPcs = piezas tocadas: prev buenas + prev scrap + montaje (ya incluye su scrap) + producción esta sesión (ya incluye su scrap, porque cada pieza se registra antes de medirse)
+  const totalPcs=prodPcs+(ctx.setupPieces||0)+(ctx.prevPieces||0)+(ctx.prevScrapPieces||0);
   const lote=ctx.adjustedQty||ctx.wo.qty;
   const pending=Math.max(0,lote-totalPcs);
   document.getElementById('prod-count').textContent=totalPcs;
@@ -3747,21 +3751,23 @@ async function registerPiece(){
 }
 
 window.reportScrap = async function reportScrap(){
-  const qty=parseInt(prompt('¿Cuántas piezas de scrap?','1'));
+  const qty=parseInt(prompt('¿Cuántas piezas con scrap? (de piezas que ya registraste)','1'));
   if(!qty||qty<1) return;
   const reason=prompt('Motivo del scrap (opcional):','')||'';
   ctx.scrapCount=(ctx.scrapCount||0)+qty;
   const rec={id:uid(),session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:qty,reason:reason,recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
   try{ await sbInsert('ot_scrap',rec); }catch(er){ console.error(er); }
-  // Update display
+  // Update display — el scrap NO suma al contador de piezas tocadas (prod-count),
+  // porque la pieza ya fue contada al presionar "Registrar Pieza" antes de medirla.
+  // El scrap aquí es solo trazabilidad de calidad: cuántas de las piezas ya
+  // registradas resultaron mal.
   const dispScrap=document.getElementById('disp-scrap'); if(dispScrap) dispScrap.textContent=ctx.scrapCount+(ctx.prevScrapPieces||0);
   const prodPcsNow=ctx.pieceTimes?ctx.pieceTimes.length:0;
-  const totalPcsNow=prodPcsNow+(ctx.setupPieces||0)+ctx.scrapCount+(ctx.prevPieces||0)+(ctx.prevScrapPieces||0);
+  const totalPcsNow=prodPcsNow+(ctx.setupPieces||0)+(ctx.prevPieces||0)+(ctx.prevScrapPieces||0);
   const pendNow=Math.max(0,(ctx.adjustedQty||ctx.wo?.qty||0)-totalPcsNow);
   const dispPend=document.getElementById('disp-pending'); if(dispPend) dispPend.textContent=pendNow;
-  // Actualizar contador principal
-  document.getElementById('prod-count').textContent=totalPcsNow;
-  alert('Scrap registrado: '+qty+' pza(s). Total scrap: '+ctx.scrapCount+' | Pendiente: '+pendNow);
+  // El contador principal NO cambia — la pieza ya estaba contada
+  alert('Scrap registrado: '+qty+' pza(s) de calidad.\nTotal scrap: '+(ctx.scrapCount+(ctx.prevScrapPieces||0))+' | Piezas tocadas: '+totalPcsNow+' | Pendiente: '+pendNow);
 }
 
 function toggleLunch(){
@@ -3895,19 +3901,19 @@ async function finishProduction(){
   clearInterval(tickInterval);
   const net=getNetElapsed();
   const count=ctx.pieceTimes.length;
-  const buenasProducidas=count+(ctx.setupPieces||0); // buenas de ESTA sesión (montaje + prod)
-  const scrapTotal=ctx.scrapCount||0; // scrap de ESTA sesión (montaje + prod)
-  const totalProduced=buenasProducidas; // para eficiencia y summary: solo buenas esta sesión
-  // Para validar cierre: todo lo tocado en TODA la operación (sesiones previas + esta)
-  const totalTocadas=buenasProducidas+scrapTotal+(ctx.prevPieces||0)+(ctx.prevScrapPieces||0);
+  const buenasProducidas=count+(ctx.setupPieces||0); // piezas tocadas en ESTA sesión: cada "Registrar Pieza" + total de montaje (ya incluye su scrap)
+  const scrapTotal=ctx.scrapCount||0; // solo informativo — calidad de esta sesión
+  const totalProduced=buenasProducidas; // para eficiencia y summary
+  // Para validar cierre: todo lo tocado en TODA la operación — scrap ya está incluido en buenasProducidas
+  const totalTocadas=buenasProducidas+(ctx.prevPieces||0)+(ctx.prevScrapPieces||0);
   const lote=ctx.adjustedQty||ctx.wo.qty;
   const adjustedLote=lote; // piezas disponibles esta operación (lote - scrap ops anteriores)
-  // Validar: buenas + scrap debe cuadrar con el lote disponible
+  // Validar: piezas tocadas debe cuadrar con el lote disponible
   if(totalTocadas!==adjustedLote){
     const diff=totalTocadas-adjustedLote;
     const msg=diff>0
-      ? 'Se procesaron '+diff+' piezas DE MÁS ('+buenasProducidas+' buenas + '+scrapTotal+' scrap = '+totalTocadas+' vs '+adjustedLote+' disponibles).\n¿Es correcto? ¿Deseas continuar?'
-      : 'Faltan '+Math.abs(diff)+' piezas ('+buenasProducidas+' buenas + '+scrapTotal+' scrap = '+totalTocadas+' de '+adjustedLote+' disponibles).\n¿Deseas terminar sin completar el lote?';
+      ? 'Se procesaron '+diff+' piezas DE MÁS ('+totalTocadas+' tocadas, '+scrapTotal+' con scrap, vs '+adjustedLote+' disponibles).\n¿Es correcto? ¿Deseas continuar?'
+      : 'Faltan '+Math.abs(diff)+' piezas ('+totalTocadas+' tocadas, '+scrapTotal+' con scrap, de '+adjustedLote+' disponibles).\n¿Deseas terminar sin completar el lote?';
     if(!confirm(msg)){
       clearInterval(tickInterval);
       tickInterval=setInterval(tickProduction,500);
