@@ -722,8 +722,11 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
             </div>
           </div>
           <div class="pbar-wrap"><div class="pbar" id="prod-qty-bar" style="width:0%;background:var(--accent)"></div></div>
+          <div id="prod-pending-piece-info" class="hidden" style="margin-bottom:10px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.25);border-radius:var(--r);padding:10px;font-size:13px;color:var(--accent);text-align:center"></div>
           <button class="btn btn-accent btn-xl" style="margin-top:10px;font-size:20px" id="btn-register-piece" onclick="registerPiece()"><svg class="ic"><use href="#ic-plus-heavy"/></svg> REGISTRAR PIEZA</button>
           <div style="font-size:13px;color:#1F2937;text-align:center;margin-top:4px">Presiona al terminar cada pieza, antes de medirla</div>
+          <button class="btn btn-blue" style="margin-top:8px;font-size:14px;width:100%" id="btn-piece-in-process" onclick="togglePieceInProcess()"><svg class="ic"><use href="#ic-clock"/></svg> PIEZA EN PROCESO</button>
+          <div id="btn-piece-in-process-note" style="font-size:13px;color:#1F2937;text-align:center;margin-top:4px">Si se termina tu turno y la pieza actual no está completa</div>
           <button class="btn btn-danger" style="margin-top:8px;font-size:14px;width:100%" onclick="reportScrap()"><svg class="ic"><use href="#ic-warning"/></svg> REPORTAR SCRAP</button>
           <div style="font-size:13px;color:#1F2937;text-align:center;margin-top:4px">Si al medir una pieza ya registrada sale mal — no la registres dos veces</div>
         </div>
@@ -3220,7 +3223,7 @@ async function finishSetup(isComplete){
   const stepsCheckedNow=document.querySelectorAll('.setup-step-chk:not(:disabled):checked').length;
   const allAlreadyDoneBefore=(ctx.setupPrevStepsDone||[]).length>=SETUP_STEPS.length;
   if(stepsCheckedNow<1 && !allAlreadyDoneBefore){
-    alert('Marca al menos un paso que hayas realizado en este tramo antes de continuar.\nEsto ayuda a saber qué se hizo y qué falta si el montaje se reparte entre varios operadores.');
+    alert('Marca los pasos que hayas realizado en este tramo antes de continuar.\nEsto ayuda a saber qué se hizo y qué falta si el montaje se reparte entre varios operadores.');
     return;
   }
   clearInterval(tickInterval);
@@ -3306,6 +3309,15 @@ async function goProduction(){
   }catch(e){ console.error('prevPieces fetch error:',e); }
   ctx.prevPieces=prevPiecesFetched;
   ctx.prevScrapPieces=prevScrapFetched;
+
+  // Verificar si hay una PIEZA INTERRUMPIDA pendiente de completar en esta operación
+  ctx.pendingPartialPiece=null;
+  try{
+    const partials=await sbSelect('sessions','select=id,operator_name,partial_pct,actual_sec,recorded_at&ot_id=eq.'+ctx.wo.id+'&operation_id=eq.'+ctx.operation.id+'&type=eq.piece_partial&partial_resolved=eq.false&order=recorded_at.desc&limit=1');
+    if(partials && partials.length){
+      ctx.pendingPartialPiece=partials[0];
+    }
+  }catch(e){ console.error('partial piece fetch error:',e); }
   // Pick up pieces made during setup
   const setupPzs=parseInt(document.getElementById('setup-piezas')?.value)||0;
   const setupScrap=parseInt(document.getElementById('setup-scrap')?.value)||0;
@@ -3366,6 +3378,7 @@ async function goProduction(){
   }
   document.getElementById('prod-qty-bar').style.width='0%';
   document.getElementById('prod-eff-val').textContent='0%'; document.getElementById('prod-eff-val').style.color='var(--muted)'; document.getElementById('prod-eff-val').style.textShadow='none';
+  updatePieceInProcessButton();
   const bRegBtn=document.getElementById('btn-register-piece'); if(bRegBtn){bRegBtn.disabled=false;bRegBtn.innerHTML='<svg class="ic"><use href="#ic-plus-heavy"/></svg> REGISTRAR PIEZA';bRegBtn.style.background='';}
   document.getElementById('prod-eff-label').textContent='--'; document.getElementById('st-min').textContent='--'; document.getElementById('st-avg').textContent='--'; document.getElementById('st-hist-min').textContent='--';
   document.getElementById('dt-list-box').style.display='none'; document.getElementById('last-pieces-box').style.display='none';
@@ -3706,13 +3719,87 @@ function tickProduction(){
   nr.innerHTML=`<span class="info-key">Tiempo Neto</span><span style="font-family:'DM Mono',monospace;font-size:13px">${fmtSec(net)}</span>`;
 }
 
+function updatePieceInProcessButton(){
+  const btn=document.getElementById('btn-piece-in-process');
+  const note=document.getElementById('btn-piece-in-process-note');
+  const info=document.getElementById('prod-pending-piece-info');
+  if(!btn) return;
+  if(ctx.pendingPartialPiece){
+    btn.innerHTML='<svg class="ic"><use href="#ic-check"/></svg> TERMINAR PIEZA';
+    btn.className='btn btn-accent';
+    btn.style.background='';
+    if(note) note.textContent='Hay una pieza interrumpida de turno anterior — termínala y presiona aquí';
+    if(info){
+      info.textContent='▶ Pieza en proceso al '+(ctx.pendingPartialPiece.partial_pct||0)+'% de avance ('+(ctx.pendingPartialPiece.operator_name||'')+') — te falta el '+(100-(ctx.pendingPartialPiece.partial_pct||0))+'%';
+      info.classList.remove('hidden');
+    }
+  } else {
+    btn.innerHTML='<svg class="ic"><use href="#ic-clock"/></svg> PIEZA EN PROCESO';
+    btn.className='btn btn-blue';
+    if(note) note.textContent='Si se termina tu turno y la pieza actual no está completa';
+    if(info) info.classList.add('hidden');
+  }
+}
+window.updatePieceInProcessButton=updatePieceInProcessButton;
+
+async function togglePieceInProcess(){
+  if(ctx.pendingPartialPiece){
+    // Ya hay una pendiente de turno anterior — este botón ahora actúa como "Terminar Pieza"
+    await registerPiece();
+    return;
+  }
+  // Reportar la pieza ACTUAL como interrumpida
+  const net=getNetElapsed();
+  const count=ctx.pieceTimes.length;
+  const lastMark=ctx.lastPieceCheckpoint!=null?ctx.lastPieceCheckpoint:(count>0?ctx.pieceTimes[count-1]:0);
+  const pieceNet=net-lastMark;
+  const stdSec=ctx.operation.unit_time*60;
+  const suggestedPct=Math.min(99,Math.round((pieceNet/stdSec)*100));
+  const input=prompt('¿En qué % va esta pieza? (referencia: llevas '+fmtSec(pieceNet)+' de '+fmtSec(stdSec)+' estándar, ≈'+suggestedPct+'% si vas al ritmo normal)\n\nIngresa el % real de avance de la pieza:','');
+  if(input===null) return;
+  const pct=parseInt(input);
+  if(isNaN(pct)||pct<1||pct>99){ alert('Ingresa un porcentaje válido entre 1 y 99.'); return; }
+  if(!confirm('¿Confirmas que la pieza va al '+pct+'% de avance?')) return;
+
+  const e=effCalc(ctx.operation.unit_time,pieceNet);
+  const rec={id:uid(),session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,op_type:'machining',machine_id:ctx.operation.machine_id,machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:0,type:'piece_partial',std_time:ctx.operation.unit_time,actual_sec:pieceNet,efficiency:e,partial_pct:pct,partial_resolved:false,recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
+  sessions.unshift(rec);
+  try{ await sbInsert('sessions',rec); }catch(er){ console.error(er); }
+  alert('Pieza en proceso registrada al '+pct+'% de avance.\nTu eficiencia en este tramo: '+e+'%.');
+  // Checkpoint de tiempo separado (NO en ctx.pieceTimes, que define el contador de piezas completas)
+  ctx.lastPieceCheckpoint=net;
+  // Esta pieza NO suma a PZAS PROD
+}
+window.togglePieceInProcess=togglePieceInProcess;
+
 async function registerPiece(){
   const net=getNetElapsed();
   const count=ctx.pieceTimes.length;
-  const pieceNet=count>0?net-ctx.pieceTimes[count-1]:net;
+  const lastMark=ctx.lastPieceCheckpoint!=null?ctx.lastPieceCheckpoint:(count>0?ctx.pieceTimes[count-1]:0);
+  const pieceNet=net-lastMark;
   ctx.pieceTimes.push(net);
+  ctx.lastPieceCheckpoint=null; // reset — el checkpoint ya se consumió
   const totalCount=count+1+(ctx.setupPieces||0);
-  const e=effCalc(ctx.operation.unit_time,pieceNet);
+
+  let e;
+  if(ctx.pendingPartialPiece){
+    // Esta pieza estaba interrumpida — eficiencia proporcional al % que ESTE operador completó
+    const prevPct=ctx.pendingPartialPiece.partial_pct||0;
+    const myPct=Math.max(1,100-prevPct);
+    const stdProportional=ctx.operation.unit_time*(myPct/100);
+    e=effCalc(stdProportional,pieceNet);
+    // Marcar el parcial como resuelto en BD
+    try{
+      const H2={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'};
+      await fetch(SB_URL+'/rest/v1/sessions?id=eq.'+encodeURIComponent(ctx.pendingPartialPiece.id),{method:'PATCH',headers:H2,body:JSON.stringify({partial_resolved:true})});
+      const localPartial=sessions.find(s=>s.id===ctx.pendingPartialPiece.id);
+      if(localPartial) localPartial.partial_resolved=true;
+    }catch(er){ console.error('partial resolve error:',er); }
+    ctx.pendingPartialPiece=null;
+    updatePieceInProcessButton();
+  } else {
+    e=effCalc(ctx.operation.unit_time,pieceNet);
+  }
   // piece_num continuo: cuenta todo lo tocado antes de esta sesión
   // piece_num continuo: setupPieces YA es el total de montaje (incluye scrap), no sumar setupScrap aparte
   const pieceOffset=(ctx.setupPieces||0)+(ctx.prevPieces||0);
