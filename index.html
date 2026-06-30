@@ -7804,9 +7804,11 @@ async function deleteReleasedOT(id, number){
 async function deleteClosedOT(id){
   const ot=workOrders.find(o=>o.id===id);
   const otNum=ot?.number||id;
-  const esCerrada=ot?.status==='closed';
-  const label=esCerrada?'cerrada':'liberada';
-  if(!confirm(`¿Eliminar la OT ${otNum} (${label})?\n\nSe eliminarán también sus sesiones, entregas, scrap, tránsito de MP y PT asociados.\n\nEsta acción es permanente.`)) return;
+  if(ot?.status!=='closed'){
+    alert('Solo se pueden eliminar OTs cerradas desde Información OT.\nLa OT '+otNum+' está '+( ot?.status==='released'?'liberada (activa en piso)':'en estado '+ot?.status)+' y no puede eliminarse aquí.');
+    return;
+  }
+  if(!confirm(`¿Eliminar la OT ${otNum} (cerrada)?\n\nSe eliminarán también sus sesiones, entregas, scrap, tránsito de MP y PT asociados.\n\nEsta acción es permanente.`)) return;
   showLoading('ELIMINANDO OT '+otNum+'...');
   const H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'};
   try{
@@ -12263,7 +12265,7 @@ function renderInfoOT(){
   if(!el) return;
   const q=(document.getElementById('info-ot-search')?.value||'').toLowerCase();
 
-  let list=workOrders.filter(o=>o.status==='released'||o.status==='closed');
+  let list=workOrders.filter(o=>o.status==='closed');
   if(q){
     list=list.filter(o=>{
       const prod=products.find(p=>p.id===o.product_id);
