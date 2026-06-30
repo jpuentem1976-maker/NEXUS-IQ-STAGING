@@ -3287,7 +3287,7 @@ async function finishSetup(isComplete){
 
 async function goProduction(){
   ctx.prodStart=Date.now(); ctx.pieceTimes=[]; ctx.elapsed=0; ctx.totalLunch=0; ctx.downtimes=[];
-  ctx.setupPieces=0; ctx.setupScrap=0; ctx.scrapCount=0; ctx.adjustedQty=null;
+  ctx.setupPieces=0; ctx.setupScrap=0; ctx.scrapCount=0; ctx.adjustedQty=null; ctx.prodStdAccumSec=0;
   // Calcular piezas ya producidas en sesiones ANTERIORES de esta misma operación
   // Usar timestamp de inicio de esta sesión como separador confiable
   const thisProdStartISO=new Date(ctx.prodStart).toISOString();
@@ -3761,7 +3761,10 @@ async function togglePieceInProcess(){
   if(isNaN(pct)||pct<1||pct>99){ alert('Ingresa un porcentaje válido entre 1 y 99.'); return; }
   if(!confirm('¿Confirmas que la pieza va al '+pct+'% de avance?')) return;
 
-  const e=effCalc(ctx.operation.unit_time,pieceNet);
+  // Eficiencia de este tramo: el operador avanzó del 0% al pct%, así que el estándar
+  // de referencia es proporcional al pct alcanzado, no el estándar completo de la pieza.
+  const stdProportionalThis=ctx.operation.unit_time*(pct/100);
+  const e=effCalc(stdProportionalThis,pieceNet);
   const rec={id:uid(),session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,op_type:'machining',machine_id:ctx.operation.machine_id,machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:0,type:'piece_partial',std_time:ctx.operation.unit_time,actual_sec:pieceNet,efficiency:e,partial_pct:pct,partial_resolved:false,recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
   sessions.unshift(rec);
   try{ await sbInsert('sessions',rec); }catch(er){ console.error(er); }
@@ -3781,13 +3784,14 @@ async function registerPiece(){
   ctx.lastPieceCheckpoint=null; // reset — el checkpoint ya se consumió
   const totalCount=count+1+(ctx.setupPieces||0);
 
-  let e;
+  let e, stdContribMin;
   if(ctx.pendingPartialPiece){
     // Esta pieza estaba interrumpida — eficiencia proporcional al % que ESTE operador completó
     const prevPct=ctx.pendingPartialPiece.partial_pct||0;
     const myPct=Math.max(1,100-prevPct);
     const stdProportional=ctx.operation.unit_time*(myPct/100);
     e=effCalc(stdProportional,pieceNet);
+    stdContribMin=stdProportional; // solo SU fracción de estándar, no la pieza completa
     // Marcar el parcial como resuelto en BD
     try{
       const H2={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'};
@@ -3799,7 +3803,9 @@ async function registerPiece(){
     updatePieceInProcessButton();
   } else {
     e=effCalc(ctx.operation.unit_time,pieceNet);
+    stdContribMin=ctx.operation.unit_time;
   }
+  ctx.prodStdAccumSec=(ctx.prodStdAccumSec||0)+stdContribMin*60;
   // piece_num continuo: cuenta todo lo tocado antes de esta sesión
   // piece_num continuo: setupPieces YA es el total de montaje (incluye scrap), no sumar setupScrap aparte
   const pieceOffset=(ctx.setupPieces||0)+(ctx.prevPieces||0);
@@ -3819,8 +3825,10 @@ async function registerPiece(){
   const dispScrap=document.getElementById('disp-scrap'); if(dispScrap) dispScrap.textContent=scrapTotal+(ctx.prevScrapPieces||0);
   const dispPend=document.getElementById('disp-pending'); if(dispPend) dispPend.textContent=pending;
   // Update production efficiency (only production pieces vs production time)
+  // Usa el estándar EFECTIVO acumulado (proporcional cuando una pieza fue retomada de otro
+  // operador), no unit_time*prodPcs, para no inflar la eficiencia con piezas parciales.
   const netNow=getNetElapsed();
-  const prodEff=effCalc(ctx.operation.unit_time*prodPcs,netNow);
+  const prodEff=effCalc((ctx.prodStdAccumSec||0)/60,netNow);
   const gc=effColor(prodEff);
   document.getElementById('prod-eff-val').textContent=prodEff+'%';
   document.getElementById('prod-eff-val').style.color=gc;
