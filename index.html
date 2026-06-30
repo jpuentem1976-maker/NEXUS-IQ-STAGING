@@ -589,6 +589,10 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
       <div class="timer-std" id="setup-std-display">00:00</div>
       <div style="margin:16px 0 6px;font-size:13px;color:#1F2937;text-transform:uppercase;letter-spacing:.8px">Tiempo Transcurrido</div>
       <div class="timer-live" id="setup-timer" style="color:var(--text)">00:00</div>
+      <div id="setup-mine-box" class="hidden" style="margin-top:10px;background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.2);border-radius:var(--r);padding:10px">
+        <div style="font-size:13px;color:#1F2937;text-transform:uppercase;letter-spacing:.5px">Tu aporte en este turno</div>
+        <div style="font-size:24px;font-family:'DM Mono',monospace;font-weight:700;color:var(--accent)" id="setup-mine-timer">00:00</div>
+      </div>
       <div id="setup-pbar-wrap" class="hidden" style="margin:12px 0">
         <div class="pbar-wrap"><div class="pbar" id="setup-pbar" style="width:0%;background:var(--accent)"></div></div>
         <div id="setup-pbar-label" style="font-size:13px;color:#1F2937;margin-top:3px"></div>
@@ -616,6 +620,10 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
       </div>
       <div id="setup-btn-start"><button class="btn btn-blue btn-xl" style="margin-top:20px" onclick="startSetup()">▶ INICIAR MONTAJE</button></div>
       <div id="setup-btn-finish" class="hidden" style="display:flex;flex-direction:column;gap:10px;margin-top:20px">
+        <div class="card" style="text-align:left;padding:14px">
+          <div style="font-size:13px;color:#1F2937;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Pasos realizados en este tramo <span style="font-weight:400;normal-case;text-transform:none">(registro de diagnóstico, no afecta eficiencia)</span></div>
+          <div id="setup-checklist"></div>
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <button class="btn btn-ghost btn-lg" id="setup-btn-lonche" onclick="toggleSetupLunch()"><svg class="ic"><use href="#ic-plate"/></svg> LONCHE</button>
           <button class="btn btn-ghost btn-lg" id="setup-btn-paro" onclick="toggleSetupParo()"><svg class="ic"><use href="#ic-warning"/></svg> PARO</button>
@@ -637,7 +645,10 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
           <button class="btn btn-danger btn-lg" style="width:100%" onclick="endSetupParo()"><svg class="ic"><use href="#ic-check"/></svg> TERMINAR PARO</button>
         </div>
         <div id="setup-dt-list" style="font-size:13px"></div>
-        <button class="btn btn-accent btn-xl" onclick="finishSetup()"><svg class="ic"><use href="#ic-check"/></svg> FINALIZAR MONTAJE</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
+          <button class="btn btn-ghost btn-xl" onclick="finishSetup(false)"><svg class="ic"><use href="#ic-clock"/></svg> FIN DE TURNO</button>
+          <button class="btn btn-accent btn-xl" onclick="finishSetup(true)"><svg class="ic"><use href="#ic-check"/></svg> MONTAJE CONCLUIDO</button>
+        </div>
       </div>
     </div>
   </div>
@@ -3037,19 +3048,22 @@ function checkSelectReady(){
       return;
     }
 
-    // Operación primaria (machining): verificar si ya existe setup en BD
-    const yaHizoSetup=sessions.some(s=>
+    // Operación primaria (machining): verificar si el montaje YA SE CONCLUYÓ
+    // (registros viejos sin el campo is_setup_complete se tratan como completos, por compatibilidad)
+    const setupRecs=sessions.filter(s=>
       s.ot_id===woId &&
       (s.operation_id===opId||(op&&s.op_number===op.op_number)) &&
       s.type==='setup'
-    );
+    ).sort((a,b)=>new Date(b.recorded_at)-new Date(a.recorded_at));
+    const lastSetup=setupRecs[0];
+    const montajeConcluido=lastSetup ? (lastSetup.is_setup_complete!==false) : false;
 
-    if(yaHizoSetup){
-      // Montaje ya hecho → solo producción
+    if(montajeConcluido){
+      // Montaje ya concluido → solo producción
       btnSetup.style.display='none';
       btnProd.style.display='';
     } else {
-      // Sin montaje previo → solo montaje, producción bloqueada
+      // Sin montaje, o montaje en pausa sin concluir → solo montaje (para iniciar o continuar)
       btnSetup.style.display='';
       btnProd.style.display='none';
     }
@@ -3070,7 +3084,34 @@ function buildCtx(){
   ctx={wo,product:prod,operation:op,operator:oper,setupStart:null,setupEnd:null,setupEff:0,prodStart:null,pieceTimes:[],elapsed:0,lunchStart:null,totalLunch:0,dtStart:null,dtCat:'',downtimes:[],sessionId:sessId,secStart:null,secStartedAt:null,secActiveId:null,setupLunchStart:null,setupTotalLunch:0,setupDtStart:null,setupDtCat:'',setupDowntimes:[]};
 }
 
-function goSetup(){
+const SETUP_STEPS=[
+  {id:'mordazas',label:'Cambio y maquinado de mordazas (de ser necesario)'},
+  {id:'herramientas_valvulas',label:'Colocar herramientas y ajuste de válvulas de soluble'},
+  {id:'modelos_herr',label:'Seleccionar modelos de herramienta, compensación y dirección'},
+  {id:'ref_pieza',label:'Referenciar pieza (montaje)'},
+  {id:'ref_herr',label:'Referenciar herramientas'},
+  {id:'simulacion',label:'Correr simulación'},
+  {id:'single_block',label:'Correr programa paso a paso (single block)'},
+  {id:'tool_data',label:'Realizar ajuste dimensional (tool data)'},
+  {id:'verif_dim',label:'Verificación dimensional al 100% de la pieza'}
+];
+
+function renderSetupChecklist(prevDone){
+  const box=document.getElementById('setup-checklist');
+  if(!box) return;
+  prevDone=prevDone||[];
+  let html='';
+  SETUP_STEPS.forEach(s=>{
+    const doneBefore=prevDone.includes(s.id);
+    html+='<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;'+(doneBefore?'opacity:.6':'')+'">'
+      +'<input type="checkbox" class="setup-step-chk" value="'+s.id+'" '+(doneBefore?'checked disabled':'')+' style="width:18px;height:18px">'
+      +'<span>'+s.label+(doneBefore?' <span style="color:var(--accent);font-size:13px">(ya completado por turno anterior)</span>':'')+'</span>'
+      +'</label>';
+  });
+  box.innerHTML=html;
+}
+
+async function goSetup(){
   buildCtx();
   document.getElementById('setup-sub').textContent=`${ctx.product.name} · Op.${ctx.operation.op_number} ${ctx.operation.name} · ${ctx.operation.machine_name||''}`;
   document.getElementById('su-operator').textContent=ctx.operator.name;
@@ -3086,6 +3127,25 @@ function goSetup(){
   document.getElementById('setup-btn-start').classList.remove('hidden');
   document.getElementById('setup-btn-finish').classList.add('hidden');
   document.getElementById('setup-live').classList.add('hidden');
+  document.getElementById('setup-mine-box').classList.add('hidden');
+
+  // Consultar tramos previos de montaje incompletos para esta OT+operación
+  ctx.setupPrevSec=0;
+  ctx.setupPrevOperators=[];
+  ctx.setupPrevStepsDone=[];
+  try{
+    const prevTramos=await sbSelect('sessions','select=session_id,operator_id,actual_sec,checklist_done&ot_id=eq.'+ctx.wo.id+'&operation_id=eq.'+ctx.operation.id+'&type=eq.setup&order=recorded_at.asc')||[];
+    prevTramos.forEach(t=>{
+      ctx.setupPrevSec+=parseInt(t.actual_sec)||0;
+      if(t.operator_id && !ctx.setupPrevOperators.includes(t.operator_id)) ctx.setupPrevOperators.push(t.operator_id);
+      if(Array.isArray(t.checklist_done)) ctx.setupPrevStepsDone=[...new Set([...ctx.setupPrevStepsDone,...t.checklist_done])];
+    });
+  }catch(e){ console.error('prev setup fetch:',e); }
+
+  renderSetupChecklist(ctx.setupPrevStepsDone);
+  if(ctx.setupPrevSec>0){
+    document.getElementById('setup-timer').textContent=fmtSec(ctx.setupPrevSec);
+  }
   showStep('step-setup');
 }
 
@@ -3128,19 +3188,23 @@ async function startSetup(){
   document.getElementById('setup-live').classList.remove('hidden');
   document.getElementById('setup-timer').style.color='var(--accent)';
   document.getElementById('setup-pbar-wrap').classList.remove('hidden');
+  if((ctx.setupPrevSec||0)>0) document.getElementById('setup-mine-box').classList.remove('hidden');
   // Save setup_start record immediately so dashboard shows activity
   const startRec={id:uid(),session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,op_type:ctx.operation.op_type,machine_id:ctx.operation.machine_id,machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:ctx.wo.qty,type:'setup_start',std_time:ctx.operation.setup_time,actual_sec:0,efficiency:0,recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
   sessions.unshift(startRec);
   try{ await sbInsert('sessions',startRec); }catch(e2){ console.error(e2); }
   saveMachineStatus('running','Montaje iniciado');
   clearInterval(tickInterval);
+  const prevSec=ctx.setupPrevSec||0;
   tickInterval=setInterval(()=>{
     const lunchActive=ctx.setupLunchStart?Math.floor((Date.now()-ctx.setupLunchStart)/1000):0;
     const dtActive=ctx.setupDtStart?Math.floor((Date.now()-ctx.setupDtStart)/1000):0;
     const pausedSetup=ctx.setupTotalLunch+lunchActive+ctx.setupDowntimes.reduce((a,d)=>a+(d.secs||0),0)+dtActive;
-    const el=Math.max(0,Math.floor((Date.now()-ctx.setupStart)/1000)-pausedSetup);
+    const myEl=Math.max(0,Math.floor((Date.now()-ctx.setupStart)/1000)-pausedSetup);
+    const el=prevSec+myEl; // reloj grande: acumulado total real (tramos previos + este tramo)
     const std=ctx.operation.setup_time*60;
     document.getElementById('setup-timer').textContent=fmtSec(el);
+    document.getElementById('setup-mine-timer').textContent=fmtSec(myEl);
     const pct=Math.min((el/std)*100,100);
     const pb=document.getElementById('setup-pbar');
     pb.style.width=pct+'%'; pb.style.background=el<=std?'var(--accent)':'var(--danger)';
@@ -3148,7 +3212,7 @@ async function startSetup(){
   },500);
 }
 
-async function finishSetup(){
+async function finishSetup(isComplete){
   clearInterval(tickInterval);
   // Cerrar lonche activo si quedó abierto
   if(ctx.setupLunchStart){ ctx.setupTotalLunch+=Math.floor((Date.now()-ctx.setupLunchStart)/1000); ctx.setupLunchStart=null; }
@@ -3157,20 +3221,55 @@ async function finishSetup(){
   ctx.setupEnd=Date.now();
   const rawSec=Math.floor((ctx.setupEnd-ctx.setupStart)/1000);
   const paused=ctx.setupTotalLunch+ctx.setupDowntimes.reduce((a,d)=>a+(d.secs||0),0);
-  const actualSec=Math.max(1,rawSec-paused);
-  const e=effCalc(ctx.operation.setup_time,actualSec);
-  ctx.setupEff=e;
-  const c=effColor(e);
-  document.getElementById('setup-eff-val').textContent=e+'%'; document.getElementById('setup-eff-val').style.color=c;
-  document.getElementById('setup-eff-label').textContent=effLabel(e); document.getElementById('setup-eff-label').style.color=c;
-  document.getElementById('setup-btn-finish').classList.add('hidden');
-  document.getElementById('setup-live').classList.add('hidden');
-  document.getElementById('setup-result').classList.remove('hidden');
+  const myActualSec=Math.max(1,rawSec-paused); // tiempo de ESTE tramo, sin acumulado previo
+  const prevSec=ctx.setupPrevSec||0;
+  const totalSec=prevSec+myActualSec; // acumulado total real para esta OT+operación
+
+  // Checklist: pasos marcados en este tramo (no incluye los ya marcados de tramos previos)
+  const stepsThisTramo=Array.from(document.querySelectorAll('.setup-step-chk:not(:disabled):checked')).map(el=>el.value);
+  const allStepsDone=[...new Set([...(ctx.setupPrevStepsDone||[]),...stepsThisTramo])];
+
+  // ¿Cuántos operadores distintos han tocado este montaje (incluyendo el actual)?
+  const allOperators=[...new Set([...(ctx.setupPrevOperators||[]),ctx.operator.id])];
+  const multiOperator=allOperators.length>1;
+
+  let e=0;
+  if(isComplete){
+    if(multiOperator){
+      // Repartido entre varios: NO se atribuye eficiencia a nadie — solo se registra el total
+      e=null;
+    } else {
+      // Un solo operador de inicio a fin: eficiencia normal contra el estándar completo
+      e=effCalc(ctx.operation.setup_time,totalSec);
+    }
+  }
+  ctx.setupEff=e||0;
+
+  if(isComplete){
+    const c=e!=null?effColor(e):'var(--text)';
+    document.getElementById('setup-eff-val').textContent=e!=null?e+'%':'N/A';
+    document.getElementById('setup-eff-val').style.color=c;
+    document.getElementById('setup-eff-label').textContent=e!=null?effLabel(e):'Montaje repartido entre '+allOperators.length+' operadores — sin eficiencia individual';
+    document.getElementById('setup-eff-label').style.color=c;
+    document.getElementById('setup-btn-finish').classList.add('hidden');
+    document.getElementById('setup-live').classList.add('hidden');
+    document.getElementById('setup-result').classList.remove('hidden');
+  }
+
   const recId=uid();
   ctx.setupRecordId=recId; // store for update in goProduction
-  const rec={id:recId,session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,op_type:ctx.operation.op_type,machine_id:ctx.operation.machine_id,machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:ctx.wo.qty,type:'setup',std_time:ctx.operation.setup_time,actual_sec:actualSec,efficiency:e,setup_pieces:0,downtimes:ctx.setupDowntimes||[],recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
+  const rec={id:recId,session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,op_type:ctx.operation.op_type,machine_id:ctx.operation.machine_id,machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:ctx.wo.qty,type:'setup',std_time:ctx.operation.setup_time,actual_sec:myActualSec,total_accumulated_sec:totalSec,efficiency:e,is_setup_complete:!!isComplete,checklist_done:stepsThisTramo,downtimes:ctx.setupDowntimes||[],recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
+  if(isComplete) rec.setup_pieces=0;
   sessions.unshift(rec);
   try{ await sbInsert('sessions',rec); updateMachineLoadStart(); }catch(e2){ console.error(e2); }
+
+  if(!isComplete){
+    // FIN DE TURNO sin concluir: regresar a selección, máquina queda disponible para que otro retome el montaje
+    saveMachineStatus('stopped','Montaje en pausa — turno terminado');
+    const spEl=document.getElementById('setup-piezas'); if(spEl) spEl.value='0';
+    const ssEl=document.getElementById('setup-scrap'); if(ssEl) ssEl.value='0';
+    showStep('step-select');
+  }
 }
 
 async function goProduction(){
