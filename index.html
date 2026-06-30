@@ -6273,7 +6273,7 @@ function getOTBomMaterialStatus(o,p){
     out.push({
       m,matCat,i,bomId,esBarra,
       totalReqOriginal,cubierto,totalReq,cantConsumir,dispPP,reqLote,
-      totalDisp,dispReal,yaApartado,enTransito,
+      totalDisp,dispReal,yaApartado,enTransito,yaEnTransitConsumed,
       cubiertoTotal,
       critico:m.critico!==false
     });
@@ -6897,6 +6897,56 @@ async function releaseOT(id){
     if(p){
       const estado=getOTBomMaterialStatus(o,p);
       for(const b of estado){
+        // ── Barra de Almacén General sin apartar/habilitar previo: consumir FIFO directo ──
+        // (si ya pasó por Apartar→Habilitar, el bloque de arriba que marca mp_transit
+        // 'listo'→'consumido' ya cubrió este material y no debe duplicarse aquí)
+        if(b.esBarra && b.totalReq>0.0001 && !b.enTransito && !b.yaEnTransitConsumed){
+          let porCubrirGen=b.totalReq;
+          let stockGen;
+          try{
+            stockGen=await sbSelect('mp_stock','select=*&material_id=eq.'+encodeURIComponent(b.m.tipo)+'&producto_id=is.null&status=in.(disponible,parcial)')||[];
+          }catch(e){
+            console.error('fresh mp_stock (barra general) fetch error, falling back to local:',e);
+            stockGen=mpStock.filter(s=>s.material_id===b.m.tipo&&!s.producto_id&&(s.status==='disponible'||s.status==='parcial'));
+          }
+          for(const s of stockGen){
+            if(porCubrirGen<=0.0001) break;
+            const longTotalAct=stockLongTotal(s);
+            if(longTotalAct<=0) continue;
+            const longOrig=parseFloat(s.longitud_original||s.longitud_in)||0;
+            const precio=parseFloat(s.precio_kg)||0;
+            const consumo=Math.min(porCubrirGen, longTotalAct);
+            const longRestante=Math.max(0,parseFloat((longTotalAct-consumo).toFixed(3)));
+            const newCant=longOrig>0?Math.floor(longRestante/longOrig):parseInt(s.cantidad)||0;
+            const newResiduo=longOrig>0?parseFloat((longRestante-newCant*longOrig).toFixed(3)):0;
+            const kgBarra=parseFloat(s.kg_barra)||0;
+            const newKgTotal=longOrig>0?parseFloat(((longRestante/longOrig)*kgBarra).toFixed(3)):parseFloat(s.kg_total||0)-parseFloat(s.kg_total||0)*(consumo/longTotalAct);
+            const newValor=parseFloat((newKgTotal*precio).toFixed(2));
+            const newStatus=longRestante<=0?'sin_stock':'disponible';
+            const kgConsumido=longOrig>0?parseFloat(((consumo/longOrig)*kgBarra).toFixed(3)):0;
+            const valorConsumido=parseFloat((kgConsumido*precio).toFixed(2));
+
+            await sbUpdate('mp_stock',{id:s.id},{cantidad:newCant,longitud_original:longOrig,longitud_residuo:newResiduo,kg_total:parseFloat(newKgTotal.toFixed(3)),valor_total:newValor,status:newStatus,updated_at:now});
+            await sbInsert('mp_transit',{
+              id:uid(),ot_id:id,ot_number:o.number,
+              product_id:o.product_id,product_name:prod.name||'',product_code:prod.code||'',
+              material:s.material||b.matCat?.label||'',forma:s.forma||b.matCat?.forma||'',diametro:s.diametro||b.matCat?.diametro||null,
+              longitud_in:consumo,cantidad_barras:newCant<(parseInt(s.cantidad)||0)?(parseInt(s.cantidad)||0)-newCant:1,
+              kg_real:kgConsumido,precio_kg:precio,valor:valorConsumido,
+              mp_stock_id:s.id,material_id:b.m.tipo,
+              notas_habilitado:'Almacén General consumido directo al liberar OT',
+              status:'consumido',moved_by:'Sistema',moved_at:now,released_at:now
+            });
+            await sbInsert('mp_movements',{
+              id:uid(),mp_stock_id:s.id,tipo:'salida',
+              material:s.material||b.matCat?.label||'',forma:s.forma||'',diametro:s.diametro||null,
+              cantidad:1,longitud_in:consumo,kg:kgConsumido,valor:valorConsumido,
+              origen:'Almacén MP',destino:'OT '+o.number+' (Liberada)',
+              ot_id:id,ot_number:o.number,recorded_at:now
+            });
+            porCubrirGen=parseFloat((porCubrirGen-consumo).toFixed(3));
+          }
+        }
         if(b.cantConsumir<=0) continue;
         const bomId=b.bomId;
         // Consultar mp_stock FRESCO de Supabase para evitar precio_kg desactualizado del array local
