@@ -908,8 +908,10 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
       <div style="margin-left:auto"><button class="btn btn-accent btn-sm" onclick="showProductForm(null)">+ Nuevo Producto</button></div>
     </div>
     <div class="ptabs" style="margin-bottom:14px">
-      <button class="ptab active" id="prodtab-stock" onclick="setProductTipoTab('stock')"><svg class="ic"><use href="#ic-package"/></svg> Stock</button>
-      <button class="ptab" id="prodtab-pedido" onclick="setProductTipoTab('pedido')"><svg class="ic"><use href="#ic-wrench"/></svg> Bajo Pedido</button>
+      <button class="ptab active" id="prodtab-s83f" onclick="setProductTipoTab('s83f')"><svg class="ic"><use href="#ic-package"/></svg> Productos S83F</button>
+      <button class="ptab" id="prodtab-s250" onclick="setProductTipoTab('s250')"><svg class="ic"><use href="#ic-package"/></svg> Productos S250</button>
+      <button class="ptab" id="prodtab-otros" onclick="setProductTipoTab('otros')"><svg class="ic"><use href="#ic-package"/></svg> Otros Productos Stock</button>
+      <button class="ptab" id="prodtab-pedido" onclick="setProductTipoTab('pedido')"><svg class="ic"><use href="#ic-wrench"/></svg> Productos Bajo Pedido</button>
     </div>
     <div id="product-form-wrap"></div>
     <div id="products-list"></div>
@@ -3821,11 +3823,22 @@ function toggleOps(id){
   btn.textContent=hidden?'▲ Ocultar':'▼ Ver operaciones';
 }
 
-let _productTipoTab='stock';
+let _productTipoTab='s83f';
+// Familias con pestaña fija
+const FAMILIAS_S83F=['S83F','FL7','FL9'];
+const FAMILIAS_S250=['S250'];
+function prodTabOf(p){
+  const fam=(p.familia||'').toUpperCase().trim();
+  if(FAMILIAS_S83F.some(f=>fam.includes(f))) return 's83f';
+  if(FAMILIAS_S250.some(f=>fam.includes(f))) return 's250';
+  if((p.tipo_producto||'stock')==='pedido') return 'pedido';
+  return 'otros';
+}
 function setProductTipoTab(tipo){
   _productTipoTab=tipo;
-  document.getElementById('prodtab-stock')?.classList.toggle('active',tipo==='stock');
-  document.getElementById('prodtab-pedido')?.classList.toggle('active',tipo==='pedido');
+  ['s83f','s250','otros','pedido'].forEach(t=>{
+    document.getElementById('prodtab-'+t)?.classList.toggle('active',tipo===t);
+  });
   document.getElementById('product-form-wrap').innerHTML='';
   renderProducts();
 }
@@ -3834,7 +3847,7 @@ window.setProductTipoTab=setProductTipoTab;
 function renderProducts(){
   const list=document.getElementById('products-list');
   const q=(document.getElementById('products-search')?.value||'').trim().toLowerCase();
-  let filtered=products.filter(p=>(p.tipo_producto||'stock')===_productTipoTab);
+  let filtered=products.filter(p=>prodTabOf(p)===_productTipoTab);
   if(q) filtered=filtered.filter(p=>
     (p.name||'').toLowerCase().includes(q)||
     (p.code||'').toLowerCase().includes(q)||
@@ -3843,7 +3856,7 @@ function renderProducts(){
   // Actualizar contador
   const counter=document.getElementById('products-counter');
   if(counter) counter.textContent=filtered.length+' producto'+(filtered.length!==1?'s':'');
-  if(!filtered.length){ list.innerHTML=`<div class="card" style="color:var(--text);text-align:center;padding:40px">${q?`Sin resultados para "<b>${q}</b>"`:`Sin productos ${_productTipoTab==='pedido'?'bajo pedido':'de stock'}`}</div>`; return; }
+  if(!filtered.length){ const tabLabel={s83f:'S83F',s250:'S250',otros:'stock',pedido:'bajo pedido'}[_productTipoTab]||''; list.innerHTML=`<div class="card" style="color:var(--text);text-align:center;padding:40px">${q?`Sin resultados para "<b>${q}</b>"`:`Sin productos ${tabLabel}`}</div>`; return; }
   const sorted=[...filtered].sort((a,b)=>{const an=a.sort_number??99999,bn=b.sort_number??99999;return an-bn;});
   list.innerHTML=sorted.map(p=>{
 
@@ -4998,7 +5011,7 @@ async function saveProduct(id,isNew){
 
   const prodData={id,name,code,
     familia:(document.getElementById('pf-familia')?.value.trim().toUpperCase())||null,
-    tipo_producto:_productTipoTab,
+    tipo_producto:(_productTipoTab==='pedido')?'pedido':'stock',
     batch:document.getElementById('pf-batch')?.value.trim()||null,
     photo_url:document.getElementById('pf-photo-url-final')?.value.trim()||document.getElementById('pf-photo')?.value.trim()||null,
     steel_type:document.getElementById('pf-steel')?.value.trim()||null,
