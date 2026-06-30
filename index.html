@@ -959,7 +959,8 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
     <div class="ptabs" style="margin-bottom:14px">
       <button class="ptab active" id="drawmptab-s83f" onclick="setDrawingsMpTab('s83f')"><svg class="ic"><use href="#ic-package"/></svg> Productos S83F</button>
       <button class="ptab" id="drawmptab-s250" onclick="setDrawingsMpTab('s250')"><svg class="ic"><use href="#ic-package"/></svg> Productos S250</button>
-      <button class="ptab" id="drawmptab-otros" onclick="setDrawingsMpTab('otros')"><svg class="ic"><use href="#ic-package"/></svg> Otros</button>
+      <button class="ptab" id="drawmptab-otros" onclick="setDrawingsMpTab('otros')"><svg class="ic"><use href="#ic-package"/></svg> Otros Productos Stock</button>
+      <button class="ptab" id="drawmptab-pedido" onclick="setDrawingsMpTab('pedido')"><svg class="ic"><use href="#ic-wrench"/></svg> Productos Bajo Pedido</button>
     </div>
     <div id="drawings-mp-body"></div>
   </div>
@@ -968,6 +969,12 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
   <div id="e-cnc" class="subpage">
     <div style="font-size:15px;font-weight:700;margin-bottom:4px">Programas CNC</div>
     <div style="font-size:13px;color:#1F2937;margin-bottom:16px">Programas por producto y operacion. Los puedes subir directamente desde cada operacion en Productos.</div>
+    <div class="ptabs" style="margin-bottom:14px">
+      <button class="ptab active" id="cnctab-s83f" onclick="setCncTab('s83f')"><svg class="ic"><use href="#ic-package"/></svg> Productos S83F</button>
+      <button class="ptab" id="cnctab-s250" onclick="setCncTab('s250')"><svg class="ic"><use href="#ic-package"/></svg> Productos S250</button>
+      <button class="ptab" id="cnctab-otros" onclick="setCncTab('otros')"><svg class="ic"><use href="#ic-package"/></svg> Otros Productos Stock</button>
+      <button class="ptab" id="cnctab-pedido" onclick="setCncTab('pedido')"><svg class="ic"><use href="#ic-wrench"/></svg> Productos Bajo Pedido</button>
+    </div>
     <div id="cnc-body"></div>
   </div>
 
@@ -5556,8 +5563,51 @@ function buildDrawingsGrid(prods, containerId){
   html += '</div>';
   body.innerHTML = html;
 }
-
 function renderDrawings(){ buildDrawingsGrid(products, 'drawings-body'); }
+
+let _cncTab='s83f';
+function setCncTab(tipo){
+  _cncTab=tipo;
+  ['s83f','s250','otros','pedido'].forEach(t=>{
+    document.getElementById('cnctab-'+t)?.classList.toggle('active',tipo===t);
+  });
+  renderCNCPrograms();
+}
+window.setCncTab=setCncTab;
+
+function renderCNCPrograms(){
+  const body=document.getElementById('cnc-body');
+  if(!body) return;
+  const prodsInTab=products.filter(p=>prodTabOf(p)===_cncTab)
+    .sort((a,b)=>(a.sort_number??99999)-(b.sort_number??99999));
+  // Construir lista de programas: producto + cada operación con cnc_program_url
+  const rows=[];
+  prodsInTab.forEach(p=>{
+    (p.operations||[]).forEach(op=>{
+      if(op.cnc_program_url){
+        rows.push({product:p, op});
+      }
+    });
+  });
+  if(!rows.length){
+    body.innerHTML='<div class="card" style="color:var(--text);text-align:center;padding:40px">Ningún producto de esta pestaña tiene programa CNC cargado.<br><small>Sube el programa desde Ingeniería <svg class="ic"><use href="#ic-arrow-right"/></svg> Productos <svg class="ic"><use href="#ic-arrow-right"/></svg> editar producto <svg class="ic"><use href="#ic-arrow-right"/></svg> en cada operación.</small></div>';
+    return;
+  }
+  let html='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">';
+  rows.forEach(r=>{
+    const p=r.product, op=r.op;
+    html+='<div class="card" style="text-align:center;padding:16px;cursor:pointer" onclick="window.open(\''+op.cnc_program_url+'\',\'_blank\')">';
+    html+='<div style="font-size:30px;margin-bottom:6px"><svg class="ic"><use href="#ic-save"/></svg></div>';
+    html+='<div style="font-weight:700;font-size:13px;margin-bottom:2px">'+(p.sort_number!=null?p.sort_number+' - ':'')+p.name+'</div>';
+    html+='<div style="font-size:13px;color:#1F2937;margin-bottom:2px">'+p.code+'</div>';
+    html+='<div style="font-size:13px;color:var(--accent);margin-bottom:8px">Op.'+op.op_number+' '+(op.name||'')+(op.machine_name?' — '+op.machine_name:'')+'</div>';
+    html+='<a href="'+op.cnc_program_url+'" target="_blank" download class="btn btn-accent btn-sm" style="display:inline-flex">'+(op.cnc_program_name?op.cnc_program_name:'Ver/Descargar')+'</a>';
+    html+='</div>';
+  });
+  html+='</div>';
+  body.innerHTML=html;
+}
+window.renderCNCPrograms=renderCNCPrograms;
 window.renderDrawings = renderDrawings;
 
 let _cDrawingsTab='s83f';
@@ -5720,7 +5770,7 @@ function matTabOf(m){
 }
 function setDrawingsMpTab(tipo){
   _drawingsMpTab=tipo;
-  ['s83f','s250','otros'].forEach(t=>{
+  ['s83f','s250','otros','pedido'].forEach(t=>{
     document.getElementById('drawmptab-'+t)?.classList.toggle('active',tipo===t);
   });
   renderDrawingsMp();
