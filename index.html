@@ -10768,7 +10768,7 @@ function showMaterialForm(id){
       +'</div>'
     +'</div>';
   window._matfEditing=m;
-  setTimeout(function(){ onMatfCatChange(); onMatfFormaChange(); },30);
+  setTimeout(function(){ onMatfCatChange(); onMatfFormaChange(); onMatfReposChange(); },30);
 }
 window.showMaterialForm=showMaterialForm;
 
@@ -10868,8 +10868,13 @@ function onMatfFormaChange(){
 window.onMatfFormaChange=onMatfFormaChange;
 
 function onMatfReposChange(){
-  // Re-render el bloque de medidas para mostrar/ocultar longitud estándar
-  onMatfFormaChange();
+  const repos=document.getElementById('matf-repos')?.value;
+  const bajoPedido=repos==='false';
+  // Ocultar Stock Mínimo y Cantidad Máxima cuando es bajo pedido
+  const minEl=document.getElementById('matf-min')?.closest('.field');
+  const maxEl=document.getElementById('matf-max')?.closest('.field');
+  if(minEl) minEl.style.display=bajoPedido?'none':'';
+  if(maxEl) maxEl.style.display=bajoPedido?'none':'';
 }
 window.onMatfReposChange=onMatfReposChange;
 
