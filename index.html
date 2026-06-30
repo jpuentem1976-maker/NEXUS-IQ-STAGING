@@ -769,7 +769,7 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
     <button class="ptab" onclick="setConsultaTab('c-maquinas',this)"><svg class="ic"><use href="#ic-gear"/></svg> Carga de Máquinas</button>
     <button class="ptab" onclick="setConsultaTab('c-productos',this)"><svg class="ic"><use href="#ic-folder-index"/></svg> Productos</button>
     <button class="ptab" onclick="setConsultaTab('c-herramental',this)"><svg class="ic"><use href="#ic-wrench"/></svg> Herramental</button>
-    <button class="ptab" onclick="setConsultaTab('c-drawings',this)"><svg class="ic"><use href="#ic-ruler"/></svg> Dibujos</button>
+    <button class="ptab" onclick="setConsultaTab('c-drawings',this)"><svg class="ic"><use href="#ic-ruler"/></svg> Dibujos Fabricación</button>
     <button class="ptab" onclick="setConsultaTab('c-control',this)"><svg class="ic"><use href="#ic-check-circle"/></svg> Control Diario</button>
   </div>
   <div id="c-dashboard" class="subpage active fade">
@@ -792,7 +792,13 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
     <div id="c-prod-list"></div>
   </div>
   <div id="c-drawings" class="subpage">
-    <div style="font-size:15px;font-weight:700;margin-bottom:4px;color:var(--text)"><svg class="ic"><use href="#ic-ruler"/></svg> Dibujos <span style="font-size:13px">(Solo lectura)</span></div>
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px;color:var(--text)"><svg class="ic"><use href="#ic-ruler"/></svg> Dibujos Fabricación <span style="font-size:13px">(Solo lectura)</span></div>
+    <div class="ptabs" style="margin-bottom:14px">
+      <button class="ptab active" id="cdrawtab-s83f" onclick="setConsultaDrawingsTab('s83f')"><svg class="ic"><use href="#ic-package"/></svg> Productos S83F</button>
+      <button class="ptab" id="cdrawtab-s250" onclick="setConsultaDrawingsTab('s250')"><svg class="ic"><use href="#ic-package"/></svg> Productos S250</button>
+      <button class="ptab" id="cdrawtab-otros" onclick="setConsultaDrawingsTab('otros')"><svg class="ic"><use href="#ic-package"/></svg> Otros Productos Stock</button>
+      <button class="ptab" id="cdrawtab-pedido" onclick="setConsultaDrawingsTab('pedido')"><svg class="ic"><use href="#ic-wrench"/></svg> Productos Bajo Pedido</button>
+    </div>
     <div id="c-drawings-body"></div>
   </div>
 
@@ -937,6 +943,12 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
   <div id="e-drawings" class="subpage">
     <div style="font-size:15px;font-weight:700;margin-bottom:4px"><svg class="ic"><use href="#ic-ruler"/></svg> Dibujos de Fabricación</div>
     <div style="font-size:13px;color:#1F2937;margin-bottom:16px">Doble click para abrir en nueva ventana.</div>
+    <div class="ptabs" style="margin-bottom:14px">
+      <button class="ptab active" id="drawtab-s83f" onclick="setDrawingsTab('s83f')"><svg class="ic"><use href="#ic-package"/></svg> Productos S83F</button>
+      <button class="ptab" id="drawtab-s250" onclick="setDrawingsTab('s250')"><svg class="ic"><use href="#ic-package"/></svg> Productos S250</button>
+      <button class="ptab" id="drawtab-otros" onclick="setDrawingsTab('otros')"><svg class="ic"><use href="#ic-package"/></svg> Otros Productos Stock</button>
+      <button class="ptab" id="drawtab-pedido" onclick="setDrawingsTab('pedido')"><svg class="ic"><use href="#ic-wrench"/></svg> Productos Bajo Pedido</button>
+    </div>
     <div id="drawings-body"></div>
   </div>
 
@@ -944,6 +956,11 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
   <div id="e-drawings-mp" class="subpage">
     <div style="font-size:15px;font-weight:700;margin-bottom:4px"><svg class="ic"><use href="#ic-folder-index"/></svg> Dibujos de Materia Prima</div>
     <div style="font-size:13px;color:#1F2937;margin-bottom:16px">Dibujos de piezas de Forja, Fundición, Corte en Pantógrafo y Corte Láser.</div>
+    <div class="ptabs" style="margin-bottom:14px">
+      <button class="ptab active" id="drawmptab-s83f" onclick="setDrawingsMpTab('s83f')"><svg class="ic"><use href="#ic-package"/></svg> Productos S83F</button>
+      <button class="ptab" id="drawmptab-s250" onclick="setDrawingsMpTab('s250')"><svg class="ic"><use href="#ic-package"/></svg> Productos S250</button>
+      <button class="ptab" id="drawmptab-otros" onclick="setDrawingsMpTab('otros')"><svg class="ic"><use href="#ic-package"/></svg> Otros</button>
+    </div>
     <div id="drawings-mp-body"></div>
   </div>
 
@@ -5066,6 +5083,7 @@ async function deleteProduct(id){
       await fetch(SB_URL+'/rest/v1/work_orders?id=eq.'+encodeURIComponent(ot.id),{method:'DELETE',headers:H});
     }
     await fetch(SB_URL+'/rest/v1/operations?product_id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:H});
+    await fetch(SB_URL+'/rest/v1/product_materials?product_id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:H});
     await fetch(SB_URL+'/rest/v1/products?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:H});
     workOrders=workOrders.filter(o=>o.product_id!==id);
     products=products.filter(p=>p.id!==id);
@@ -5507,13 +5525,23 @@ async function deleteMaterialDrawing(){
 }
 window.deleteMaterialDrawing=deleteMaterialDrawing;
 
+let _drawingsTab='s83f';
+function setDrawingsTab(tipo){
+  _drawingsTab=tipo;
+  ['s83f','s250','otros','pedido'].forEach(t=>{
+    document.getElementById('drawtab-'+t)?.classList.toggle('active',tipo===t);
+  });
+  renderDrawings();
+}
+window.setDrawingsTab=setDrawingsTab;
+
 function buildDrawingsGrid(prods, containerId){
   const body = document.getElementById(containerId);
   if(!body) return;
-  const withDrawing = prods.filter(function(p){ return p.drawing_url; })
+  const withDrawing = prods.filter(function(p){ return p.drawing_url && prodTabOf(p)===_drawingsTab; })
     .sort(function(a,b){ return (a.sort_number??99999)-(b.sort_number??99999); });
   if(!withDrawing.length){
-    body.innerHTML = '<div class="card" style="color:var(--text);text-align:center;padding:40px">Ningun producto tiene dibujo cargado.</div>';
+    body.innerHTML = '<div class="card" style="color:var(--text);text-align:center;padding:40px">Ningún producto de esta pestaña tiene dibujo cargado.</div>';
     return;
   }
   var html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">';
@@ -5532,7 +5560,37 @@ function buildDrawingsGrid(prods, containerId){
 function renderDrawings(){ buildDrawingsGrid(products, 'drawings-body'); }
 window.renderDrawings = renderDrawings;
 
-function renderConsultaDrawings(){ buildDrawingsGrid(products, 'c-drawings-body'); }
+let _cDrawingsTab='s83f';
+function setConsultaDrawingsTab(tipo){
+  _cDrawingsTab=tipo;
+  ['s83f','s250','otros','pedido'].forEach(t=>{
+    document.getElementById('cdrawtab-'+t)?.classList.toggle('active',tipo===t);
+  });
+  renderConsultaDrawings();
+}
+window.setConsultaDrawingsTab=setConsultaDrawingsTab;
+
+function renderConsultaDrawings(){
+  const body=document.getElementById('c-drawings-body');
+  if(!body) return;
+  const withDrawing=products.filter(function(p){ return p.drawing_url && prodTabOf(p)===_cDrawingsTab; })
+    .sort(function(a,b){ return (a.sort_number??99999)-(b.sort_number??99999); });
+  if(!withDrawing.length){
+    body.innerHTML='<div class="card" style="color:var(--text);text-align:center;padding:40px">Ningún producto de esta pestaña tiene dibujo cargado.</div>';
+    return;
+  }
+  var html='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">';
+  withDrawing.forEach(function(p){
+    html+='<div class="card" style="text-align:center;padding:16px;cursor:pointer" data-url="'+p.drawing_url+'" onclick="window.open(this.dataset.url,String.fromCharCode(95,98,108,97,110,107))">';
+    html+='<div style="font-size:36px;margin-bottom:8px"><svg class="ic"><use href="#ic-page"/></svg></div>';
+    html+='<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+(p.sort_number!=null?p.sort_number+' - ':'')+p.name+'</div>';
+    html+='<div style="font-size:13px;color:#1F2937;margin-bottom:10px">'+p.code+'</div>';
+    html+='<a href="'+p.drawing_url+'" target="_blank" class="btn btn-accent btn-sm" style="display:inline-flex">Ver PDF</a>';
+    html+='</div>';
+  });
+  html+='</div>';
+  body.innerHTML=html;
+}
 window.renderConsultaDrawings = renderConsultaDrawings;
 
 // ── CONTROL DIARIO — Checklist inteligente Programación ──────────────────
@@ -5653,10 +5711,26 @@ window.confirmarServExt = function(){
   renderControlDiario();
 };
 
+let _drawingsMpTab='s83f';
+function matTabOf(m){
+  const fam=(m.familia||'').toUpperCase().trim();
+  if(FAMILIAS_S83F.some(f=>fam.includes(f))) return 's83f';
+  if(FAMILIAS_S250.some(f=>fam.includes(f))) return 's250';
+  return 'otros'; // sin familia capturada o familia distinta cae en Otros
+}
+function setDrawingsMpTab(tipo){
+  _drawingsMpTab=tipo;
+  ['s83f','s250','otros'].forEach(t=>{
+    document.getElementById('drawmptab-'+t)?.classList.toggle('active',tipo===t);
+  });
+  renderDrawingsMp();
+}
+window.setDrawingsMpTab=setDrawingsMpTab;
+
 function buildDrawingsMpGrid(mats, containerId){
   const body=document.getElementById(containerId);
   if(!body) return;
-  const withDrawing=mats.filter(m=>m.dibujo_url)
+  const withDrawing=mats.filter(m=>m.dibujo_url && matTabOf(m)===_drawingsMpTab)
     .sort((a,b)=>{
       // Ordenar por categoría oficial, luego nombre, luego forma
       const CAT_ORDER=['Acero','Acero Inoxidable','Bronce','Latón','Aluminio','Nylamid','Pieza Comprada'];
@@ -5667,7 +5741,7 @@ function buildDrawingsMpGrid(mats, containerId){
       return (a.forma||'').localeCompare(b.forma||'');
     });
   if(!withDrawing.length){
-    body.innerHTML='<div class="card" style="color:var(--text);text-align:center;padding:40px">Ningún material tiene dibujo cargado.<br><small>Agrega dibujos desde Ingeniería <svg class="ic"><use href="#ic-arrow-right"/></svg> Catálogo de Materiales en formas: Corte en Pantógrafo, Corte Láser, Forja o Fundición.</small></div>';
+    body.innerHTML='<div class="card" style="color:var(--text);text-align:center;padding:40px">Ningún material de esta pestaña tiene dibujo cargado.<br><small>Agrega dibujos desde Ingeniería <svg class="ic"><use href="#ic-arrow-right"/></svg> Catálogo de Materiales en formas: Corte en Pantógrafo, Corte Láser, Forja o Fundición — y captura el campo Familia para ubicarlo en la pestaña correcta.</small></div>';
     return;
   }
   let html='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">';
@@ -10840,6 +10914,10 @@ function onMatfFormaChange(){
     html+='<div class="field"><label>'+lbl+'</label>'
       +'<input type="text" id="matf-codigo-especial" value="'+(m?.codigo_especial||'')+'" placeholder="'+phMap[forma]+'">'
     +'</div>';
+    html+='<div class="field"><label>FAMILIA</label>'
+      +'<input type="text" id="matf-familia" value="'+(m?.familia||'')+'" placeholder="ej. S83F, S250, FL7, FL9" style="text-transform:uppercase">'
+      +'<div style="font-size:13px;color:#1F2937;margin-top:2px">Para ubicar el dibujo en la pestaña correcta</div>'
+    +'</div>';
   }
 
   // ── Dibujo PDF — subida a Supabase Storage bucket 'drawings' ──
@@ -10900,6 +10978,7 @@ async function saveMaterial(id){
   const diametro_int=parseFloat(document.getElementById('matf-dint')?.value)||null;
   const cantidad_min=parseInt(document.getElementById('matf-min')?.value)||0;
   const codigo_especial=(document.getElementById('matf-codigo-especial')?.value||'')||null;
+  const familia=(document.getElementById('matf-familia')?.value?.trim().toUpperCase()||'')||null;
   const dibujo_url=(document.getElementById('matf-dibujo-url')?.value?.trim()||'')||null;
   const cantidad_max=parseInt(document.getElementById('matf-max')?.value)||0;
   const cantidad_max_tipo=document.getElementById('matf-max-tipo')?.value||'maximo';
@@ -10910,7 +10989,7 @@ async function saveMaterial(id){
   if(!name){alert('El nombre / especificación es requerido');return;}
   const fo=MAT_FORMAS.find(f=>f.val===forma)||{campos:[]};
   const grupoLegacy=fo.val==='Tubo'?'tubing':(fo.campos.length===0?'pieza':'barra');
-  const rec={name,categoria,grupo:grupoLegacy,densidad,forma,diametro,diametro_int,cantidad_min,cantidad_max,cantidad_max_tipo,notas,reposicion,longitud_reposicion,longitud_reposicion_unidad,codigo_especial,dibujo_url,active:true};
+  const rec={name,categoria,grupo:grupoLegacy,densidad,forma,diametro,diametro_int,cantidad_min,cantidad_max,cantidad_max_tipo,notas,reposicion,longitud_reposicion,longitud_reposicion_unidad,codigo_especial,familia,dibujo_url,active:true};
   try{
     if(id){
       await sbUpdate('mp_materials',{id},rec);
