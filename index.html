@@ -3215,6 +3215,14 @@ async function startSetup(){
 }
 
 async function finishSetup(isComplete){
+  // Validar que se haya marcado al menos 1 paso en este tramo, salvo que ya estén
+  // todos completados por turnos anteriores (nada nuevo que marcar)
+  const stepsCheckedNow=document.querySelectorAll('.setup-step-chk:not(:disabled):checked').length;
+  const allAlreadyDoneBefore=(ctx.setupPrevStepsDone||[]).length>=SETUP_STEPS.length;
+  if(stepsCheckedNow<1 && !allAlreadyDoneBefore){
+    alert('Marca al menos un paso que hayas realizado en este tramo antes de continuar.\nEsto ayuda a saber qué se hizo y qué falta si el montaje se reparte entre varios operadores.');
+    return;
+  }
   clearInterval(tickInterval);
   // Cerrar lonche activo si quedó abierto
   if(ctx.setupLunchStart){ ctx.setupTotalLunch+=Math.floor((Date.now()-ctx.setupLunchStart)/1000); ctx.setupLunchStart=null; }
