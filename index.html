@@ -673,6 +673,10 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
         <label>Cantidad de Piezas Producidas</label>
         <input type="number" id="sec-piezas" placeholder="0" min="0" style="text-align:center;font-size:22px;font-family:'DM Mono',monospace" oninput="const mx=parseInt(this.max)||9999;if(parseInt(this.value)>mx)this.value=mx;">
       </div>
+      <div class="field" id="sec-scrap-field">
+        <label>Piezas con Scrap <span style="font-size:13px;color:#1F2937;font-weight:400">(dejar en 0 si no aplica)</span></label>
+        <input type="number" id="sec-scrap" placeholder="0" min="0" value="0" style="text-align:center;font-size:22px;font-family:'DM Mono',monospace;color:var(--danger)">
+      </div>
       <div id="sec-btn-start"><button class="btn btn-blue btn-xl" onclick="startSecondary()">▶ INICIAR</button></div>
       <div id="sec-btn-finish" class="hidden" style="display:flex;flex-direction:column;gap:10px">
         <button class="btn btn-accent btn-xl" onclick="finishSecondary()"><svg class="ic"><use href="#ic-check"/></svg> TERMINAR OPERACIÓN</button>
@@ -3453,6 +3457,8 @@ function startSecondaryStep(){
   const _maxSecPzs=Math.max(1,(ctx.wo.qty||0)-(otScrap||[]).filter(s=>s.ot_id===ctx.wo.id).reduce((a,s)=>a+(parseInt(s.qty)||0),0));
   const _secInp=document.getElementById('sec-piezas');
   _secInp.value=''; _secInp.max=_maxSecPzs; _secInp.placeholder='0 (max '+_maxSecPzs+')';
+  const _secScrapInp=document.getElementById('sec-scrap');
+  if(_secScrapInp) _secScrapInp.value='0';
   const sumEl=document.getElementById('sec-summary'); if(sumEl) sumEl.innerHTML='';
 
   // Inject special UI for TT and Niquelado
@@ -3465,6 +3471,8 @@ function startSecondaryStep(){
     document.getElementById('sec-btn-start').classList.add('hidden');
     document.getElementById('sec-btn-finish').classList.add('hidden');
     document.getElementById('sec-piezas').closest('.field').style.display='none';
+    const _scrapFieldTT=document.getElementById('sec-scrap-field');
+    if(_scrapFieldTT) _scrapFieldTT.style.display='none';
     // Arrancar timer automáticamente
     ctx.secStart=Date.now(); ctx.secStartedAt=Date.now();
     document.getElementById('sec-timer').style.color='var(--accent)';
@@ -3516,6 +3524,8 @@ function startSecondaryStep(){
     document.getElementById('sec-btn-start').classList.add('hidden');
     document.getElementById('sec-btn-finish').classList.add('hidden');
     document.getElementById('sec-piezas').closest('.field').style.display='none';
+    const _scrapFieldNiq=document.getElementById('sec-scrap-field');
+    if(_scrapFieldNiq) _scrapFieldNiq.style.display='none';
     // Hide timer section
     const timerSection=document.getElementById('sec-timer').closest('div[style*="text-align:center"]');
     if(timerSection) timerSection.style.display='none';
@@ -3533,6 +3543,8 @@ function startSecondaryStep(){
   } else {
     // Operación secundaria normal
     document.getElementById('sec-piezas').closest('.field').style.display='';
+    const _scrapFieldNorm=document.getElementById('sec-scrap-field');
+    if(_scrapFieldNorm) _scrapFieldNorm.style.display='';
     const timerSection=document.getElementById('sec-timer').closest('div[style*="text-align:center"]');
     if(timerSection) timerSection.style.display='';
     if(ctx.secActiveId){
@@ -3612,9 +3624,20 @@ async function finishSecondary(){
   const actualSec=Math.max(1,Math.floor((Date.now()-ctx.secStartedAt)/1000));
   const _maxSec2=parseInt(document.getElementById('sec-piezas').max)||Math.max(1,(ctx.wo.qty||0)-(otScrap||[]).filter(s=>s.ot_id===ctx.wo.id).reduce((a,s)=>a+(parseInt(s.qty)||0),0));
   const piezas=Math.min(parseInt(document.getElementById('sec-piezas').value)||0,_maxSec2);
+  const scrapSec=Math.max(0,parseInt(document.getElementById('sec-scrap')?.value)||0);
   const rec={id:uid(),session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,op_type:'secondary',machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:ctx.wo.qty,type:'secondary_complete',actual_sec:actualSec,pieces_produced:piezas,recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
   sessions.unshift(rec);
   try{ await sbInsert('sessions',rec); }catch(e){ console.error(e); }
+  // Fix #2+#3 — Registrar scrap de operación secundaria con snapshot de costo
+  if(scrapSec>0){
+    try{
+      const snapshot=await calcSnapshotCostoScrap(ctx.wo.id, ctx.operation.sort_order??null);
+      const scrapRec={id:uid(),ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,qty:scrapSec,reason:'Scrap en '+ctx.operation.name,operation_id:ctx.operation.id,op_number:ctx.operation.op_number,sort_order:ctx.operation.sort_order??null,operation_name:ctx.operation.name,costo_unitario_snapshot:snapshot,recorded_at:new Date().toISOString()};
+      await sbInsert('ot_scrap',scrapRec);
+      otScrap.unshift(scrapRec);
+      ctx.secScrapRegistered=true; // evitar duplicado si luego se llama completeSecondaryOp
+    }catch(e){ console.error('scrap secundaria finishSecondary:',e); }
+  }
   await closeSecActiveRecord();
   ctx.secActiveId=null;
   // Show result - DON'T go back to select yet, wait for "Operación Concluida"
@@ -3627,7 +3650,7 @@ async function finishSecondary(){
   sumEl.innerHTML='<div style="margin-top:14px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);border-radius:var(--r);padding:14px;text-align:center">'
     +'<div style="font-size:13px;color:#1F2937;margin-bottom:6px">OPERACIÓN TERMINADA</div>'
     +'<div style="font-size:28px;font-weight:700;color:var(--green)">'+timeStr+'</div>'
-    +'<div style="font-size:13px;color:#1F2937;margin-top:4px">'+piezas+' pzas producidas</div>'
+    +'<div style="font-size:13px;color:#1F2937;margin-top:4px">'+piezas+' pzas producidas'+(scrapSec>0?' · <span style="color:var(--danger)">'+scrapSec+' scrap</span>':'')+'</div>'
     +'<button class="btn btn-orange btn-xl" style="margin-top:14px;width:100%" onclick="completeSecondaryOp()"><svg class="ic"><use href="#ic-flag"/></svg> OPERACIÓN CONCLUIDA</button>'
     +'<button class="btn btn-ghost btn-lg" style="margin-top:8px;width:100%" onclick="showStep(\'step-select\')"><svg class="ic"><use href="#ic-undo"/></svg> Salir (no concluir operación)</button>'
     +'</div>';
@@ -3699,6 +3722,17 @@ async function completeSecondaryOp(){
   const actualSec=ctx.secStartedAt?Math.max(1,Math.floor((Date.now()-ctx.secStartedAt)/1000)):0;
   const _maxSec3=parseInt(document.getElementById('sec-piezas').max)||Math.max(1,(ctx.wo.qty||0)-(otScrap||[]).filter(s=>s.ot_id===ctx.wo.id).reduce((a,s)=>a+(parseInt(s.qty)||0),0));
   const piezas=Math.min(parseInt(document.getElementById('sec-piezas').value)||0,_maxSec3);
+  const scrapSec=Math.max(0,parseInt(document.getElementById('sec-scrap')?.value)||0);
+  // Fix #2+#3 — Registrar scrap con snapshot solo si no fue ya guardado en finishSecondary
+  // (completeSecondaryOp se llama tras finishSecondary O directamente con OPERACIÓN CONCLUIDA)
+  if(scrapSec>0 && !ctx.secScrapRegistered){
+    try{
+      const snapshot=await calcSnapshotCostoScrap(ctx.wo.id, ctx.operation.sort_order??null);
+      const scrapRec={id:uid(),ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,qty:scrapSec,reason:'Scrap en '+ctx.operation.name,operation_id:ctx.operation.id,op_number:ctx.operation.op_number,sort_order:ctx.operation.sort_order??null,operation_name:ctx.operation.name,costo_unitario_snapshot:snapshot,recorded_at:new Date().toISOString()};
+      await sbInsert('ot_scrap',scrapRec);
+      otScrap.unshift(scrapRec);
+    }catch(e){ console.error('scrap secundaria completeSecondaryOp:',e); }
+  }
   await closeSecActiveRecord();
   ctx.secActiveId=null;
   await markOpComplete(actualSec,piezas,true);
@@ -7717,12 +7751,14 @@ async function confirmAddScrap(){
 
   showLoading('REGISTRANDO...');
   try{
+    const snapshot=await calcSnapshotCostoScrap(otId, parseInt(sort_order)||null);
     await sbInsert('ot_scrap',{
       id:uid(),ot_id:otId,ot_number:wo.number,product_id:wo.product_id,
       product_name:prod?.name||'',product_code:prod?.code||'',
       qty:n,reason,
       operation_id,op_number,sort_order:parseInt(sort_order)||null,
       operation_name:op?.name||'',
+      costo_unitario_snapshot:snapshot,
       recorded_at:new Date().toISOString()
     });
     await loadAllData();
@@ -12402,26 +12438,48 @@ window.calcOTCosting=calcOTCosting;
 
 // ── Valoriza un registro individual de scrap según costo acumulado hasta su operación ──
 function valorizarScrapRecord(scrapRec, otc){
+  const qty=parseInt(scrapRec.qty)||0;
+  // Fix #3: si tiene snapshot guardado al momento del registro, usarlo directamente
+  if(scrapRec.costo_unitario_snapshot && parseFloat(scrapRec.costo_unitario_snapshot)>0){
+    return parseFloat(scrapRec.costo_unitario_snapshot)*qty;
+  }
+  // Fallback para registros legacy sin snapshot: recalcular dinámico
   const {mpUnitario,ops}=otc;
   const sortOrderScrap=scrapRec.sort_order!=null?parseInt(scrapRec.sort_order):null;
-  let costoUnit=mpUnitario; // siempre incluye MP completa del lote
+  let costoUnit=mpUnitario;
   if(sortOrderScrap!=null){
     ops.forEach(op=>{
       if(op.sort_order!=null && op.sort_order<=sortOrderScrap){
-        const hrs=(op.totalSec||0)/3600;
-        const totalSecAllPieces=op.pieces>0?op.totalSec:0;
-        // Costo por pieza de esta operación = (costoMOD+costoGIF) / piezas procesadas en esa operación
         const piezasOp=op.pieces||otc.totalDel||1;
         costoUnit += ((op.costoMOD+op.costoGIF)/piezasOp);
       }
     });
   } else {
-    // Sin operación registrada (datos legacy) <svg class="ic"><use href="#ic-arrow-right"/></svg> usar costo unitario total de la OT
     costoUnit=otc.costoUnitario;
   }
-  return costoUnit*(parseInt(scrapRec.qty)||0);
+  return costoUnit*qty;
 }
 window.valorizarScrapRecord=valorizarScrapRecord;
+
+// ── Calcula costo unitario snapshot al momento de registrar scrap (Fix #3) ──
+// Usa datos en vivo: mp_transit ya existente + sessions de operaciones hasta sort_order dado
+async function calcSnapshotCostoScrap(otId, sortOrderScrap){
+  try{
+    const otc=await calcOTCosting(otId);
+    if(!otc) return 0;
+    let costoUnit=otc.mpUnitario||0;
+    if(sortOrderScrap!=null){
+      (otc.ops||[]).forEach(op=>{
+        if(op.sort_order!=null && op.sort_order<=sortOrderScrap){
+          const piezasOp=op.pieces||otc.totalDel||1;
+          costoUnit+=((op.costoMOD+op.costoGIF)/piezasOp);
+        }
+      });
+    }
+    return parseFloat(costoUnit.toFixed(4));
+  }catch(e){ console.warn('calcSnapshotCostoScrap:',e); return 0; }
+}
+window.calcSnapshotCostoScrap=calcSnapshotCostoScrap;
 
 // ── Reporte de Scrap Valorizado ──
 async function renderScrapReport(){
