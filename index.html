@@ -3192,9 +3192,11 @@ async function goProduction(){
     const localRec=sessions.find(s=>s.id===ctx.setupRecordId);
     if(localRec) localRec.setup_pieces=setupPzs;
   }
-  // Calculate adjustedQty FIRST before using it
-  const completedOpIds=new Set(sessions.filter(s=>s.ot_id===ctx.wo.id&&s.is_op_complete&&s.operation_id!==ctx.operation.id).map(s=>s.operation_id));
-  const prevScrap=(otScrap||[]).filter(s=>s.ot_id===ctx.wo.id&&(!s.operation_id||completedOpIds.has(s.operation_id)||s.session_id!==ctx.sessionId)).reduce((a,s)=>a+(parseInt(s.qty)||0),0);
+  // adjustedQty: lote menos scrap de operaciones ANTERIORES a esta (op_number menor)
+  const thisOpNum=ctx.operation.op_number||0;
+  const prevScrap=(otScrap||[])
+    .filter(s=>s.ot_id===ctx.wo.id && (s.op_number||0)<thisOpNum && s.op_number>0)
+    .reduce((a,s)=>a+(parseInt(s.qty)||0),0);
   const adjustedQty=Math.max(1,(ctx.wo.qty||0)-prevScrap);
   ctx.adjustedQty=adjustedQty;
   // Show setup efficiency in production screen
