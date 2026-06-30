@@ -6899,7 +6899,14 @@ async function releaseOT(id){
       for(const b of estado){
         if(b.cantConsumir<=0) continue;
         const bomId=b.bomId;
-        const stockItems=mpStock.filter(s=>s.producto_id===p.id&&String(s.bom_item_id)===String(bomId)&&(s.status==='disponible'||s.status==='apartado'||s.status==='parcial'));
+        // Consultar mp_stock FRESCO de Supabase para evitar precio_kg desactualizado del array local
+        let stockItems;
+        try{
+          stockItems=await sbSelect('mp_stock','select=*&producto_id=eq.'+encodeURIComponent(p.id)+'&bom_item_id=eq.'+encodeURIComponent(bomId)+'&status=in.(disponible,apartado,parcial)')||[];
+        }catch(e){
+          console.error('fresh mp_stock fetch error, falling back to local:',e);
+          stockItems=mpStock.filter(s=>s.producto_id===p.id&&String(s.bom_item_id)===String(bomId)&&(s.status==='disponible'||s.status==='apartado'||s.status==='parcial'));
+        }
         let porConsumir=b.cantConsumir;
         for(const s of stockItems){
           if(porConsumir<=0) break;
