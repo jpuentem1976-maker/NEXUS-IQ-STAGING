@@ -3205,13 +3205,13 @@ async function goProduction(){
   const setupPcsEl=document.getElementById('disp-setup-pcs');
   if(setupPcsEl) setupPcsEl.textContent=setupPzs;
   const pendingEl=document.getElementById('disp-pending');
-  if(pendingEl) pendingEl.textContent=Math.max(0,ctx.wo.qty-(ctx.prevPieces||0)-(ctx.prevScrapPieces||0)-setupPzs-setupScrap);
+  if(pendingEl) pendingEl.textContent=Math.max(0,adjustedQty-(ctx.prevPieces||0)-(ctx.prevScrapPieces||0)-setupPzs-setupScrap);
   document.getElementById('prod-sub').textContent=`${ctx.product.name} · Op.${ctx.operation.op_number} ${ctx.operation.name} · OT: ${ctx.wo.number}`;
   saveMachineStatus('running','Producción iniciada');
   // Contador: todas las piezas tocadas ANTES de esta sesión (prev buenas + prev scrap + montaje buenas + montaje scrap)
   const startCount=(ctx.prevPieces||0)+(ctx.prevScrapPieces||0)+setupPzs+setupScrap;
   document.getElementById('prod-count').textContent=String(startCount);
-  document.getElementById('prod-qty-total').textContent=ctx.wo.qty;
+  document.getElementById('prod-qty-total').textContent=adjustedQty;
   // PZAS PROD siempre arranca en 0 — solo cuenta lo de ESTA sesión
   const dispProdInit=document.getElementById('disp-prod-pcs'); if(dispProdInit) dispProdInit.textContent='0';
   // SCRAP muestra el scrap de montaje de esta sesión (0 si no hubo montaje en este turno)
@@ -3586,7 +3586,7 @@ async function registerPiece(){
   const scrapTotal=(ctx.scrapCount||0); // setupScrap + scrap prod esta sesión
   // totalPcs = todo lo tocado: prev buenas + prev scrap + montaje buenas + montaje scrap + prod esta sesión + scrap esta sesión
   const totalPcs=prodPcs+(ctx.setupPieces||0)+scrapTotal+(ctx.prevPieces||0)+(ctx.prevScrapPieces||0);
-  const lote=ctx.wo.qty;
+  const lote=ctx.adjustedQty||ctx.wo.qty;
   const pending=Math.max(0,lote-totalPcs);
   document.getElementById('prod-count').textContent=totalPcs;
   document.getElementById('prod-qty-bar').style.width=Math.min((totalPcs/lote)*100,100)+'%';
@@ -3632,7 +3632,7 @@ window.reportScrap = async function reportScrap(){
   const dispScrap=document.getElementById('disp-scrap'); if(dispScrap) dispScrap.textContent=ctx.scrapCount+(ctx.prevScrapPieces||0);
   const prodPcsNow=ctx.pieceTimes?ctx.pieceTimes.length:0;
   const totalPcsNow=prodPcsNow+(ctx.setupPieces||0)+ctx.scrapCount+(ctx.prevPieces||0)+(ctx.prevScrapPieces||0);
-  const pendNow=Math.max(0,(ctx.wo?.qty||0)-totalPcsNow);
+  const pendNow=Math.max(0,(ctx.adjustedQty||ctx.wo?.qty||0)-totalPcsNow);
   const dispPend=document.getElementById('disp-pending'); if(dispPend) dispPend.textContent=pendNow;
   // Actualizar contador principal
   document.getElementById('prod-count').textContent=totalPcsNow;
@@ -3775,8 +3775,8 @@ async function finishProduction(){
   const totalProduced=buenasProducidas; // para eficiencia y summary: solo buenas esta sesión
   // Para validar cierre: todo lo tocado en TODA la operación (sesiones previas + esta)
   const totalTocadas=buenasProducidas+scrapTotal+(ctx.prevPieces||0)+(ctx.prevScrapPieces||0);
-  const lote=ctx.wo.qty;
-  const adjustedLote=ctx.adjustedQty||lote; // piezas disponibles esta operación (lote - scrap ops anteriores)
+  const lote=ctx.adjustedQty||ctx.wo.qty;
+  const adjustedLote=lote; // piezas disponibles esta operación (lote - scrap ops anteriores)
   // Validar: buenas + scrap debe cuadrar con el lote disponible
   if(totalTocadas!==adjustedLote){
     const diff=totalTocadas-adjustedLote;
