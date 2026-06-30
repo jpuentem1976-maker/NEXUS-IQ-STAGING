@@ -3545,6 +3545,7 @@ function startSecondaryStep(){
         document.getElementById('sec-timer').textContent=fmtSec(el);
       },500);
     } else {
+      clearInterval(tickInterval); // Fix #1: matar intervalo heredado de pantalla anterior
       document.getElementById('sec-timer').textContent='00:00'; document.getElementById('sec-timer').style.color='var(--muted)';
       document.getElementById('sec-btn-start').classList.remove('hidden');
       document.getElementById('sec-btn-finish').classList.add('hidden');
@@ -7167,7 +7168,6 @@ function renderReleasedOTs(){
         <div id="ot-costing-${o.id}" style="margin-top:10px"></div>
         <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">
           <button class="btn btn-green btn-sm" onclick="addDelivery('${o.id}',${o.qty},${dels},${scraps})">+ Entrega</button>
-          <button class="btn btn-sm" onclick="addScrap('${o.id}')" style="background:rgba(239,68,68,.15);color:var(--danger);border:1px solid rgba(239,68,68,.3)">+ Scrap</button>
           ${(p?.operations||[]).some(op=>op.op_type==='external')?`<button class="btn btn-sm" onclick="addExternalService('${o.id}')" style="background:rgba(194,65,12,.12);color:#9A3412;border:1px solid rgba(251,146,60,.3)"><svg class="ic"><use href="#ic-flame"/></svg> Servicio Externo</button>`:''}
           <button class="btn btn-warn btn-sm" onclick="closeOT('${o.id}',${o.qty},${dels},${scraps})"><svg class="ic"><use href="#ic-lock"/></svg> Cerrar O.T.</button>
           <button class="btn btn-sm btn-danger" onclick="deleteReleasedOT('${o.id}','${o.number}')"><svg class="ic"><use href="#ic-trash"/></svg> Eliminar</button>
@@ -7598,17 +7598,19 @@ window.confirmarSolicitarMP=confirmarSolicitarMP;
 function addDelivery(otId,qty,delivered,scrap){
   const remaining=Math.max(0,qty-delivered-scrap);
   if(remaining<=0){ alert('No hay piezas pendientes por entregar.'); return; }
-  const n=parseInt(prompt('Cantidad a entregar (quedan '+remaining+' pendientes):'));
-  if(!n||isNaN(n)||n<=0) return;
-  if(n>remaining){ alert('No puedes entregar '+n+' pzas. Solo quedan '+remaining+' pendientes.'); return; }
+  const input=prompt('Cantidad a entregar (quedan '+remaining+' pendientes):');
+  if(input===null) return;
+  const n=parseInt(input);
+  if(!n||isNaN(n)||n<=0){ alert('Ingresa una cantidad válida.'); return; }
+  if(n>remaining){ alert('No puedes entregar '+n+' pzas. Máximo disponible: '+remaining+'.'); return; }
   showLoading('REGISTRANDO...');
   const wo=workOrders.find(w=>w.id===otId);
   const prod=products.find(p=>p.id===wo?.product_id);
   sbInsert('ot_deliveries',{id:uid(),ot_id:otId,qty:n,delivered_at:new Date().toISOString()})
     .then(()=>{ sbUpdate('work_orders',{id:otId},{delivered_qty:delivered+n}); return loadAllData(); })
-    .then(()=>{
+    .then(async()=>{
       renderReleasedOTs(); renderRawMaterial(); hideLoading();
-      if(wo) registrarEntregaEnPTTransit(otId, wo.number, wo.product_id, prod?.name||'', n);
+      if(wo) await registrarEntregaEnPTTransit(otId, wo.number, wo.product_id, prod?.name||'', n);
     })
     .catch(e=>{ alert('Error: '+e.message); hideLoading(); });
 }
@@ -13524,19 +13526,22 @@ async function registrarEntregaEnPTTransit(otId, otNumber, productoId, productoN
   if(!cantidadEntregada||cantidadEntregada<=0) return;
   try{
     const now=new Date().toISOString();
-    // Buscar si ya hay un registro para esta OT
-    const existente=ptTransit.find(t=>t.ot_id===String(otId)&&t.status!=='completo');
+    // Consultar Supabase fresco — el array local ptTransit puede estar vacío si
+    // el usuario nunca abrió el módulo Almacén PT en esta sesión (Fix #6)
+    const frescosPT=await sbSelect('pt_transit','select=*&ot_id=eq.'+encodeURIComponent(String(otId))+'&status=neq.completo')||[];
+    const existente=frescosPT[0]||null;
     if(existente){
       const nuevaMov=existente.cantidad+cantidadEntregada;
       await sbUpdate('pt_transit',{id:existente.id},{cantidad:nuevaMov});
     } else {
       await sbInsert('pt_transit',{
+        id:uid(),
         ot_id:String(otId), ot_number:otNumber, producto_id:String(productoId),
         producto_nombre:productoNombre, cantidad:cantidadEntregada, cantidad_movida:0,
         status:'pendiente', entregado_at:now, created_at:now
       });
     }
-    // Refrescar datos si estamos en página PT
+    // Refrescar array local si el módulo PT está activo
     if(almPTAuth){
       ptTransit=await sbFetch('pt_transit','order=created_at.desc')||[];
     }
