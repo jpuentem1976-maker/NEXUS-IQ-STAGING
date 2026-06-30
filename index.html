@@ -2992,32 +2992,40 @@ function onOpChange(){
 
 function checkSelectReady(){
   const ok=document.getElementById('sel-ot').value&&document.getElementById('sel-op').value&&document.getElementById('sel-operator').value;
-  document.getElementById('btn-go-setup').disabled=!ok;
-  document.getElementById('btn-go-prod').disabled=!ok;
+  const btnSetup=document.getElementById('btn-go-setup');
+  const btnProd=document.getElementById('btn-go-prod');
+  // Reset visibility
+  btnSetup.style.display=''; btnProd.style.display='';
+  btnSetup.disabled=!ok; btnProd.disabled=!ok;
+  btnSetup.style.opacity=''; btnSetup.title='';
+
   const opId=document.getElementById('sel-op').value;
   const woId=document.getElementById('sel-ot').value;
   if(ok&&woId){
     const wo=getWO(woId); const prod=getProduct(wo.product_id);
     const op=prod?.operations.find(o=>o.id===opId);
-    // Solo machining tiene montaje
+
     if(op&&op.op_type!=='machining'){
-      document.getElementById('btn-go-setup').disabled=true;
+      // Operación secundaria: solo producción, sin montaje
+      btnSetup.style.display='none';
+      return;
     }
-    // Si ya existe sesión de setup completada para esta OT+operación, ocultar montaje
+
+    // Operación primaria (machining): verificar si ya existe setup en BD
     const yaHizoSetup=sessions.some(s=>
       s.ot_id===woId &&
-      (s.operation_id===opId || (op && s.op_number===op.op_number)) &&
+      (s.operation_id===opId||(op&&s.op_number===op.op_number)) &&
       s.type==='setup'
     );
+
     if(yaHizoSetup){
-      const btnSetup=document.getElementById('btn-go-setup');
-      btnSetup.disabled=true;
-      btnSetup.style.opacity='0.4';
-      btnSetup.title='Montaje ya realizado para esta operación';
+      // Montaje ya hecho → solo producción
+      btnSetup.style.display='none';
+      btnProd.style.display='';
     } else {
-      const btnSetup=document.getElementById('btn-go-setup');
-      btnSetup.style.opacity='';
-      btnSetup.title='';
+      // Sin montaje previo → solo montaje, producción bloqueada
+      btnSetup.style.display='';
+      btnProd.style.display='none';
     }
   }
 }
