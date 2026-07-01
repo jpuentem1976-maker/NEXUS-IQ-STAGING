@@ -7315,7 +7315,7 @@ function renderReleasedOTs(){
         </div>
         <div id="bom-status-${o.id}" style="margin-top:10px"></div>
         ${(()=>{
-          const qr2=(otQualityRecords||[]).filter(q=>q.ot_id===o.id);
+          const qr2=(otQualityRecords||[]).filter(q=>q.ot_id===o.id).sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
           if(!qr2.length) return '<div id="prog-q-'+o.id+'" style="display:none"></div>';
           let h='<div style="font-size:13px;font-weight:700;color:var(--warn);margin-bottom:8px;text-transform:uppercase">Registros de Calidad</div>';
           qr2.forEach(function(q){
@@ -7819,9 +7819,11 @@ async function saveExternalService(){
       const prodOps=(prod?.operations||[]).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
       const extOps=prodOps.filter(op=>op.op_type==='external'||op.op_type==='tt'||op.machine_name==='Tratamientos Térmicos'||op.machine_name==='Niquelado');
       const minExtSortOrder=extOps.length>0?Math.min(...extOps.map(op=>op.sort_order||999)):999;
-      const scrapRows=await sbSelect('ot_scrap','select=id,sort_order,costo_unitario_snapshot&ot_id=eq.'+encodeURIComponent(otId))||[];
+      const scrapRows=await sbSelect('ot_scrap','select=id,sort_order,operation_id,costo_unitario_snapshot&ot_id=eq.'+encodeURIComponent(otId))||[];
       for(const sr of scrapRows){
-        const srSortOrder=sr.sort_order!=null?parseInt(sr.sort_order):null;
+        // Buscar la operación en prodOps por operation_id para obtener su sort_order real
+        const opInProd=prodOps.find(op=>op.id===sr.operation_id);
+        const srSortOrder=opInProd?.sort_order??null;
         if(srSortOrder==null||srSortOrder<minExtSortOrder) continue;
         const nuevoSnap=await calcSnapshotCostoScrapConExt(otId,srSortOrder,prodOps);
         if(nuevoSnap>0&&Math.abs(nuevoSnap-(parseFloat(sr.costo_unitario_snapshot)||0))>0.001){
@@ -7909,22 +7911,22 @@ async function closeOT(otId,qty,delivered,scrap){
   await fetch(SB_URL+'/rest/v1/mp_transit?ot_id=eq.'+encodeURIComponent(otId),{method:'PATCH',headers:H,body:JSON.stringify({status:'consumido',released_at:now})});
 
   // Fix #15 — Recalcular costo_unitario_snapshot de scrap al cierre (ya con servicios externos cargados)
-  // Solo actualiza scrap cuyo sort_order >= sort_order mínimo de operaciones con costo externo
+  // Solo actualiza scrap cuyo operation_id corresponde a operación >= sort_order de la op externa
   try{
-    const scrapRows=await sbSelect('ot_scrap','select=id,sort_order,costo_unitario_snapshot,op_number&ot_id=eq.'+encodeURIComponent(otId))||[];
+    const scrapRows=await sbSelect('ot_scrap','select=id,sort_order,operation_id,costo_unitario_snapshot,op_number&ot_id=eq.'+encodeURIComponent(otId))||[];
     if(scrapRows.length){
-      const wo=workOrders.find(w=>w.id===otId);
-      const prod=products.find(p=>p.id===wo?.product_id);
-      const prodOps=(prod?.operations||[]).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
-      // Obtener sort_order mínimo de operaciones externas (TT, Niquelado, etc.)
-      const extOps=prodOps.filter(op=>op.op_type==='external'||op.op_type==='tt'||op.machine_name==='Tratamientos Térmicos'||op.machine_name==='Niquelado');
-      const minExtSortOrder=extOps.length>0?Math.min(...extOps.map(op=>op.sort_order||999)):999;
+      const woCls=workOrders.find(w=>w.id===otId);
+      const prodCls=products.find(p=>p.id===woCls?.product_id);
+      const prodOpsCls=(prodCls?.operations||[]).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+      const extOpsCls=prodOpsCls.filter(op=>op.op_type==='external'||op.op_type==='tt'||op.machine_name==='Tratamientos Térmicos'||op.machine_name==='Niquelado');
+      const minExtSO=extOpsCls.length>0?Math.min(...extOpsCls.map(op=>op.sort_order||999)):999;
       for(const sr of scrapRows){
-        const srSortOrder=sr.sort_order!=null?parseInt(sr.sort_order):null;
-        // Solo recalcular si el scrap ocurrió en o después de la primera operación externa
-        if(srSortOrder==null || srSortOrder<minExtSortOrder) continue;
-        const nuevoSnap=await calcSnapshotCostoScrapConExt(otId,srSortOrder,prodOps);
-        if(nuevoSnap>0 && Math.abs(nuevoSnap-(parseFloat(sr.costo_unitario_snapshot)||0))>0.001){
+        // Usar sort_order real de prodOps por operation_id — más confiable que el guardado en ot_scrap
+        const opInProd=prodOpsCls.find(op=>op.id===sr.operation_id);
+        const srSO=opInProd?.sort_order??null;
+        if(srSO==null||srSO<minExtSO) continue;
+        const nuevoSnap=await calcSnapshotCostoScrapConExt(otId,srSO,prodOpsCls);
+        if(nuevoSnap>0&&Math.abs(nuevoSnap-(parseFloat(sr.costo_unitario_snapshot)||0))>0.001){
           await sbUpdate('ot_scrap',{id:sr.id},{costo_unitario_snapshot:nuevoSnap});
         }
       }
