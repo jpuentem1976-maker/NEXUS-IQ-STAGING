@@ -3350,9 +3350,19 @@ async function goProduction(){
   ctx.scrapCount=setupScrap;
   // Save setup scrap to ot_scrap if any
   if(setupScrap>0){
-    const scrapRec={id:uid(),session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:setupScrap,reason:'Scrap en montaje',recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
-    sbInsert('ot_scrap',scrapRec).catch(e=>console.error('setup scrap insert:',e));
-    otScrap.unshift(scrapRec);
+    // Calcular snapshot de costo al momento del montaje (async, no bloquea el inicio de producción)
+    const scrapRecSetup={id:uid(),session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,sort_order:ctx.operation.sort_order??null,machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:setupScrap,reason:'Scrap en montaje',costo_unitario_snapshot:0,recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
+    otScrap.unshift(scrapRecSetup);
+    // Insertar primero con snapshot=0, luego actualizar con el valor real
+    sbInsert('ot_scrap',scrapRecSetup).then(async()=>{
+      try{
+        const snap=await calcSnapshotCostoScrap(ctx.wo.id, ctx.operation.sort_order??null);
+        if(snap>0){
+          await sbUpdate('ot_scrap',{id:scrapRecSetup.id},{costo_unitario_snapshot:snap});
+          scrapRecSetup.costo_unitario_snapshot=snap;
+        }
+      }catch(e){ console.warn('setup scrap snapshot:',e); }
+    }).catch(e=>console.error('setup scrap insert:',e));
   }
   // Update the setup record in Supabase with actual setup_pieces now that operator filled it
   if(ctx.setupRecordId && setupPzs>0){
@@ -3514,7 +3524,8 @@ function startSecondaryStep(){
     panel.id='sec-special-panel';
     // Calcular piezas ya liberadas en TT (sesiones previas parciales de esta operación)
     const ttPrevLib=(sessions||[]).filter(s=>s.ot_id===ctx.wo.id&&s.operation_id===ctx.operation.id&&s.type==='tt_partial').reduce((a,s)=>a+(parseInt(s.pieces_produced)||0),0);
-    const ttPendientes=Math.max(0,ctx.wo.qty-ttPrevLib);
+    const ttScrapTotal=(otScrap||[]).filter(s=>s.ot_id===ctx.wo.id).reduce((a,s)=>a+(parseInt(s.qty)||0),0);
+    const ttPendientes=Math.max(0,ctx.wo.qty-ttPrevLib-ttScrapTotal);
     panel.innerHTML=`
       <div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px">
         <div style="font-size:13px;font-weight:700;color:var(--warn);text-transform:uppercase;letter-spacing:1px">Inspección de Tratamiento Térmico</div>
@@ -3712,10 +3723,11 @@ async function completeTTOp(isComplete=true){
   const resultado    = document.getElementById('tt-resultado')?.value||'pendiente';
   const notas        = document.getElementById('tt-notas')?.value.trim()||null;
   const ttMaxPend    = parseInt(document.getElementById('tt-piezas-lib')?.max)||ctx.wo.qty;
-  const piezasLib    = Math.min(parseInt(document.getElementById('tt-piezas-lib')?.value)||0, ttMaxPend);
+  const piezasLib    = parseInt(document.getElementById('tt-piezas-lib')?.value)||0;
   const scrapTT      = Math.max(0,parseInt(document.getElementById('tt-scrap')?.value)||0);
 
   if(piezasLib<=0){ alert('Captura la cantidad de piezas liberadas en esta ronda antes de continuar.'); return; }
+  if(piezasLib>ttMaxPend){ alert('No puedes liberar '+piezasLib+' piezas. El máximo disponible es '+ttMaxPend+'.'); document.getElementById('tt-piezas-lib').value=ttMaxPend; return; }
   if(scrapTT>piezasLib){ alert('El scrap ('+scrapTT+') no puede ser mayor a las piezas liberadas ('+piezasLib+').'); return; }
 
   showLoading('REGISTRANDO...');
@@ -7869,12 +7881,21 @@ async function closeOT(otId,qty,delivered,scrap){
   await fetch(SB_URL+'/rest/v1/mp_transit?ot_id=eq.'+encodeURIComponent(otId),{method:'PATCH',headers:H,body:JSON.stringify({status:'consumido',released_at:now})});
 
   // Fix #15 — Recalcular costo_unitario_snapshot de scrap al cierre (ya con servicios externos cargados)
+  // Solo actualiza scrap cuyo sort_order >= sort_order mínimo de operaciones con costo externo
   try{
-    const scrapRows=await sbSelect('ot_scrap','select=id,sort_order,costo_unitario_snapshot&ot_id=eq.'+encodeURIComponent(otId))||[];
-    const otcFinal=await calcOTCosting(otId);
-    if(otcFinal && scrapRows.length){
+    const scrapRows=await sbSelect('ot_scrap','select=id,sort_order,costo_unitario_snapshot,op_number&ot_id=eq.'+encodeURIComponent(otId))||[];
+    if(scrapRows.length){
+      const wo=workOrders.find(w=>w.id===otId);
+      const prod=products.find(p=>p.id===wo?.product_id);
+      const prodOps=(prod?.operations||[]).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+      // Obtener sort_order mínimo de operaciones externas (TT, Niquelado, etc.)
+      const extOps=prodOps.filter(op=>op.op_type==='external'||op.op_type==='tt');
+      const minExtSortOrder=extOps.length>0?Math.min(...extOps.map(op=>op.sort_order||999)):999;
       for(const sr of scrapRows){
-        const nuevoSnap=await calcSnapshotCostoScrap(otId,sr.sort_order!=null?parseInt(sr.sort_order):null);
+        const srSortOrder=sr.sort_order!=null?parseInt(sr.sort_order):null;
+        // Solo recalcular si el scrap ocurrió en o después de la primera operación externa
+        if(srSortOrder==null || srSortOrder<minExtSortOrder) continue;
+        const nuevoSnap=await calcSnapshotCostoScrapConExt(otId,srSortOrder,prodOps);
         if(nuevoSnap>0 && Math.abs(nuevoSnap-(parseFloat(sr.costo_unitario_snapshot)||0))>0.001){
           await sbUpdate('ot_scrap',{id:sr.id},{costo_unitario_snapshot:nuevoSnap});
         }
@@ -12586,6 +12607,40 @@ async function calcSnapshotCostoScrap(otId, sortOrderScrap){
   }catch(e){ console.warn('calcSnapshotCostoScrap:',e); return 0; }
 }
 window.calcSnapshotCostoScrap=calcSnapshotCostoScrap;
+
+// ── Calcula snapshot incluyendo servicios externos proporcionales al sort_order (Fix #15) ──
+// Solo suma el costo externo de operaciones cuyo sort_order <= sortOrderScrap
+async function calcSnapshotCostoScrapConExt(otId, sortOrderScrap, prodOps){
+  try{
+    const otc=await calcOTCosting(otId);
+    if(!otc) return 0;
+    let costoUnit=otc.mpUnitario||0;
+    // Sumar MOD+GIF de operaciones hasta sort_order del scrap
+    if(sortOrderScrap!=null){
+      (otc.ops||[]).forEach(op=>{
+        if(op.sort_order!=null && op.sort_order<=sortOrderScrap){
+          const piezasOp=op.pieces||otc.totalDel||otc.wo?.qty||1;
+          costoUnit+=((op.costoMOD+op.costoGIF)/piezasOp);
+        }
+      });
+    }
+    // Sumar costo externo solo de operaciones externas con sort_order <= sortOrderScrap
+    const extOpsEnRango=(prodOps||[]).filter(op=>
+      (op.op_type==='external'||op.op_type==='tt') &&
+      (op.sort_order||0)<=sortOrderScrap
+    );
+    if(extOpsEnRango.length && otc.extRows?.length){
+      // Distribuir el costo externo total entre las operaciones externas en rango
+      // (asignación proporcional si hay múltiples, o total si solo hay una)
+      const totalExtEnRango=otc.extRows.reduce((a,e)=>a+(parseFloat(e.costo)||0),0);
+      const totalExtAll=otc.totalMOE||0;
+      const fraccion=totalExtAll>0?totalExtEnRango/totalExtAll:1;
+      costoUnit+=(totalExtAll*fraccion)/(otc.wo?.qty||1);
+    }
+    return parseFloat(costoUnit.toFixed(4));
+  }catch(e){ console.warn('calcSnapshotCostoScrapConExt:',e); return 0; }
+}
+window.calcSnapshotCostoScrapConExt=calcSnapshotCostoScrapConExt;
 
 // ── Reporte de Scrap Valorizado ──
 async function renderScrapReport(){
