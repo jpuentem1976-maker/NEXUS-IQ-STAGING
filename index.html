@@ -2956,7 +2956,16 @@ let tickInterval=null;
 function showStep(s){
   ['step-select','step-setup','step-production','step-secondary'].forEach(id=>{const el=document.getElementById(id);el.classList.add('hidden');el.classList.remove('fade');el.classList.remove('active');});
   const el=document.getElementById(s); el.classList.remove('hidden'); void el.offsetWidth; el.classList.add('fade');
-  if(s==='step-select') renderSecOpsActive();
+  if(s==='step-select'){
+    renderSecOpsActive();
+    // Fix #16 — Al volver a la pantalla de operador (tras terminar/salir/concluir una operación),
+    // forzar refresco de la lista de operaciones (disabled/CONCLUIDA) y del máximo de piezas,
+    // en vez de confiar en que el usuario cambie manualmente los dropdowns.
+    // Sin esto, si el operador presiona CONTINUAR PRODUCCIÓN sin tocar los selects, el sistema
+    // podía quedarse con el máximo de piezas calculado antes de la última operación registrada.
+    const _selOtVal=document.getElementById('sel-ot')?.value;
+    if(_selOtVal && typeof onOTChange==='function') onOTChange();
+  }
 }
 
 function populateSelects(){
@@ -3484,10 +3493,12 @@ async function startSecondaryStep(){
     const scrapTotal=(otScrap||[]).filter(s=>s.ot_id===ctx.wo.id).reduce((a,s)=>a+(parseInt(s.qty)||0),0);
     _maxSecPzs=Math.max(0,(ctx.wo.qty||0)-prevSessPzs-scrapTotal);
     prevSessDB.forEach(s=>{ if(!sessions.find(x=>x.id===s.id)) sessions.push(s); });
+    console.log('[maxPiezas] OT='+ctx.wo.number+' op='+ctx.operation.name+' fuente=DB loteQty='+(ctx.wo.qty||0)+' prevSessPzs='+prevSessPzs+' scrapTotal='+scrapTotal+' registros='+prevSessDB.length+' => max='+_maxSecPzs);
   }catch(e){
     const prevSessPzs=(sessions||[]).filter(s=>s.ot_id===ctx.wo.id&&s.operation_id===ctx.operation.id&&(s.type==='secondary_complete'||s.type==='tt_partial')).reduce((a,s)=>a+(parseInt(s.pieces_produced)||0),0);
     const scrapTotal=(otScrap||[]).filter(s=>s.ot_id===ctx.wo.id).reduce((a,s)=>a+(parseInt(s.qty)||0),0);
     _maxSecPzs=Math.max(0,(ctx.wo.qty||0)-prevSessPzs-scrapTotal);
+    console.warn('[maxPiezas] OT='+ctx.wo.number+' op='+ctx.operation.name+' fuente=CACHE-LOCAL (falló consulta a BD, ver error abajo) loteQty='+(ctx.wo.qty||0)+' prevSessPzs='+prevSessPzs+' scrapTotal='+scrapTotal+' => max='+_maxSecPzs, e);
   }
   const _secInp=document.getElementById('sec-piezas');
   _secInp.value=''; _secInp.max=_maxSecPzs; _secInp.placeholder='0 (max '+_maxSecPzs+')';
