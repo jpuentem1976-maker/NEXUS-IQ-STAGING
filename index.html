@@ -3277,6 +3277,9 @@ async function finishSetup(isComplete){
     document.getElementById('setup-btn-finish').classList.add('hidden');
     document.getElementById('setup-live').classList.add('hidden');
     document.getElementById('setup-result').classList.remove('hidden');
+    // Fix — resetear campos a 0 para que el operador capture valores de este montaje
+    const spReset=document.getElementById('setup-piezas'); if(spReset) spReset.value='0';
+    const ssReset=document.getElementById('setup-scrap');  if(ssReset) ssReset.value='0';
   }
 
   const recId=uid();
@@ -3509,9 +3512,15 @@ function startSecondaryStep(){
     })();
     const panel=document.createElement('div');
     panel.id='sec-special-panel';
+    // Calcular piezas ya liberadas en TT (sesiones previas parciales de esta operación)
+    const ttPrevLib=(sessions||[]).filter(s=>s.ot_id===ctx.wo.id&&s.operation_id===ctx.operation.id&&s.type==='tt_partial').reduce((a,s)=>a+(parseInt(s.pieces_produced)||0),0);
+    const ttPendientes=Math.max(0,ctx.wo.qty-ttPrevLib);
     panel.innerHTML=`
       <div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px">
         <div style="font-size:13px;font-weight:700;color:var(--warn);text-transform:uppercase;letter-spacing:1px">Inspección de Tratamiento Térmico</div>
+        ${ttPrevLib>0?`<div style="font-size:13px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:6px;padding:8px 12px;color:var(--green)">
+          <strong>${ttPrevLib}</strong> pzas liberadas en rondas anteriores · Pendientes: <strong>${ttPendientes}</strong>
+        </div>`:''}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div class="field" style="margin:0"><label style="font-size:13px">% C Superficial</label>
             <input id="tt-c-superficial" type="number" step="0.01" placeholder="ej. 0.85" style="font-family:'DM Mono',monospace"></div>
@@ -3522,6 +3531,16 @@ function startSecondaryStep(){
           <div class="field" style="margin:0"><label style="font-size:13px">Lote de Muestra</label>
             <input id="tt-lote" type="text" placeholder="ej. LM-2026-001" style="font-family:'DM Mono',monospace"></div>
         </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="field" style="margin:0">
+            <label style="font-size:13px">Piezas Liberadas <span style="color:#1F2937;font-weight:400">(esta ronda, máx ${ttPendientes})</span></label>
+            <input id="tt-piezas-lib" type="number" min="0" max="${ttPendientes}" value="${ttPendientes}" placeholder="0" style="font-family:'DM Mono',monospace;text-align:center;font-size:18px">
+          </div>
+          <div class="field" style="margin:0">
+            <label style="font-size:13px;color:var(--danger)">Scrap en TT <span style="color:#1F2937;font-weight:400">(de las liberadas)</span></label>
+            <input id="tt-scrap" type="number" min="0" value="0" placeholder="0" style="font-family:'DM Mono',monospace;text-align:center;font-size:18px;color:var(--danger)">
+          </div>
+        </div>
         <div class="field" style="margin:0"><label style="font-size:13px">Resultado</label>
           <select id="tt-resultado" style="font-size:13px">
             <option value="aprobado">✅ Aprobado</option>
@@ -3530,9 +3549,14 @@ function startSecondaryStep(){
           </select></div>
         <div class="field" style="margin:0"><label style="font-size:13px">Notas / Observaciones</label>
           <textarea id="tt-notas" rows="2" placeholder="Observaciones del proceso..." style="resize:none;font-size:13px"></textarea></div>
-        <button class="btn btn-orange btn-xl" style="width:100%;margin-top:4px" onclick="completeTTOp()">
-          <svg class="ic"><use href="#ic-flag"/></svg> OPERACIÓN CONCLUIDA
-        </button>
+        <div style="display:flex;gap:8px;flex-direction:column">
+          ${ttPendientes>0?`<button class="btn btn-warn btn-xl" style="width:100%" onclick="completeTTOp(false)">
+            <svg class="ic"><use href="#ic-clock"/></svg> LIBERAR PARCIAL (quedan pendientes)
+          </button>`:''}
+          <button class="btn btn-orange btn-xl" style="width:100%;margin-top:0" onclick="completeTTOp(true)">
+            <svg class="ic"><use href="#ic-flag"/></svg> OPERACIÓN CONCLUIDA (lote completo)
+          </button>
+        </div>
       </div>`;
     secCard.appendChild(panel);
   } else if(isNiquelado){
@@ -3679,55 +3703,91 @@ async function finishSecondary(){
     +'</div>';
 }
 
-// ── Tratamiento Térmico: guardar inspección y concluir op ──
-async function completeTTOp(){
+// ── Tratamiento Térmico: guardar inspección, scrap y liberación (parcial o completa) ──
+async function completeTTOp(isComplete=true){
   const cSuperficial = parseFloat(document.getElementById('tt-c-superficial')?.value)||null;
   const capa         = parseFloat(document.getElementById('tt-capa')?.value)||null;
   const dureza       = parseFloat(document.getElementById('tt-dureza')?.value)||null;
   const lote         = document.getElementById('tt-lote')?.value.trim()||null;
   const resultado    = document.getElementById('tt-resultado')?.value||'pendiente';
   const notas        = document.getElementById('tt-notas')?.value.trim()||null;
+  const ttMaxPend    = parseInt(document.getElementById('tt-piezas-lib')?.max)||ctx.wo.qty;
+  const piezasLib    = Math.min(parseInt(document.getElementById('tt-piezas-lib')?.value)||0, ttMaxPend);
+  const scrapTT      = Math.max(0,parseInt(document.getElementById('tt-scrap')?.value)||0);
 
-  // Guardar en ot_quality_records
+  if(piezasLib<=0){ alert('Captura la cantidad de piezas liberadas en esta ronda antes de continuar.'); return; }
+  if(scrapTT>piezasLib){ alert('El scrap ('+scrapTT+') no puede ser mayor a las piezas liberadas ('+piezasLib+').'); return; }
+
+  showLoading('REGISTRANDO...');
+  const now=new Date().toISOString();
+
+  // 1. Guardar inspección en ot_quality_records
   const qRec={
-    id:uid(),
-    ot_id:ctx.wo.id,
-    ot_number:ctx.wo.number,
-    product_id:ctx.product.id,
-    product_name:ctx.product.name,
-    product_code:ctx.product.code,
-    operation_id:ctx.operation.id,
-    operation_name:ctx.operation.name,
-    tipo_inspeccion:'tratamiento_termico',
-    inspector:ctx.operator.name,
-    fecha:new Date().toISOString(),
-    datos:JSON.stringify({c_superficial:cSuperficial,capa_carburizado:capa,dureza_hrc:dureza,lote_muestra:lote}),
-    resultado,
-    notas,
-    created_at:new Date().toISOString()
+    id:uid(),ot_id:ctx.wo.id,ot_number:ctx.wo.number,
+    product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,
+    operation_id:ctx.operation.id,operation_name:ctx.operation.name,
+    tipo_inspeccion:'tratamiento_termico',inspector:ctx.operator.name,fecha:now,
+    datos:JSON.stringify({c_superficial:cSuperficial,capa_carburizado:capa,dureza_hrc:dureza,lote_muestra:lote,
+      piezas_liberadas:piezasLib,scrap:scrapTT,liberacion:isComplete?'completa':'parcial'}),
+    resultado,notas,created_at:now
   };
-  try{
-    await sbInsert('ot_quality_records',qRec);
-    otQualityRecords.unshift(qRec);
-  }catch(e){ console.error('Error guardando inspección TT:',e); alert('Error al guardar inspección: '+e.message); }
+  try{ await sbInsert('ot_quality_records',qRec); otQualityRecords.unshift(qRec); }
+  catch(e){ console.error('Error guardando inspección TT:',e); hideLoading(); alert('Error al guardar inspección: '+e.message); return; }
 
-  // Concluir la operación secundaria normalmente
+  // 2. Fix #13 — Registrar scrap de TT con snapshot de costo
+  if(scrapTT>0){
+    try{
+      const snapshot=await calcSnapshotCostoScrap(ctx.wo.id, ctx.operation.sort_order??null);
+      const scrapRec={id:uid(),ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,
+        product_name:ctx.product.name,product_code:ctx.product.code,qty:scrapTT,
+        reason:'Scrap en Tratamiento Térmico',operation_id:ctx.operation.id,
+        op_number:ctx.operation.op_number,sort_order:ctx.operation.sort_order??null,
+        operation_name:ctx.operation.name,costo_unitario_snapshot:snapshot,recorded_at:now};
+      await sbInsert('ot_scrap',scrapRec);
+      otScrap.unshift(scrapRec);
+    }catch(e){ console.error('TT scrap insert:',e); }
+  }
+
+  // 3. Fix #14 — Registrar sesión con tipo tt_partial o secondary_complete
+  const actualSec=ctx.secStartedAt?Math.max(1,Math.floor((Date.now()-ctx.secStartedAt)/1000)):0;
+  const sesType=isComplete?'secondary_complete':'tt_partial';
+  const sesRec={id:uid(),session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,
+    product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,
+    operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,
+    op_type:'tt',machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,
+    operator_name:ctx.operator.name,qty:ctx.wo.qty,type:sesType,actual_sec:actualSec,
+    pieces_produced:piezasLib,recorded_at:now,date_label:dateStr(Date.now())};
+  try{ await sbInsert('sessions',sesRec); sessions.unshift(sesRec); }catch(e){ console.error(e); }
+
   await closeSecActiveRecord();
   ctx.secActiveId=null;
-  await markOpComplete(0,ctx.wo.qty,true);
 
-  // Refrescar OT Liberadas en Programación y Consulta para mostrar el badge de calidad
-  try{
-    const freshQ=await sbSelect('ot_quality_records','select=*&order=created_at.desc');
-    if(freshQ) otQualityRecords=freshQ;
-  }catch(e){ console.warn('No se pudo refrescar quality records:',e); }
-  if(typeof renderReleasedOTs==='function') renderReleasedOTs();
-  if(typeof renderConsulta==='function' && document.getElementById('c-lib-list')) renderConsulta();
-
-  showStep('step-select');
-  // Refrescar selector de operaciones para marcar TT como CONCLUIDA
-  const woSel=document.getElementById('sel-ot');
-  if(woSel&&woSel.value&&typeof onWOChange==='function') onWOChange();
+  if(isComplete){
+    // Operación concluida completa
+    await markOpComplete(actualSec,piezasLib,true);
+    try{
+      const freshQ=await sbSelect('ot_quality_records','select=*&order=created_at.desc');
+      if(freshQ) otQualityRecords=freshQ;
+    }catch(e){ console.warn(e); }
+    if(typeof renderReleasedOTs==='function') renderReleasedOTs();
+    if(typeof renderConsulta==='function'&&document.getElementById('c-lib-list')) renderConsulta();
+    hideLoading();
+    showStep('step-select');
+    const woSel=document.getElementById('sel-ot');
+    if(woSel&&woSel.value&&typeof onWOChange==='function') onWOChange();
+  } else {
+    // Fix #14 — Liberación parcial: NO marcar op completa, volver a selección para retomar
+    try{
+      const freshQ=await sbSelect('ot_quality_records','select=*&order=created_at.desc');
+      if(freshQ) otQualityRecords=freshQ;
+    }catch(e){ console.warn(e); }
+    if(typeof renderReleasedOTs==='function') renderReleasedOTs();
+    hideLoading();
+    alert('Liberación parcial registrada: '+piezasLib+' piezas'+(scrapTT>0?', '+scrapTT+' scrap':'')+'\nPuedes retomar la operación TT para liberar el resto del lote.');
+    showStep('step-select');
+    const woSel=document.getElementById('sel-ot');
+    if(woSel&&woSel.value&&typeof onWOChange==='function') onWOChange();
+  }
 }
 window.completeTTOp=completeTTOp;
 
@@ -7806,8 +7866,22 @@ async function closeOT(otId,qty,delivered,scrap){
   const H={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal','Content-Type':'application/json'};
   const now=new Date().toISOString();
   await fetch(SB_URL+'/rest/v1/work_orders?id=eq.'+encodeURIComponent(otId),{method:'PATCH',headers:H,body:JSON.stringify({status:'closed',closed_at:now})});
-  // Marcar mp_transit como consumido al cerrar la OT
   await fetch(SB_URL+'/rest/v1/mp_transit?ot_id=eq.'+encodeURIComponent(otId),{method:'PATCH',headers:H,body:JSON.stringify({status:'consumido',released_at:now})});
+
+  // Fix #15 — Recalcular costo_unitario_snapshot de scrap al cierre (ya con servicios externos cargados)
+  try{
+    const scrapRows=await sbSelect('ot_scrap','select=id,sort_order,costo_unitario_snapshot&ot_id=eq.'+encodeURIComponent(otId))||[];
+    const otcFinal=await calcOTCosting(otId);
+    if(otcFinal && scrapRows.length){
+      for(const sr of scrapRows){
+        const nuevoSnap=await calcSnapshotCostoScrap(otId,sr.sort_order!=null?parseInt(sr.sort_order):null);
+        if(nuevoSnap>0 && Math.abs(nuevoSnap-(parseFloat(sr.costo_unitario_snapshot)||0))>0.001){
+          await sbUpdate('ot_scrap',{id:sr.id},{costo_unitario_snapshot:nuevoSnap});
+        }
+      }
+    }
+  }catch(e){ console.warn('Fix #15 snapshot recalc:',e); }
+
   await loadAllData(); renderReleasedOTs(); renderClosedOTs(); renderRmtProd(); populateSelects(); hideLoading();
 }
 
