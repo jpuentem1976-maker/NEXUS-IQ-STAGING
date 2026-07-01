@@ -3365,7 +3365,7 @@ async function goProduction(){
   if(setupScrap>0){
     // Calcular snapshot ANTES del insert — en este momento solo existe la sesión de montaje
     let snapSetup=0;
-    try{ snapSetup=await calcSnapshotCostoScrap(ctx.wo.id, ctx.operation.sort_order??null); }catch(e){ console.warn('setup scrap snapshot:',e); }
+    try{ snapSetup=await calcSnapshotCostoScrapConExt(ctx.wo.id, ctx.operation.sort_order??null, ctx.product.operations); }catch(e){ console.warn('setup scrap snapshot:',e); }
     const scrapRecSetup={id:uid(),session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,sort_order:ctx.operation.sort_order??null,machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:setupScrap,reason:'Scrap en montaje',costo_unitario_snapshot:snapSetup,recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
     otScrap.unshift(scrapRecSetup);
     sbInsert('ot_scrap',scrapRecSetup).catch(e=>console.error('setup scrap insert:',e));
@@ -3543,9 +3543,21 @@ async function startSecondaryStep(){
     const panel=document.createElement('div');
     panel.id='sec-special-panel';
     // Calcular piezas ya liberadas en TT (sesiones previas parciales de esta operación)
-    const ttPrevLib=(sessions||[]).filter(s=>s.ot_id===ctx.wo.id&&s.operation_id===ctx.operation.id&&s.type==='tt_partial').reduce((a,s)=>a+(parseInt(s.pieces_produced)||0),0);
-    const ttScrapTotal=(otScrap||[]).filter(s=>s.ot_id===ctx.wo.id).reduce((a,s)=>a+(parseInt(s.qty)||0),0);
-    const ttPendientes=Math.max(0,ctx.wo.qty-ttPrevLib-ttScrapTotal);
+    // Fix #18 — Consultar fresco desde BD en vez de depender del array local `sessions`,
+    // que puede no estar sincronizado en esta ruta específica (ver console.log [ttPendientes]).
+    let ttPrevLib=0, ttScrapTotal=0, ttPendientes=ctx.wo.qty;
+    try{
+      const ttPrevDB=await sbSelect('sessions','select=pieces_produced&ot_id=eq.'+encodeURIComponent(ctx.wo.id)+'&operation_id=eq.'+encodeURIComponent(ctx.operation.id)+'&type=eq.tt_partial')||[];
+      ttPrevLib=ttPrevDB.reduce((a,s)=>a+(parseInt(s.pieces_produced)||0),0);
+      ttScrapTotal=(otScrap||[]).filter(s=>s.ot_id===ctx.wo.id).reduce((a,s)=>a+(parseInt(s.qty)||0),0);
+      ttPendientes=Math.max(0,ctx.wo.qty-ttPrevLib-ttScrapTotal);
+      console.log('[ttPendientes] OT='+ctx.wo.number+' fuente=DB loteQty='+ctx.wo.qty+' ttPrevLib='+ttPrevLib+' ttScrapTotal='+ttScrapTotal+' registros='+ttPrevDB.length+' => pendientes='+ttPendientes);
+    }catch(e){
+      ttPrevLib=(sessions||[]).filter(s=>s.ot_id===ctx.wo.id&&s.operation_id===ctx.operation.id&&s.type==='tt_partial').reduce((a,s)=>a+(parseInt(s.pieces_produced)||0),0);
+      ttScrapTotal=(otScrap||[]).filter(s=>s.ot_id===ctx.wo.id).reduce((a,s)=>a+(parseInt(s.qty)||0),0);
+      ttPendientes=Math.max(0,ctx.wo.qty-ttPrevLib-ttScrapTotal);
+      console.warn('[ttPendientes] OT='+ctx.wo.number+' fuente=CACHE-LOCAL (falló consulta a BD, ver error abajo) loteQty='+ctx.wo.qty+' ttPrevLib='+ttPrevLib+' ttScrapTotal='+ttScrapTotal+' => pendientes='+ttPendientes, e);
+    }
     panel.innerHTML=`
       <div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px">
         <div style="font-size:13px;font-weight:700;color:var(--warn);text-transform:uppercase;letter-spacing:1px">Inspección de Tratamiento Térmico</div>
@@ -3565,7 +3577,7 @@ async function startSecondaryStep(){
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div class="field" style="margin:0">
             <label style="font-size:13px">Piezas Liberadas <span style="color:#1F2937;font-weight:400">(esta ronda, máx ${ttPendientes})</span></label>
-            <input id="tt-piezas-lib" type="number" min="0" max="${ttPendientes}" value="${ttPendientes}" placeholder="0" style="font-family:'DM Mono',monospace;text-align:center;font-size:18px">
+            <input id="tt-piezas-lib" type="number" min="0" max="${ttPendientes}" value="" placeholder="0" style="font-family:'DM Mono',monospace;text-align:center;font-size:18px">
           </div>
           <div class="field" style="margin:0">
             <label style="font-size:13px;color:var(--danger)">Scrap en TT <span style="color:#1F2937;font-weight:400">(de las liberadas)</span></label>
@@ -3709,7 +3721,7 @@ async function finishSecondary(){
   // Fix #2+#3 — Registrar scrap de operación secundaria con snapshot de costo
   if(scrapSec>0){
     try{
-      const snapshot=await calcSnapshotCostoScrap(ctx.wo.id, ctx.operation.sort_order??null);
+      const snapshot=await calcSnapshotCostoScrapConExt(ctx.wo.id, ctx.operation.sort_order??null, ctx.product.operations);
       const scrapRec={id:uid(),ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,qty:scrapSec,reason:'Scrap en '+ctx.operation.name,operation_id:ctx.operation.id,op_number:ctx.operation.op_number,sort_order:ctx.operation.sort_order??null,operation_name:ctx.operation.name,costo_unitario_snapshot:snapshot,recorded_at:new Date().toISOString()};
       await sbInsert('ot_scrap',scrapRec);
       otScrap.unshift(scrapRec);
@@ -3769,7 +3781,7 @@ async function completeTTOp(isComplete=true){
   // 2. Fix #13 — Registrar scrap de TT con snapshot de costo
   if(scrapTT>0){
     try{
-      const snapshot=await calcSnapshotCostoScrap(ctx.wo.id, ctx.operation.sort_order??null);
+      const snapshot=await calcSnapshotCostoScrapConExt(ctx.wo.id, ctx.operation.sort_order??null, ctx.product.operations);
       const scrapRec={id:uid(),ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,
         product_name:ctx.product.name,product_code:ctx.product.code,qty:scrapTT,
         reason:'Scrap en Tratamiento Térmico',operation_id:ctx.operation.id,
@@ -3849,7 +3861,7 @@ async function completeSecondaryOp(){
   // (completeSecondaryOp se llama tras finishSecondary O directamente con OPERACIÓN CONCLUIDA)
   if(scrapSec>0 && !ctx.secScrapRegistered){
     try{
-      const snapshot=await calcSnapshotCostoScrap(ctx.wo.id, ctx.operation.sort_order??null);
+      const snapshot=await calcSnapshotCostoScrapConExt(ctx.wo.id, ctx.operation.sort_order??null, ctx.product.operations);
       const scrapRec={id:uid(),ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,qty:scrapSec,reason:'Scrap en '+ctx.operation.name,operation_id:ctx.operation.id,op_number:ctx.operation.op_number,sort_order:ctx.operation.sort_order??null,operation_name:ctx.operation.name,costo_unitario_snapshot:snapshot,recorded_at:new Date().toISOString()};
       await sbInsert('ot_scrap',scrapRec);
       otScrap.unshift(scrapRec);
@@ -7285,12 +7297,13 @@ function renderReleasedOTs(){
     // para esa operación). Así Programación detecta de un vistazo si algún operador dejó una
     // operación a medias sin concluirla, sin importar cuál operación sea.
     let partialBadges='';
+    const pendientesReales=Math.max(0,(o.qty||0)-dels-scraps);
     (p?.operations||[]).filter(op=>op.op_type!=='machining').forEach(op=>{
       const opSessions=(sessions||[]).filter(s=>s.ot_id===o.id&&s.operation_id===op.id);
       const registradas=opSessions.filter(s=>s.type==='secondary_complete'||s.type==='tt_partial').reduce((a,s)=>a+(parseInt(s.pieces_produced)||0),0);
       const hasClosed=opSessions.some(s=>s.type==='op_complete'||s.is_op_complete===true);
       if(registradas>0&&!hasClosed){
-        partialBadges+='<span class="tag" style="background:rgba(59,130,246,.12);color:#1D4ED8;border:1px solid rgba(59,130,246,.3);font-size:13px" title="'+op.name+' con piezas registradas pendientes de concluir la operación">⏳ '+op.name.toUpperCase()+' PARCIAL — '+registradas+'/'+(o.qty||0)+' pzas</span>';
+        partialBadges+='<span class="tag" style="background:rgba(59,130,246,.12);color:#1D4ED8;border:1px solid rgba(59,130,246,.3);font-size:13px" title="'+op.name+' con piezas registradas pendientes de concluir la operación">⏳ '+op.name.toUpperCase()+' PARCIAL — '+registradas+'/'+pendientesReales+' pzas</span>';
       }
     });
     html_parts.push(`
@@ -7913,7 +7926,7 @@ async function confirmAddScrap(){
 
   showLoading('REGISTRANDO...');
   try{
-    const snapshot=await calcSnapshotCostoScrap(otId, parseInt(sort_order)||null);
+    const snapshot=await calcSnapshotCostoScrapConExt(otId, parseInt(sort_order)||null, prod?.operations);
     await sbInsert('ot_scrap',{
       id:uid(),ot_id:otId,ot_number:wo.number,product_id:wo.product_id,
       product_name:prod?.name||'',product_code:prod?.code||'',
