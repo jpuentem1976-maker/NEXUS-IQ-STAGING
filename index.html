@@ -3476,7 +3476,12 @@ function startSecondaryStep(){
   document.getElementById('sec-operator').textContent=ctx.operator.name;
   document.getElementById('sec-ot').textContent=ctx.wo.number;
   document.getElementById('sec-machine').textContent=machineName||'Mesa de Trabajo';
-  const _maxSecPzs=Math.max(1,(ctx.wo.qty||0)-(otScrap||[]).filter(s=>s.ot_id===ctx.wo.id).reduce((a,s)=>a+(parseInt(s.qty)||0),0));
+  const _maxSecPzs=Math.max(0,(()=>{
+    // Descontar piezas ya registradas en rondas anteriores de ESTA operación
+    const prevSessPzs=(sessions||[]).filter(s=>s.ot_id===ctx.wo.id&&s.operation_id===ctx.operation.id&&(s.type==='secondary_complete'||s.type==='tt_partial')).reduce((a,s)=>a+(parseInt(s.pieces_produced)||0),0);
+    const scrapTotal=(otScrap||[]).filter(s=>s.ot_id===ctx.wo.id).reduce((a,s)=>a+(parseInt(s.qty)||0),0);
+    return (ctx.wo.qty||0)-prevSessPzs-scrapTotal;
+  })());
   const _secInp=document.getElementById('sec-piezas');
   _secInp.value=''; _secInp.max=_maxSecPzs; _secInp.placeholder='0 (max '+_maxSecPzs+')';
   const _secScrapInp=document.getElementById('sec-scrap');
@@ -7309,17 +7314,22 @@ function renderReleasedOTs(){
           qr2.forEach(function(q){
             var d={}; try{d=JSON.parse(q.datos||'{}')}catch(e){}
             var rc=q.resultado==='aprobado'?'var(--green)':q.resultado==='rechazado'?'var(--danger)':'var(--warn)';
+            var esParc=d.liberacion==='parcial';
+            var pzasLib=d.piezas_liberadas!=null?' · <strong>'+d.piezas_liberadas+' pzas</strong>':'';
+            var tipoLib=d.liberacion?'<span style="font-size:11px;padding:2px 6px;border-radius:4px;font-weight:700;background:'+(esParc?'rgba(245,158,11,.15)':'rgba(16,185,129,.12)')+';color:'+(esParc?'var(--warn)':'var(--green)')+'">'+( esParc?'PARCIAL':'COMPLETO')+'</span>':'';
             h+='<div style="background:var(--bg3);border-radius:6px;padding:10px;margin-bottom:6px;font-size:13px">';
-            h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">';
+            h+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;align-items:center">';
             h+='<span style="font-weight:700;color:var(--accent2)">'+(q.tipo_inspeccion||'').replace(/_/g,' ').toUpperCase()+'</span>';
+            h+=tipoLib;
             h+='<span style="color:var(--text)">'+new Date(q.fecha).toLocaleDateString('es-MX')+'</span>';
             h+='<span style="font-weight:700;color:'+rc+'">'+(q.resultado||'').toUpperCase()+'</span>';
-            h+='<span style="color:#1F2937">Inspector: '+(q.inspector||'—')+'</span>';
+            h+='<span style="color:#1F2937">Inspector: '+(q.inspector||'—')+pzasLib+'</span>';
             h+='</div><div style="display:flex;gap:16px;flex-wrap:wrap">';
             if(d.c_superficial!=null) h+='<span>%C Sup: <strong>'+d.c_superficial+'</strong></span>';
             if(d.capa_carburizado!=null) h+='<span>Capa: <strong>'+d.capa_carburizado+'"</strong></span>';
             if(d.dureza_hrc!=null) h+='<span>Dureza: <strong>'+d.dureza_hrc+' HRC</strong></span>';
             if(d.lote_muestra) h+='<span>Lote: <strong>'+d.lote_muestra+'</strong></span>';
+            if(d.scrap!=null&&d.scrap>0) h+='<span style="color:var(--danger)">Scrap: <strong>'+d.scrap+'</strong></span>';
             h+='</div>';
             if(q.notas) h+='<div style="color:#1F2937;margin-top:4px">'+q.notas+'</div>';
             h+='</div>';
@@ -7794,6 +7804,24 @@ async function saveExternalService(){
     document.getElementById('ext-svc-costo').value='';
     renderExtSvcExisting();
     renderReleasedOTs();
+    // Fix #15 — Recalcular snapshots de scrap al cargar servicio externo
+    // (solo para scrap en operaciones >= sort_order de la op externa)
+    try{
+      const otId=_extSvcOtId;
+      const prod=products.find(p=>p.id===wo?.product_id);
+      const prodOps=(prod?.operations||[]).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+      const extOps=prodOps.filter(op=>op.op_type==='external'||op.op_type==='tt');
+      const minExtSortOrder=extOps.length>0?Math.min(...extOps.map(op=>op.sort_order||999)):999;
+      const scrapRows=await sbSelect('ot_scrap','select=id,sort_order,costo_unitario_snapshot&ot_id=eq.'+encodeURIComponent(otId))||[];
+      for(const sr of scrapRows){
+        const srSortOrder=sr.sort_order!=null?parseInt(sr.sort_order):null;
+        if(srSortOrder==null||srSortOrder<minExtSortOrder) continue;
+        const nuevoSnap=await calcSnapshotCostoScrapConExt(otId,srSortOrder,prodOps);
+        if(nuevoSnap>0&&Math.abs(nuevoSnap-(parseFloat(sr.costo_unitario_snapshot)||0))>0.001){
+          await sbUpdate('ot_scrap',{id:sr.id},{costo_unitario_snapshot:nuevoSnap});
+        }
+      }
+    }catch(e){ console.warn('Fix #15 ext service recalc:',e); }
   }catch(e){ alert('Error: '+e.message); }
 }
 window.saveExternalService=saveExternalService;
@@ -12588,10 +12616,12 @@ async function calcSnapshotCostoScrap(otId, sortOrderScrap){
     const otc=await calcOTCosting(otId);
     if(!otc) return 0;
     let costoUnit=otc.mpUnitario||0;
+    const loteQty=otc.wo?.qty||1; // usar lote completo como denominador base
     if(sortOrderScrap!=null){
       (otc.ops||[]).forEach(op=>{
         if(op.sort_order!=null && op.sort_order<=sortOrderScrap){
-          const piezasOp=op.pieces||otc.totalDel||1;
+          // Usar piezas reales si hay, o el lote como referencia estándar
+          const piezasOp=op.pieces>0?op.pieces:loteQty;
           costoUnit+=((op.costoMOD+op.costoGIF)/piezasOp);
         }
       });
@@ -12609,10 +12639,11 @@ async function calcSnapshotCostoScrapConExt(otId, sortOrderScrap, prodOps){
     if(!otc) return 0;
     let costoUnit=otc.mpUnitario||0;
     // Sumar MOD+GIF de operaciones hasta sort_order del scrap
+    const loteQtyCon=otc.wo?.qty||1;
     if(sortOrderScrap!=null){
       (otc.ops||[]).forEach(op=>{
         if(op.sort_order!=null && op.sort_order<=sortOrderScrap){
-          const piezasOp=op.pieces||otc.totalDel||otc.wo?.qty||1;
+          const piezasOp=op.pieces>0?op.pieces:loteQtyCon;
           costoUnit+=((op.costoMOD+op.costoGIF)/piezasOp);
         }
       });
