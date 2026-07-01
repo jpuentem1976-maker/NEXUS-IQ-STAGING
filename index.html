@@ -1110,6 +1110,7 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
     <div style="font-size:13px;color:#1F2937;margin-bottom:14px">Costos y tiempos reales por O.T. — doble click en una fila para ver el detalle completo.</div>
     <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
       <input type="text" id="info-ot-search" placeholder="Buscar OT o producto..." oninput="renderInfoOT()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:13px;width:240px">
+      <button class="btn btn-sm" onclick="exportInfoOTListExcel()" style="background:rgba(16,124,16,.12);color:#0E6B0E;border:1px solid rgba(16,124,16,.3)"><svg class="ic"><use href="#ic-download"/></svg> Exportar a Excel</button>
     </div>
     <div id="info-ot-list"></div>
   </div>
@@ -2023,7 +2024,10 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
   <div class="card modal" style="max-width:760px;max-height:85vh;overflow-y:auto">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div id="info-ot-modal-title" style="font-family:var(--font-display,sans-serif);font-size:18px;color:var(--accent)"><svg class="ic"><use href="#ic-doc-tab"/></svg> Detalle OT</div>
-      <button class="btn btn-ghost btn-sm" onclick="closeModal('info-ot-modal')"><svg class="ic"><use href="#ic-x"/></svg> Cerrar</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" onclick="exportInfoOTDetailExcel()" style="background:rgba(16,124,16,.12);color:#0E6B0E;border:1px solid rgba(16,124,16,.3)"><svg class="ic"><use href="#ic-download"/></svg> Exportar a Excel</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('info-ot-modal')"><svg class="ic"><use href="#ic-x"/></svg> Cerrar</button>
+      </div>
     </div>
     <div id="info-ot-modal-body"></div>
   </div>
@@ -12527,6 +12531,122 @@ function renderInfoOT(){
 }
 window.renderInfoOT=renderInfoOT;
 
+// ── Fix #7 — Exportación a Excel de Información OT (listado y detalle) ──
+async function ensureXLSXLib(){
+  if(typeof XLSX!=='undefined') return;
+  await new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=resolve; s.onerror=()=>reject(new Error('No se pudo cargar la librería de Excel (revisa tu conexión a internet)'));
+    document.head.appendChild(s);
+  });
+}
+
+async function exportInfoOTListExcel(){
+  try{
+    showLoading('GENERANDO EXCEL...');
+    await ensureXLSXLib();
+    const q=(document.getElementById('info-ot-search')?.value||'').toLowerCase();
+    let list=workOrders.filter(o=>o.status==='closed');
+    if(q){
+      list=list.filter(o=>{
+        const prod=products.find(p=>p.id===o.product_id);
+        return (o.number||'').toLowerCase().includes(q)||(prod?.name||'').toLowerCase().includes(q)||(prod?.code||'').toLowerCase().includes(q);
+      });
+    }
+    list=[...list].sort((a,b)=>(b.released_at||'').localeCompare(a.released_at||''));
+    if(!list.length){ hideLoading(); alert('No hay OTs cerradas para exportar con el filtro actual.'); return; }
+
+    const rows=[];
+    for(const o of list){
+      const prod=products.find(p=>p.id===o.product_id);
+      const dels=(otDeliveries||[]).filter(d=>d.ot_id===o.id).reduce((a,d)=>a+(parseInt(d.qty)||0),0);
+      const scraps=(otScrap||[]).filter(s=>s.ot_id===o.id).reduce((a,s)=>a+(parseInt(s.qty)||0),0);
+      let totalMP=0;
+      try{
+        const transit=await sbSelect('mp_transit','select=valor&ot_id=eq.'+encodeURIComponent(o.id));
+        totalMP=(transit||[]).reduce((a,t)=>a+(parseFloat(t.valor)||0),0);
+      }catch(e){ /* deja $0.00 si falla la consulta de esta OT en particular */ }
+      rows.push({
+        'OT':o.number||'',
+        'Producto':prod?.name||'',
+        'Código':prod?.code||'',
+        'Programado':o.qty||0,
+        'Entregado':dels,
+        'Scrap':scraps,
+        'Costo MP':Number(totalMP.toFixed(2)),
+        'Fecha Liberación':o.released_at?new Date(o.released_at).toLocaleDateString('es-MX'):'',
+        'Estado':'Cerrada'
+      });
+    }
+    const ws=XLSX.utils.json_to_sheet(rows);
+    ws['!cols']=[{wch:12},{wch:26},{wch:14},{wch:12},{wch:12},{wch:10},{wch:12},{wch:16},{wch:10}];
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'OTs Cerradas');
+    XLSX.writeFile(wb,'NEXUS_IQ_OTs_Cerradas_'+(new Date().toISOString().slice(0,10))+'.xlsx');
+    hideLoading();
+  }catch(e){
+    hideLoading();
+    alert('Error generando el Excel: '+e.message);
+  }
+}
+window.exportInfoOTListExcel=exportInfoOTListExcel;
+
+async function exportInfoOTDetailExcel(){
+  const otId=window._infoOTDetailCurrentId;
+  const o=workOrders.find(w=>w.id===otId);
+  if(!o){ alert('No se encontró la OT a exportar.'); return; }
+  try{
+    showLoading('GENERANDO EXCEL...');
+    await ensureXLSXLib();
+    const prod=products.find(p=>p.id===o.product_id);
+    const c=await calcOTCosting(otId);
+    const {mpRows,totalMP,ops,totalMOD,totalGIF,extRows,totalMOE,dels,totalDel,scraps,totalScrap,costoTotal,costoUnitario}=c;
+
+    const wb=XLSX.utils.book_new();
+
+    const wsResumen=XLSX.utils.json_to_sheet([{
+      'OT':o.number||'', 'Producto':prod?.name||'', 'Código':prod?.code||'',
+      'Programado':o.qty||0, 'Entregado':totalDel, 'Scrap':totalScrap,
+      'Costo MP':Number(totalMP.toFixed(2)), 'Costo MOD':Number(totalMOD.toFixed(2)),
+      'Costo GIF':Number(totalGIF.toFixed(2)), 'Servicios Externos':Number(totalMOE.toFixed(2)),
+      'Costo Total':Number(costoTotal.toFixed(2)),
+      'Costo Unitario':o.qty>0?Number(costoUnitario.toFixed(2)):0
+    }]);
+    wsResumen['!cols']=[{wch:12},{wch:24},{wch:12},{wch:12},{wch:12},{wch:10},{wch:12},{wch:12},{wch:12},{wch:16},{wch:12},{wch:14}];
+    XLSX.utils.book_append_sheet(wb,wsResumen,'Resumen');
+
+    const wsMP=XLSX.utils.json_to_sheet((mpRows||[]).map(t=>({
+      'Material':t.material||'—','Forma':t.forma||'—','Kg':Number(parseFloat(t.kg_real||0).toFixed(3)),
+      '$/Kg':Number(parseFloat(t.precio_kg||0).toFixed(2)),'Valor':Number(parseFloat(t.valor||0).toFixed(2))
+    })));
+    XLSX.utils.book_append_sheet(wb,wsMP,'Materia Prima');
+
+    const wsOps=XLSX.utils.json_to_sheet((ops||[]).map(op=>({
+      'Operación':'Op.'+(op.op_number||'-')+' '+op.name,'Máquina':op.machine_name||'—','Operador':op.operator_name||'—',
+      'Piezas':op.pieces,'Tiempo Total':fmtSec(op.totalSec),'MOD':Number(op.costoMOD.toFixed(2)),'GIF':Number(op.costoGIF.toFixed(2))
+    })));
+    XLSX.utils.book_append_sheet(wb,wsOps,'Tiempos por Operación');
+
+    const wsExt=XLSX.utils.json_to_sheet((extRows||[]).map(e=>({
+      'Proveedor':e.proveedor||'—','Concepto':e.concepto||'—','Costo':Number(parseFloat(e.costo||0).toFixed(2))
+    })));
+    XLSX.utils.book_append_sheet(wb,wsExt,'Servicios Externos');
+
+    const wsDel=XLSX.utils.json_to_sheet((dels||[]).map(d=>({
+      'Fecha':d.delivered_at?new Date(d.delivered_at).toLocaleDateString('es-MX'):'','Piezas':d.qty||0
+    })));
+    XLSX.utils.book_append_sheet(wb,wsDel,'Entregas');
+
+    XLSX.writeFile(wb,'NEXUS_IQ_'+(o.number||'OT')+'_Detalle.xlsx');
+    hideLoading();
+  }catch(e){
+    hideLoading();
+    alert('Error generando el Excel: '+e.message);
+  }
+}
+window.exportInfoOTDetailExcel=exportInfoOTDetailExcel;
+
 // ── Cálculo de costeo compartido (usado por Información OT y O.T. Liberadas) ──
 async function calcOTCosting(otId){
   const wo=workOrders.find(w=>w.id===otId);
@@ -12784,6 +12904,7 @@ window.renderScrapReport=renderScrapReport;
 async function showInfoOTDetail(otId){
   const o=workOrders.find(w=>w.id===otId);
   if(!o) return;
+  window._infoOTDetailCurrentId=otId;
   const prod=products.find(p=>p.id===o.product_id);
   const title=document.getElementById('info-ot-modal-title');
   title.innerHTML=`<svg class="ic"><use href="#ic-doc-tab"/></svg> ${o.number} — ${prod?.name||''}`;
