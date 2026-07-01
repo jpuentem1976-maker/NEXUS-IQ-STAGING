@@ -3465,7 +3465,7 @@ setInterval(()=>{
   });
 },1000);
 
-function startSecondaryStep(){
+async function startSecondaryStep(){
   const machineName = ctx.operation.machine_name||'';
   const isTTOp = machineName === 'Tratamientos Térmicos';
   const isNiquelado = machineName === 'Niquelado';
@@ -3476,12 +3476,19 @@ function startSecondaryStep(){
   document.getElementById('sec-operator').textContent=ctx.operator.name;
   document.getElementById('sec-ot').textContent=ctx.wo.number;
   document.getElementById('sec-machine').textContent=machineName||'Mesa de Trabajo';
-  const _maxSecPzs=Math.max(0,(()=>{
-    // Descontar piezas ya registradas en rondas anteriores de ESTA operación
+  // Consultar Supabase fresco — el array local puede no tener sesiones recientes
+  let _maxSecPzs=0;
+  try{
+    const prevSessDB=await sbSelect('sessions','select=pieces_produced,type&ot_id=eq.'+encodeURIComponent(ctx.wo.id)+'&operation_id=eq.'+encodeURIComponent(ctx.operation.id)+'&type=in.(secondary_complete,tt_partial)')||[];
+    const prevSessPzs=prevSessDB.reduce((a,s)=>a+(parseInt(s.pieces_produced)||0),0);
+    const scrapTotal=(otScrap||[]).filter(s=>s.ot_id===ctx.wo.id).reduce((a,s)=>a+(parseInt(s.qty)||0),0);
+    _maxSecPzs=Math.max(0,(ctx.wo.qty||0)-prevSessPzs-scrapTotal);
+    prevSessDB.forEach(s=>{ if(!sessions.find(x=>x.id===s.id)) sessions.push(s); });
+  }catch(e){
     const prevSessPzs=(sessions||[]).filter(s=>s.ot_id===ctx.wo.id&&s.operation_id===ctx.operation.id&&(s.type==='secondary_complete'||s.type==='tt_partial')).reduce((a,s)=>a+(parseInt(s.pieces_produced)||0),0);
     const scrapTotal=(otScrap||[]).filter(s=>s.ot_id===ctx.wo.id).reduce((a,s)=>a+(parseInt(s.qty)||0),0);
-    return (ctx.wo.qty||0)-prevSessPzs-scrapTotal;
-  })());
+    _maxSecPzs=Math.max(0,(ctx.wo.qty||0)-prevSessPzs-scrapTotal);
+  }
   const _secInp=document.getElementById('sec-piezas');
   _secInp.value=''; _secInp.max=_maxSecPzs; _secInp.placeholder='0 (max '+_maxSecPzs+')';
   const _secScrapInp=document.getElementById('sec-scrap');
@@ -7810,7 +7817,7 @@ async function saveExternalService(){
       const otId=_extSvcOtId;
       const prod=products.find(p=>p.id===wo?.product_id);
       const prodOps=(prod?.operations||[]).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
-      const extOps=prodOps.filter(op=>op.op_type==='external'||op.op_type==='tt');
+      const extOps=prodOps.filter(op=>op.op_type==='external'||op.op_type==='tt'||op.machine_name==='Tratamientos Térmicos'||op.machine_name==='Niquelado');
       const minExtSortOrder=extOps.length>0?Math.min(...extOps.map(op=>op.sort_order||999)):999;
       const scrapRows=await sbSelect('ot_scrap','select=id,sort_order,costo_unitario_snapshot&ot_id=eq.'+encodeURIComponent(otId))||[];
       for(const sr of scrapRows){
@@ -7910,7 +7917,7 @@ async function closeOT(otId,qty,delivered,scrap){
       const prod=products.find(p=>p.id===wo?.product_id);
       const prodOps=(prod?.operations||[]).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
       // Obtener sort_order mínimo de operaciones externas (TT, Niquelado, etc.)
-      const extOps=prodOps.filter(op=>op.op_type==='external'||op.op_type==='tt');
+      const extOps=prodOps.filter(op=>op.op_type==='external'||op.op_type==='tt'||op.machine_name==='Tratamientos Térmicos'||op.machine_name==='Niquelado');
       const minExtSortOrder=extOps.length>0?Math.min(...extOps.map(op=>op.sort_order||999)):999;
       for(const sr of scrapRows){
         const srSortOrder=sr.sort_order!=null?parseInt(sr.sort_order):null;
@@ -12615,14 +12622,14 @@ async function calcSnapshotCostoScrap(otId, sortOrderScrap){
   try{
     const otc=await calcOTCosting(otId);
     if(!otc) return 0;
+    const loteQty=otc.wo?.qty||1;
     let costoUnit=otc.mpUnitario||0;
-    const loteQty=otc.wo?.qty||1; // usar lote completo como denominador base
     if(sortOrderScrap!=null){
       (otc.ops||[]).forEach(op=>{
         if(op.sort_order!=null && op.sort_order<=sortOrderScrap){
-          // Usar piezas reales si hay, o el lote como referencia estándar
-          const piezasOp=op.pieces>0?op.pieces:loteQty;
-          costoUnit+=((op.costoMOD+op.costoGIF)/piezasOp);
+          // Siempre dividir entre lote completo — el costo estándar por pieza
+          // se calcula contra el lote, no contra las piezas producidas hasta ahora
+          costoUnit+=((op.costoMOD+op.costoGIF)/loteQty);
         }
       });
     }
@@ -12638,28 +12645,26 @@ async function calcSnapshotCostoScrapConExt(otId, sortOrderScrap, prodOps){
     const otc=await calcOTCosting(otId);
     if(!otc) return 0;
     let costoUnit=otc.mpUnitario||0;
-    // Sumar MOD+GIF de operaciones hasta sort_order del scrap
     const loteQtyCon=otc.wo?.qty||1;
+    // Sumar MOD+GIF de operaciones hasta sort_order del scrap
     if(sortOrderScrap!=null){
       (otc.ops||[]).forEach(op=>{
         if(op.sort_order!=null && op.sort_order<=sortOrderScrap){
-          const piezasOp=op.pieces>0?op.pieces:loteQtyCon;
-          costoUnit+=((op.costoMOD+op.costoGIF)/piezasOp);
+          costoUnit+=((op.costoMOD+op.costoGIF)/loteQtyCon);
         }
       });
     }
-    // Sumar costo externo solo de operaciones externas con sort_order <= sortOrderScrap
-    const extOpsEnRango=(prodOps||[]).filter(op=>
-      (op.op_type==='external'||op.op_type==='tt') &&
-      (op.sort_order||0)<=sortOrderScrap
-    );
-    if(extOpsEnRango.length && otc.extRows?.length){
-      // Distribuir el costo externo total entre las operaciones externas en rango
-      // (asignación proporcional si hay múltiples, o total si solo hay una)
-      const totalExtEnRango=otc.extRows.reduce((a,e)=>a+(parseFloat(e.costo)||0),0);
-      const totalExtAll=otc.totalMOE||0;
-      const fraccion=totalExtAll>0?totalExtEnRango/totalExtAll:1;
-      costoUnit+=(totalExtAll*fraccion)/(otc.wo?.qty||1);
+    // Sumar costo externo SOLO si el scrap ocurrió en o después de la operación externa
+    // Usar sort_order de operaciones marcadas como external o tt en prodOps
+    if(otc.extRows?.length && sortOrderScrap!=null){
+      const extSortOrders=(prodOps||[])
+        .filter(op=>op.op_type==='external'||op.op_type==='tt'||op.machine_name==='Tratamientos Térmicos'||op.machine_name==='Niquelado')
+        .map(op=>op.sort_order||999);
+      const minExtSO=extSortOrders.length>0?Math.min(...extSortOrders):999;
+      if(sortOrderScrap>=minExtSO){
+        const totalExt=otc.totalMOE||0;
+        costoUnit+=totalExt/loteQtyCon;
+      }
     }
     return parseFloat(costoUnit.toFixed(4));
   }catch(e){ console.warn('calcSnapshotCostoScrapConExt:',e); return 0; }
