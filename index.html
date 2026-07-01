@@ -3350,19 +3350,12 @@ async function goProduction(){
   ctx.scrapCount=setupScrap;
   // Save setup scrap to ot_scrap if any
   if(setupScrap>0){
-    // Calcular snapshot de costo al momento del montaje (async, no bloquea el inicio de producción)
-    const scrapRecSetup={id:uid(),session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,sort_order:ctx.operation.sort_order??null,machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:setupScrap,reason:'Scrap en montaje',costo_unitario_snapshot:0,recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
+    // Calcular snapshot ANTES del insert — en este momento solo existe la sesión de montaje
+    let snapSetup=0;
+    try{ snapSetup=await calcSnapshotCostoScrap(ctx.wo.id, ctx.operation.sort_order??null); }catch(e){ console.warn('setup scrap snapshot:',e); }
+    const scrapRecSetup={id:uid(),session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,sort_order:ctx.operation.sort_order??null,machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:setupScrap,reason:'Scrap en montaje',costo_unitario_snapshot:snapSetup,recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
     otScrap.unshift(scrapRecSetup);
-    // Insertar primero con snapshot=0, luego actualizar con el valor real
-    sbInsert('ot_scrap',scrapRecSetup).then(async()=>{
-      try{
-        const snap=await calcSnapshotCostoScrap(ctx.wo.id, ctx.operation.sort_order??null);
-        if(snap>0){
-          await sbUpdate('ot_scrap',{id:scrapRecSetup.id},{costo_unitario_snapshot:snap});
-          scrapRecSetup.costo_unitario_snapshot=snap;
-        }
-      }catch(e){ console.warn('setup scrap snapshot:',e); }
-    }).catch(e=>console.error('setup scrap insert:',e));
+    sbInsert('ot_scrap',scrapRecSetup).catch(e=>console.error('setup scrap insert:',e));
   }
   // Update the setup record in Supabase with actual setup_pieces now that operator filled it
   if(ctx.setupRecordId && setupPzs>0){
