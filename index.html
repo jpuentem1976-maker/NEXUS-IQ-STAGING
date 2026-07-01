@@ -3222,15 +3222,6 @@ async function startSetup(){
 }
 
 async function finishSetup(isComplete){
-  // Fix #11 — Validar piezas capturadas antes de Montaje Concluido
-  if(isComplete){
-    const piezasSetup=parseInt(document.getElementById('setup-piezas')?.value)||0;
-    if(piezasSetup<=0){
-      alert('Captura la cantidad de piezas producidas durante el montaje antes de concluir.');
-      document.getElementById('setup-piezas')?.focus();
-      return;
-    }
-  }
   // Validar que se haya marcado al menos 1 paso en este tramo, salvo que ya estén
   // todos completados por turnos anteriores (nada nuevo que marcar)
   const stepsCheckedNow=document.querySelectorAll('.setup-step-chk:not(:disabled):checked').length;
@@ -3305,6 +3296,16 @@ async function finishSetup(isComplete){
 }
 
 async function goProduction(){
+  // Fix #11 — Validar que se capturaron piezas del montaje antes de iniciar producción
+  // (solo si hubo montaje en esta sesión, es decir, setupRecordId existe)
+  if(ctx.setupRecordId){
+    const piezasSetup=parseInt(document.getElementById('setup-piezas')?.value)||0;
+    if(piezasSetup<=0){
+      alert('Captura la cantidad de piezas producidas durante el montaje antes de iniciar producción.');
+      document.getElementById('setup-piezas')?.focus();
+      return;
+    }
+  }
   ctx.prodStart=Date.now(); ctx.pieceTimes=[]; ctx.elapsed=0; ctx.totalLunch=0; ctx.downtimes=[];
   ctx.setupPieces=0; ctx.setupScrap=0; ctx.scrapCount=0; ctx.adjustedQty=null; ctx.prodStdAccumSec=0;
   // Calcular piezas ya producidas en sesiones ANTERIORES de esta misma operación
