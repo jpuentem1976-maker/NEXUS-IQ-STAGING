@@ -13109,6 +13109,57 @@ async function calcSnapshotCostoScrapConExt(otId, sortOrderScrap, prodOps){
 }
 window.calcSnapshotCostoScrapConExt=calcSnapshotCostoScrapConExt;
 
+// ── Fix #25 — Costo acumulado hasta cierta operación, dado un otc ya calculado.
+// Es la misma matemática de calcSnapshotCostoScrapConExt pero síncrona y sin volver a
+// pedir el costeo a Supabase — así se puede reutilizar un otc en caché tanto para valorizar
+// scrap como para valorizar piezas buenas, garantizando el mismo criterio en ambos lados.
+function costoAcumuladoHastaOperacion(otc, sortOrderObjetivo, prodOps){
+  if(!otc) return 0;
+  let costoUnit=otc.mpUnitario||0;
+  const loteQty=otc.wo?.qty||1;
+  if(sortOrderObjetivo!=null){
+    (otc.ops||[]).forEach(op=>{
+      if(op.sort_order!=null && op.sort_order<=sortOrderObjetivo){
+        costoUnit+=((op.costoMOD+op.costoGIF)/loteQty);
+      }
+    });
+  }
+  if(otc.extRows?.length && sortOrderObjetivo!=null){
+    const extSortOrders=(prodOps||[])
+      .filter(op=>op.op_type==='external'||op.op_type==='tt'||op.machine_name==='Tratamientos Térmicos'||op.machine_name==='Niquelado')
+      .map(op=>op.sort_order||999);
+    const minExtSO=extSortOrders.length>0?Math.min(...extSortOrders):999;
+    if(sortOrderObjetivo>=minExtSO) costoUnit+=(otc.totalMOE||0)/loteQty;
+  }
+  return costoUnit;
+}
+window.costoAcumuladoHastaOperacion=costoAcumuladoHastaOperacion;
+
+// ── Fix #25 — Valor de la producción BUENA (piezas type='piece'/'secondary_complete')
+// registrada en un rango de fechas, valorizada con el mismo criterio de costo acumulado
+// por operación que ya usa el scrap. Es el denominador del % Scrap en Costo (COPQ):
+//   % Scrap en Costo = valorScrap / (valorProducciónBuena + valorScrap)
+async function calcGoodProductionValue(from, to, costingCache){
+  let goodSess=(sessions||[]).filter(s=>s.type==='piece'||s.type==='secondary_complete');
+  if(from) goodSess=goodSess.filter(s=>s.recorded_at&&s.recorded_at>=from);
+  if(to)   goodSess=goodSess.filter(s=>s.recorded_at&&s.recorded_at<=to+'T23:59:59');
+  if(!goodSess.length) return 0;
+  let total=0;
+  goodSess.forEach(s=>{
+    const otc=costingCache[s.ot_id];
+    if(!otc) return;
+    const qty=s.type==='piece'?1:(parseInt(s.pieces_produced)||0);
+    if(qty<=0) return;
+    const prod=products.find(p=>p.id===otc.wo?.product_id);
+    const prodOps=prod?.operations||[];
+    const prodOp=prodOps.find(po=>po.id===s.operation_id)||prodOps.find(po=>String(po.op_number)===String(s.op_number));
+    const sortOrderSess=prodOp?.sort_order??null;
+    total+=costoAcumuladoHastaOperacion(otc,sortOrderSess,prodOps)*qty;
+  });
+  return total;
+}
+window.calcGoodProductionValue=calcGoodProductionValue;
+
 // ── Reporte de Scrap Valorizado ──
 async function renderScrapReport(){
   const el=document.getElementById('scrap-rep-list');
@@ -13138,8 +13189,13 @@ async function renderScrapReport(){
 
   el.innerHTML=`<div style="text-align:center;padding:30px;color:var(--text)">Calculando valorización...</div>`;
 
-  // Calcular costeo por OT una sola vez (cache)
-  const otIds=[...new Set(scraps.map(s=>s.ot_id))];
+  // Calcular costeo por OT una sola vez (cache) — cubre tanto las OT con scrap como
+  // las OT con producción buena en el mismo rango, para poder valorizar ambos lados
+  // del % Scrap en Costo (COPQ) con el mismo costeo.
+  let goodSessPreview=(sessions||[]).filter(s=>s.type==='piece'||s.type==='secondary_complete');
+  if(from) goodSessPreview=goodSessPreview.filter(s=>s.recorded_at&&s.recorded_at>=from);
+  if(to)   goodSessPreview=goodSessPreview.filter(s=>s.recorded_at&&s.recorded_at<=to+'T23:59:59');
+  const otIds=[...new Set([...scraps.map(s=>s.ot_id), ...goodSessPreview.map(s=>s.ot_id)])];
   const costingCache={};
   for(const otId of otIds){
     try{ costingCache[otId]=await calcOTCosting(otId); }catch(e){ costingCache[otId]=null; }
@@ -13191,9 +13247,18 @@ async function renderScrapReport(){
   });
   html+=`</tbody></table>`;
 
-  banner.innerHTML=`<div style="display:flex;gap:24px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 18px;width:fit-content;flex-wrap:wrap">
+  // Fix #25 — % Scrap en Costo (COPQ): valor del scrap contra el valor de todo lo
+  // producido (bueno + scrap) en el mismo rango de fechas, ambos con el mismo criterio
+  // de costo acumulado por operación.
+  const goodValue=await calcGoodProductionValue(from,to,costingCache);
+  const copqPct=(goodValue+totalValor)>0?(totalValor/(goodValue+totalValor)*100):0;
+
+  banner.innerHTML=`<div style="display:flex;gap:22px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 18px;width:fit-content;flex-wrap:wrap;align-items:center">
     <span style="font-size:13px"><svg class="ic"><use href="#ic-trend-down"/></svg> Piezas Scrap: <b style="color:var(--danger);font-size:16px">${totalPzas}</b></span>
-    <span style="font-size:13px"><svg class="ic"><use href="#ic-money-bag"/></svg> Valor Total: <b style="color:var(--danger);font-size:16px">$${totalValor.toFixed(2)}</b></span>
+    <span style="font-size:13px"><svg class="ic"><use href="#ic-money-bag"/></svg> Valor Total Scrap: <b style="color:var(--danger);font-size:16px">$${totalValor.toFixed(2)}</b></span>
+    <div style="width:1px;height:28px;background:var(--border)"></div>
+    <span style="font-size:13px">% Scrap en Costo (COPQ): <b style="color:var(--danger);font-size:18px">${copqPct.toFixed(1)}%</b></span>
+    <span style="font-size:13px;color:#1F2937">Producción Buena: <b style="color:var(--muted)">$${goodValue.toFixed(2)}</b></span>
   </div>`;
 
   el.innerHTML=html;
