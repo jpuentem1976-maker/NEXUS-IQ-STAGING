@@ -9155,6 +9155,14 @@ function tbl(headers, rows){
 // ══════════════════════════════════
 //  REPORTE POR OPERADOR
 // ══════════════════════════════════
+// Fix #19 — Eficiencia ponderada (misma fórmula que Consulta/Dashboard): suma de tiempo
+// estándar total / suma de tiempo real total × 100. NO es un promedio simple de los % de
+// cada pieza — eso sesga el resultado cuando el tiempo por pieza varía entre una y otra.
+function weightedEff(piecesArr){
+  const sumStd=(piecesArr||[]).reduce((a,s)=>a+((parseFloat(s.std_time)||0)*60),0);
+  const sumAct=(piecesArr||[]).reduce((a,s)=>a+(parseInt(s.actual_sec)||0),0);
+  return sumAct>0?Math.round(sumStd/sumAct*100):0;
+}
 function renderOpReport(){
   const body=document.getElementById('r-operator-body');
   if(!body) return;
@@ -9192,9 +9200,9 @@ function renderOpReport(){
   Object.values(byOp).sort((a,b)=>a.name.localeCompare(b.name)).forEach(op=>{
     const totalPcs=op.pieces.length;
     const totalNetSec=op.pieces.reduce((a,s)=>a+(parseInt(s.actual_sec)||0),0);
-    const avgEff=totalPcs>0?Math.round(op.pieces.reduce((a,s)=>a+(s.efficiency||0),0)/totalPcs):0;
+    const avgEff=weightedEff(op.pieces);
     const setupEffs=op.setups.filter(s=>s.efficiency>0);
-    const avgSetupEff=setupEffs.length>0?Math.round(setupEffs.reduce((a,s)=>a+(s.efficiency||0),0)/setupEffs.length):null;
+    const avgSetupEff=setupEffs.length>0?weightedEff(setupEffs):null;
 
     // ── Agrupar por Producto + OT ──
     const byProdOT={};
@@ -9204,28 +9212,28 @@ function renderOpReport(){
         prod:s.product_name||'--',
         code:s.product_code||'--',
         ot:s.ot_number||'--',
-        pieces:0, effSum:0, netSec:0, ops:{}
+        pieces:0, stdSec:0, netSec:0, ops:{}
       };
       byProdOT[k].pieces++;
-      byProdOT[k].effSum+=s.efficiency||0;
+      byProdOT[k].stdSec+=(parseFloat(s.std_time)||0)*60;
       byProdOT[k].netSec+=parseInt(s.actual_sec)||0;
       // Desglose por operación dentro del producto/OT
       const opk=s.operation_name||'--';
-      if(!byProdOT[k].ops[opk]) byProdOT[k].ops[opk]={pieces:0,effSum:0,netSec:0};
+      if(!byProdOT[k].ops[opk]) byProdOT[k].ops[opk]={pieces:0,stdSec:0,netSec:0};
       byProdOT[k].ops[opk].pieces++;
-      byProdOT[k].ops[opk].effSum+=s.efficiency||0;
+      byProdOT[k].ops[opk].stdSec+=(parseFloat(s.std_time)||0)*60;
       byProdOT[k].ops[opk].netSec+=parseInt(s.actual_sec)||0;
     });
 
     // Filas de productos/OTs
     const prodOTRows=Object.values(byProdOT).sort((a,b)=>a.ot.localeCompare(b.ot)).map(g=>{
-      const gAvgEff=g.pieces>0?Math.round(g.effSum/g.pieces):0;
+      const gAvgEff=g.netSec>0?Math.round(g.stdSec/g.netSec*100):0;
       const opRows=Object.entries(g.ops).map(([opn,d])=>`
         <tr style="background:var(--bg3)">
           <td style="padding:5px 10px 5px 32px;color:#1F2937;font-size:13px">└ ${opn}</td>
           <td style="padding:5px 10px;font-family:'DM Mono',monospace;font-size:13px;color:#1F2937">${d.pieces}</td>
           <td style="padding:5px 10px;font-family:'DM Mono',monospace;font-size:13px;color:#1F2937">${fmtSec(d.pieces>0?Math.round(d.netSec/d.pieces):0)}</td>
-          <td style="padding:5px 10px;font-size:13px">${effBadge(Math.round(d.effSum/d.pieces))}</td>
+          <td style="padding:5px 10px;font-size:13px">${effBadge(d.netSec>0?Math.round(d.stdSec/d.netSec*100):0)}</td>
         </tr>`).join('');
       return `
         <tr style="border-top:1px solid var(--border)">
@@ -9293,17 +9301,17 @@ function renderOTReport(){
     if(!byOT[k]) byOT[k]={ot:k,ot_id:s.ot_id||null,prod:s.product_name||'--',code:s.product_code||'--',pieces:[],ops:{}};
     byOT[k].pieces.push(s);
     const opk=s.operation_name||'--';
-    if(!byOT[k].ops[opk]) byOT[k].ops[opk]={pieces:0,netSec:0,effSum:0,operators:new Set()};
+    if(!byOT[k].ops[opk]) byOT[k].ops[opk]={pieces:0,netSec:0,stdSec:0,operators:new Set()};
     byOT[k].ops[opk].pieces++;
     byOT[k].ops[opk].netSec+=parseInt(s.actual_sec)||0;
-    byOT[k].ops[opk].effSum+=s.efficiency||0;
+    byOT[k].ops[opk].stdSec+=(parseFloat(s.std_time)||0)*60;
     byOT[k].ops[opk].operators.add(s.operator_name||'--');
   });
 
   let html='';
   Object.values(byOT).sort((a,b)=>a.ot.localeCompare(b.ot)).forEach(ot=>{
     const totalPcs=ot.pieces.length;
-    const avgEff=totalPcs>0?Math.round(ot.pieces.reduce((a,s)=>a+(s.efficiency||0),0)/totalPcs):0;
+    const avgEff=weightedEff(ot.pieces);
     const scraps=ot.ot_id?otScrap.filter(s=>s.ot_id===ot.ot_id):otScrap.filter(s=>s.ot_number===ot.ot);
     const totalScrap=scraps.reduce((a,s)=>a+(parseInt(s.qty)||0),0);
 
@@ -9321,7 +9329,7 @@ function renderOTReport(){
           <td style="font-weight:600">${opn}</td>
           <td style="font-family:'DM Mono',monospace">${d.pieces}</td>
           <td style="font-family:'DM Mono',monospace;color:var(--text)">${fmtSec(d.pieces>0?Math.round(d.netSec/d.pieces):0)}</td>
-          <td>${effBadge(Math.round(d.effSum/d.pieces))}</td>
+          <td>${effBadge(d.netSec>0?Math.round(d.stdSec/d.netSec*100):0)}</td>
           <td style="font-size:13px;color:#1F2937">${[...d.operators].join(', ')}</td>
         </tr>`).join('')
       )}
