@@ -677,6 +677,10 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
         <label>Piezas con Scrap <span style="font-size:13px;color:#1F2937;font-weight:400">(dejar en 0 si no aplica)</span></label>
         <input type="number" id="sec-scrap" placeholder="0" min="0" value="0" style="text-align:center;font-size:22px;font-family:'DM Mono',monospace;color:var(--danger)">
       </div>
+      <div class="field hidden" id="sec-scrap-responsible-field">
+        <label style="color:var(--danger)">¿Quién generó este scrap? <span style="font-size:13px;color:#1F2937;font-weight:400">(esta operación es de inspección, no de manufactura)</span></label>
+        <select id="sec-scrap-responsible"><option value="">-- Selecciona operador --</option></select>
+      </div>
       <div id="sec-btn-start"><button class="btn btn-blue btn-xl" onclick="startSecondary()">▶ INICIAR</button></div>
       <div id="sec-btn-finish" class="hidden" style="display:flex;flex-direction:column;gap:10px">
         <button class="btn btn-accent btn-xl" onclick="finishSecondary()"><svg class="ic"><use href="#ic-check"/></svg> TERMINAR OPERACIÓN</button>
@@ -3481,11 +3485,22 @@ setInterval(()=>{
   });
 },1000);
 
+// Fix #22 — Muestra/oculta el selector de responsable de scrap en TT según haya cantidad capturada
+function toggleTTScrapResponsible(){
+  const qty=parseInt(document.getElementById('tt-scrap')?.value)||0;
+  document.getElementById('tt-scrap-responsible-field')?.classList.toggle('hidden', qty<=0);
+}
+window.toggleTTScrapResponsible=toggleTTScrapResponsible;
+
 async function startSecondaryStep(){
   const machineName = ctx.operation.machine_name||'';
   const isTTOp = machineName === 'Tratamientos Térmicos';
   const isNiquelado = machineName === 'Niquelado';
   const isExternalSpecial = isTTOp || isNiquelado;
+  // Fix #22 — Inspección Final (máquina "Control de Calidad") es una operación de
+  // inspección: el operador que la corre (ej. Martha Leticia) detecta el scrap pero no
+  // lo genera, así que se le pide indicar quién fue el responsable real.
+  const isInspection = machineName === 'Control de Calidad';
 
   document.getElementById('sec-op-title').textContent=ctx.operation.name.toUpperCase();
   document.getElementById('sec-sub').textContent=`${ctx.product.name} · Op.${ctx.operation.op_number} · OT: ${ctx.wo.number}`;
@@ -3525,6 +3540,7 @@ async function startSecondaryStep(){
     document.getElementById('sec-piezas').closest('.field').style.display='none';
     const _scrapFieldTT=document.getElementById('sec-scrap-field');
     if(_scrapFieldTT) _scrapFieldTT.style.display='none';
+    document.getElementById('sec-scrap-responsible-field')?.classList.add('hidden');
     // Arrancar timer automáticamente
     ctx.secStart=Date.now(); ctx.secStartedAt=Date.now();
     document.getElementById('sec-timer').style.color='var(--accent)';
@@ -3584,8 +3600,17 @@ async function startSecondaryStep(){
           </div>
           <div class="field" style="margin:0">
             <label style="font-size:13px;color:var(--danger)">Scrap en TT <span style="color:#1F2937;font-weight:400">(de las liberadas)</span></label>
-            <input id="tt-scrap" type="number" min="0" value="0" placeholder="0" style="font-family:'DM Mono',monospace;text-align:center;font-size:18px;color:var(--danger)">
+            <input id="tt-scrap" type="number" min="0" value="0" placeholder="0" style="font-family:'DM Mono',monospace;text-align:center;font-size:18px;color:var(--danger)" oninput="toggleTTScrapResponsible()">
           </div>
+        </div>
+        <div class="field hidden" id="tt-scrap-responsible-field" style="margin:0">
+          <label style="font-size:13px;color:var(--danger)">¿Quién generó este scrap? <span style="color:#1F2937;font-weight:400">(TT es un proceso externo, no lo genera quien inspecciona)</span></label>
+          <select id="tt-scrap-responsible">
+            <option value="">-- Selecciona --</option>
+            <option value="external">Proveedor Externo</option>
+            ${operators.map(o=>`<option value="${o.id}">${o.name} (${o.code})</option>`).join('')}
+            <option value="unknown">Desconocido</option>
+          </select>
         </div>
         <div class="field" style="margin:0"><label style="font-size:13px">Resultado</label>
           <select id="tt-resultado" style="font-size:13px">
@@ -3612,6 +3637,7 @@ async function startSecondaryStep(){
     document.getElementById('sec-piezas').closest('.field').style.display='none';
     const _scrapFieldNiq=document.getElementById('sec-scrap-field');
     if(_scrapFieldNiq) _scrapFieldNiq.style.display='none';
+    document.getElementById('sec-scrap-responsible-field')?.classList.add('hidden');
     // Hide timer section
     const timerSection=document.getElementById('sec-timer').closest('div[style*="text-align:center"]');
     if(timerSection) timerSection.style.display='none';
@@ -3631,6 +3657,20 @@ async function startSecondaryStep(){
     document.getElementById('sec-piezas').closest('.field').style.display='';
     const _scrapFieldNorm=document.getElementById('sec-scrap-field');
     if(_scrapFieldNorm) _scrapFieldNorm.style.display='';
+    // Fix #22 — Selector de operador responsable del scrap, solo visible en operaciones
+    // de inspección (Control de Calidad). En operaciones normales (Rebabado, etc.) el
+    // operador que corre la operación SÍ genera el scrap, así que no se muestra.
+    const _respField=document.getElementById('sec-scrap-responsible-field');
+    const _respSel=document.getElementById('sec-scrap-responsible');
+    if(_respField){
+      _respField.classList.toggle('hidden', !isInspection);
+      if(isInspection && _respSel){
+        _respSel.innerHTML='<option value="">-- Selecciona operador --</option>'
+          +operators.map(o=>`<option value="${o.id}">${o.name} (${o.code})</option>`).join('')
+          +'<option value="unknown">Desconocido</option>';
+        _respSel.value='';
+      }
+    }
     const timerSection=document.getElementById('sec-timer').closest('div[style*="text-align:center"]');
     if(timerSection) timerSection.style.display='';
     if(ctx.secActiveId){
@@ -3705,6 +3745,21 @@ async function closeSecActiveRecord(){
   }catch(e){ console.error(e); }
 }
 
+// Fix #22 — Resuelve quién es responsable del scrap en una operación secundaria.
+// En operaciones normales (Rebabado, etc.) el operador que corre la operación SÍ genera
+// el scrap. En operaciones de inspección (Control de Calidad / Inspección Final) el
+// operador solo lo detecta, así que se exige elegir un responsable explícito.
+// Devuelve null si falta seleccionar (el caller debe alertar y abortar).
+function resolveScrapResponsible(){
+  const isInspection = (ctx.operation.machine_name||'')==='Control de Calidad';
+  if(!isInspection) return {operator_id:ctx.operator.id, operator_name:ctx.operator.name};
+  const sel=document.getElementById('sec-scrap-responsible')?.value||'';
+  if(!sel) return null;
+  if(sel==='unknown') return {operator_id:null, operator_name:'Desconocido'};
+  const op=operators.find(o=>o.id===sel);
+  return op?{operator_id:op.id, operator_name:op.name}:{operator_id:null, operator_name:'Desconocido'};
+}
+
 async function finishSecondary(){
   // Fix #12 — Validar piezas capturadas antes de terminar operación secundaria
   const piezasValCheck=parseInt(document.getElementById('sec-piezas')?.value)||0;
@@ -3718,6 +3773,16 @@ async function finishSecondary(){
   const _maxSec2=parseInt(document.getElementById('sec-piezas').max)||Math.max(1,(ctx.wo.qty||0)-(otScrap||[]).filter(s=>s.ot_id===ctx.wo.id).reduce((a,s)=>a+(parseInt(s.qty)||0),0));
   const piezas=Math.min(parseInt(document.getElementById('sec-piezas').value)||0,_maxSec2);
   const scrapSec=Math.max(0,parseInt(document.getElementById('sec-scrap')?.value)||0);
+  // Fix #22 — Si es operación de inspección y hay scrap, exigir responsable antes de continuar
+  let scrapResp=null;
+  if(scrapSec>0){
+    scrapResp=resolveScrapResponsible();
+    if(!scrapResp){
+      alert('Indica quién generó este scrap antes de terminar la operación.');
+      document.getElementById('sec-scrap-responsible')?.focus();
+      return;
+    }
+  }
   const rec={id:uid(),session_id:ctx.sessionId,ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,operation_id:ctx.operation.id,operation_name:ctx.operation.name,op_number:ctx.operation.op_number,op_type:'secondary',machine_name:ctx.operation.machine_name,operator_id:ctx.operator.id,operator_name:ctx.operator.name,qty:ctx.wo.qty,type:'secondary_complete',actual_sec:actualSec,pieces_produced:piezas,recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
   sessions.unshift(rec);
   try{ await sbInsert('sessions',rec); }catch(e){ console.error(e); }
@@ -3725,7 +3790,7 @@ async function finishSecondary(){
   if(scrapSec>0){
     try{
       const snapshot=await calcSnapshotCostoScrapConExt(ctx.wo.id, ctx.operation.sort_order??null, ctx.product.operations);
-      const scrapRec={id:uid(),ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,qty:scrapSec,reason:'Scrap en '+ctx.operation.name,operation_id:ctx.operation.id,op_number:ctx.operation.op_number,sort_order:ctx.operation.sort_order??null,operation_name:ctx.operation.name,costo_unitario_snapshot:snapshot,recorded_at:new Date().toISOString()};
+      const scrapRec={id:uid(),ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,qty:scrapSec,reason:'Scrap en '+ctx.operation.name,operation_id:ctx.operation.id,op_number:ctx.operation.op_number,sort_order:ctx.operation.sort_order??null,operation_name:ctx.operation.name,operator_id:scrapResp.operator_id,operator_name:scrapResp.operator_name,costo_unitario_snapshot:snapshot,recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
       await sbInsert('ot_scrap',scrapRec);
       otScrap.unshift(scrapRec);
       ctx.secScrapRegistered=true; // evitar duplicado si luego se llama completeSecondaryOp
@@ -3764,6 +3829,16 @@ async function completeTTOp(isComplete=true){
   if(piezasLib<=0){ alert('Captura la cantidad de piezas liberadas en esta ronda antes de continuar.'); return; }
   if(piezasLib>ttMaxPend){ alert('No puedes liberar '+piezasLib+' piezas. El máximo disponible es '+ttMaxPend+'.'); document.getElementById('tt-piezas-lib').value=ttMaxPend; return; }
   if(scrapTT>piezasLib){ alert('El scrap ('+scrapTT+') no puede ser mayor a las piezas liberadas ('+piezasLib+').'); return; }
+  // Fix #22 — TT es un proceso externo: el inspector no genera el scrap, así que se exige
+  // indicar explícitamente quién fue el responsable (sin default preseleccionado).
+  let ttScrapResp=null;
+  if(scrapTT>0){
+    const ttSel=document.getElementById('tt-scrap-responsible')?.value||'';
+    if(!ttSel){ alert('Indica quién generó el scrap de Tratamiento Térmico antes de continuar.'); document.getElementById('tt-scrap-responsible')?.focus(); return; }
+    if(ttSel==='external') ttScrapResp={operator_id:null, operator_name:'Proveedor Externo'};
+    else if(ttSel==='unknown') ttScrapResp={operator_id:null, operator_name:'Desconocido'};
+    else{ const opTT=operators.find(o=>o.id===ttSel); ttScrapResp=opTT?{operator_id:opTT.id, operator_name:opTT.name}:{operator_id:null, operator_name:'Desconocido'}; }
+  }
 
   showLoading('REGISTRANDO...');
   const now=new Date().toISOString();
@@ -3789,7 +3864,8 @@ async function completeTTOp(isComplete=true){
         product_name:ctx.product.name,product_code:ctx.product.code,qty:scrapTT,
         reason:'Scrap en Tratamiento Térmico',operation_id:ctx.operation.id,
         op_number:ctx.operation.op_number,sort_order:ctx.operation.sort_order??null,
-        operation_name:ctx.operation.name,costo_unitario_snapshot:snapshot,recorded_at:now};
+        operation_name:ctx.operation.name,operator_id:ttScrapResp.operator_id,operator_name:ttScrapResp.operator_name,
+        costo_unitario_snapshot:snapshot,recorded_at:now,date_label:dateStr(Date.now())};
       await sbInsert('ot_scrap',scrapRec);
       otScrap.unshift(scrapRec);
     }catch(e){ console.error('TT scrap insert:',e); }
@@ -3860,12 +3936,17 @@ async function completeSecondaryOp(){
   const _maxSec3=parseInt(document.getElementById('sec-piezas').max)||Math.max(1,(ctx.wo.qty||0)-(otScrap||[]).filter(s=>s.ot_id===ctx.wo.id).reduce((a,s)=>a+(parseInt(s.qty)||0),0));
   const piezas=Math.min(parseInt(document.getElementById('sec-piezas').value)||0,_maxSec3);
   const scrapSec=Math.max(0,parseInt(document.getElementById('sec-scrap')?.value)||0);
-  // Fix #2+#3 — Registrar scrap con snapshot solo si no fue ya guardado en finishSecondary
-  // (completeSecondaryOp se llama tras finishSecondary O directamente con OPERACIÓN CONCLUIDA)
+  // Fix #22 — Exigir responsable del scrap si es operación de inspección
   if(scrapSec>0 && !ctx.secScrapRegistered){
+    const scrapResp2=resolveScrapResponsible();
+    if(!scrapResp2){
+      alert('Indica quién generó este scrap antes de concluir la operación.');
+      document.getElementById('sec-scrap-responsible')?.focus();
+      return;
+    }
     try{
       const snapshot=await calcSnapshotCostoScrapConExt(ctx.wo.id, ctx.operation.sort_order??null, ctx.product.operations);
-      const scrapRec={id:uid(),ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,qty:scrapSec,reason:'Scrap en '+ctx.operation.name,operation_id:ctx.operation.id,op_number:ctx.operation.op_number,sort_order:ctx.operation.sort_order??null,operation_name:ctx.operation.name,costo_unitario_snapshot:snapshot,recorded_at:new Date().toISOString()};
+      const scrapRec={id:uid(),ot_id:ctx.wo.id,ot_number:ctx.wo.number,product_id:ctx.product.id,product_name:ctx.product.name,product_code:ctx.product.code,qty:scrapSec,reason:'Scrap en '+ctx.operation.name,operation_id:ctx.operation.id,op_number:ctx.operation.op_number,sort_order:ctx.operation.sort_order??null,operation_name:ctx.operation.name,operator_id:scrapResp2.operator_id,operator_name:scrapResp2.operator_name,costo_unitario_snapshot:snapshot,recorded_at:new Date().toISOString(),date_label:dateStr(Date.now())};
       await sbInsert('ot_scrap',scrapRec);
       otScrap.unshift(scrapRec);
     }catch(e){ console.error('scrap secundaria completeSecondaryOp:',e); }
