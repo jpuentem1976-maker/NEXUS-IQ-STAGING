@@ -9214,9 +9214,19 @@ function renderOpReport(){
     const pActTotal=op.pieces.reduce((a,s)=>a+(parseInt(s.actual_sec)||0),0);
 
     // ── Agrupar por Fecha + OT + Operación (una fila = una sesión de trabajo real) ──
+    // Fix #20 — dateK se normaliza siempre a ISO (yyyy-mm-dd). date_label viene en
+    // formato dd/mm/yyyy, así que si se usaba tal cual, el new Date(g.date+'T00:00:00')
+    // de más abajo generaba "Invalid Date" y además el ordenamiento por string quedaba mal
+    // al cruzar meses/años.
     const byGroup={};
+    function toISODate(label){
+      if(!label) return null;
+      const parts=label.split('/');
+      if(parts.length!==3) return null;
+      return parts[2]+'-'+parts[1].padStart(2,'0')+'-'+parts[0].padStart(2,'0');
+    }
     function addToGroup(s,isPieza){
-      const dateK=s.date_label||(s.recorded_at?s.recorded_at.slice(0,10):'--');
+      const dateK=toISODate(s.date_label)||(s.recorded_at?s.recorded_at.slice(0,10):'--');
       const k=dateK+'||'+(s.ot_number||'--')+'||'+(s.operation_name||'--');
       if(!byGroup[k]) byGroup[k]={
         date:dateK, ot:s.ot_number||'--', prod:s.product_name||'--', code:s.product_code||'--',
