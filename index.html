@@ -1130,9 +1130,12 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
       <div class="field" style="margin:0"><label>Desde</label><input type="date" id="scrap-rep-from" onchange="renderScrapReport()"></div>
       <div class="field" style="margin:0"><label>Hasta</label><input type="date" id="scrap-rep-to" onchange="renderScrapReport()"></div>
       <input type="text" id="scrap-rep-search" placeholder="Buscar OT o producto..." oninput="renderScrapReport()" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 12px;font-size:13px;width:220px;align-self:flex-end">
+      <button class="btn btn-sm" onclick="exportScrapReportPDF()" style="background:rgba(185,28,28,.1);color:var(--danger);border:1px solid rgba(185,28,28,.3);align-self:flex-end"><svg class="ic"><use href="#ic-download"/></svg> Exportar a PDF</button>
     </div>
-    <div id="scrap-rep-banner" style="margin-bottom:14px"></div>
-    <div id="scrap-rep-list"></div>
+    <div id="scrap-rep-export">
+      <div id="scrap-rep-banner" style="margin-bottom:14px"></div>
+      <div id="scrap-rep-list"></div>
+    </div>
   </div>
 
   <!-- MACHINE LOAD -->
@@ -9463,6 +9466,21 @@ async function exportOpReportPDF(){
     const from=document.getElementById('rf-from')?.value||'';
     const to=document.getElementById('rf-to')?.value||'';
 
+    // Fix #23 — Medir los límites de cada fila y cada tarjeta ANTES de rasterizar, para que
+    // el corte entre páginas del PDF nunca caiga a la mitad de una fila o de una tarjeta.
+    // bodyRect es la referencia (0,0) de todo lo demás.
+    const bodyRect=body.getBoundingClientRect();
+    const breakpointsCss=new Set([0, bodyRect.height]);
+    body.querySelectorAll(':scope > .card').forEach(card=>{
+      const cardRect=card.getBoundingClientRect();
+      breakpointsCss.add(cardRect.bottom-bodyRect.top); // fin de tarjeta: corte preferente
+      card.querySelectorAll('tbody tr').forEach(tr=>{
+        const trRect=tr.getBoundingClientRect();
+        breakpointsCss.add(trRect.bottom-bodyRect.top); // fin de fila: corte permitido dentro de una tarjeta larga
+      });
+    });
+    const sortedBreaksCss=[...breakpointsCss].filter(b=>b>=0&&b<=bodyRect.height).sort((a,b)=>a-b);
+
     const canvas=await html2canvas(body,{scale:2,backgroundColor:'#F3F2F1',useCORS:true});
     const {jsPDF}=window.jspdf;
     const pdf=new jsPDF('p','pt','letter');
@@ -9472,6 +9490,8 @@ async function exportOpReportPDF(){
     const headerH=40;
     const imgW=pageW-margin*2;
     const scaleFactor=imgW/canvas.width; // px canvas -> pt PDF
+    const canvasScale=canvas.width/bodyRect.width; // px CSS -> px canvas (≈2, el scale de html2canvas)
+    const sortedBreaksPx=sortedBreaksCss.map(b=>Math.round(b*canvasScale));
 
     // Encabezado (solo en la primera página)
     pdf.setFontSize(14); pdf.setFont(undefined,'bold');
@@ -9479,16 +9499,28 @@ async function exportOpReportPDF(){
     pdf.setFontSize(10); pdf.setFont(undefined,'normal');
     pdf.text('Operador: '+opFilter+'   |   Periodo: '+(from||'--')+' a '+(to||'--')+'   |   Generado: '+new Date().toLocaleDateString('es-MX'),margin,margin+26);
 
-    // Cortar el canvas completo en fragmentos que quepan en cada página (en px del canvas fuente)
+    // Altura máxima utilizable por página (en px del canvas fuente)
     const usablePtFirst=pageH-margin-(margin+headerH);
     const usablePtRest=pageH-margin*2;
     const sliceHeightPxFirst=Math.floor(usablePtFirst/scaleFactor);
     const sliceHeightPxRest=Math.floor(usablePtRest/scaleFactor);
 
+    // Encuentra el corte "seguro" (fin de fila o de tarjeta) más grande que quepa en la
+    // página actual. Si ninguno cabe (fila/bloque más alto que una página completa — caso
+    // raro), se usa el límite máximo como respaldo, igual que antes.
+    function nextBreak(srcY,maxSliceH){
+      const limit=srcY+maxSliceH;
+      if(canvas.height-srcY<=maxSliceH) return canvas.height;
+      let best=null;
+      for(const b of sortedBreaksPx){ if(b>srcY&&b<=limit) best=b; else if(b>limit) break; }
+      return best||limit;
+    }
+
     let srcY=0, page=0;
     while(srcY<canvas.height){
-      const sliceH=(page===0?sliceHeightPxFirst:sliceHeightPxRest);
-      const thisSliceH=Math.min(sliceH,canvas.height-srcY);
+      const maxSliceH=(page===0?sliceHeightPxFirst:sliceHeightPxRest);
+      const breakY=nextBreak(srcY,maxSliceH);
+      const thisSliceH=Math.max(1,Math.min(breakY-srcY,canvas.height-srcY));
       const sliceCanvas=document.createElement('canvas');
       sliceCanvas.width=canvas.width;
       sliceCanvas.height=thisSliceH;
@@ -13120,6 +13152,7 @@ async function renderScrapReport(){
       <th style="padding:8px 10px;text-align:left">OT</th>
       <th style="padding:8px 10px;text-align:left">Producto</th>
       <th style="padding:8px 10px;text-align:left">Operación</th>
+      <th style="padding:8px 10px;text-align:left">Operador</th>
       <th style="padding:8px 10px;text-align:left">Motivo</th>
       <th style="padding:8px 10px;text-align:center">Cant.</th>
       <th style="padding:8px 10px;text-align:center">Costo Unit.</th>
@@ -13134,6 +13167,14 @@ async function renderScrapReport(){
     const costoUnit=parseInt(s.qty)>0?valor/parseInt(s.qty):0;
     const fecha=s.recorded_at?new Date(s.recorded_at).toLocaleDateString('es-MX'):'—';
     const opLabel=s.op_number?`Op.${s.op_number}${s.operation_name?' — '+s.operation_name:''}`:'—';
+    // Fix #24 — Badge de operador: gris para Desconocido, naranja para Proveedor Externo,
+    // texto plano para operadores reales (mismo criterio que Reporte por Operador).
+    const operName=s.operator_name||'Desconocido';
+    const operCell=operName==='Desconocido'
+      ?`<span style="background:rgba(107,114,128,.12);color:#374151;border-radius:5px;padding:2px 8px;font-size:13px;font-weight:700">Desconocido</span>`
+      :operName==='Proveedor Externo'
+      ?`<span style="background:rgba(194,65,12,.12);color:#7C3B0A;border-radius:5px;padding:2px 8px;font-size:13px;font-weight:700">Proveedor Externo</span>`
+      :`<span style="font-weight:600;color:var(--text)">${operName}</span>`;
     totalPzas+=parseInt(s.qty)||0;
     totalValor+=valor;
     html+=`<tr style="border-bottom:1px solid var(--border)">
@@ -13141,6 +13182,7 @@ async function renderScrapReport(){
       <td style="padding:8px 10px;font-weight:700;color:var(--accent)">${s.ot_number||wo?.number||'—'}</td>
       <td style="padding:8px 10px;font-weight:600">${prod?.name||s.product_name||'—'} <span style="color:#1F2937;font-size:13px">(${prod?.code||s.product_code||'—'})</span></td>
       <td style="padding:8px 10px;color:#1F2937;font-size:13px">${opLabel}</td>
+      <td style="padding:8px 10px">${operCell}</td>
       <td style="padding:8px 10px;color:#1F2937;font-size:13px">${s.reason||'—'}</td>
       <td style="padding:8px 10px;text-align:center;font-weight:700;color:var(--danger)">${s.qty||0}</td>
       <td style="padding:8px 10px;text-align:center">$${costoUnit.toFixed(2)}</td>
@@ -13157,6 +13199,81 @@ async function renderScrapReport(){
   el.innerHTML=html;
 }
 window.renderScrapReport=renderScrapReport;
+
+// Fix #24 — Exportar Reporte de Scrap Valorizado a PDF, con la misma paginación
+// consciente de límites de fila que el Reporte por Operador (Fix #23): nunca corta
+// una fila a la mitad entre páginas.
+async function exportScrapReportPDF(){
+  const container=document.getElementById('scrap-rep-export');
+  if(!container||!document.getElementById('scrap-rep-list')?.innerHTML.trim()){ alert('No hay datos para exportar con el filtro actual.'); return; }
+  try{
+    showLoading('GENERANDO PDF...');
+    await ensurePDFExportLibs();
+    const from=document.getElementById('scrap-rep-from')?.value||'';
+    const to=document.getElementById('scrap-rep-to')?.value||'';
+
+    const containerRect=container.getBoundingClientRect();
+    const breakpointsCss=new Set([0, containerRect.height]);
+    container.querySelectorAll('tbody tr').forEach(tr=>{
+      const trRect=tr.getBoundingClientRect();
+      breakpointsCss.add(trRect.bottom-containerRect.top);
+    });
+    const sortedBreaksCss=[...breakpointsCss].filter(b=>b>=0&&b<=containerRect.height).sort((a,b)=>a-b);
+
+    const canvas=await html2canvas(container,{scale:2,backgroundColor:'#F3F2F1',useCORS:true});
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF('p','pt','letter');
+    const pageW=pdf.internal.pageSize.getWidth();
+    const pageH=pdf.internal.pageSize.getHeight();
+    const margin=24;
+    const headerH=40;
+    const imgW=pageW-margin*2;
+    const scaleFactor=imgW/canvas.width;
+    const canvasScale=canvas.width/containerRect.width;
+    const sortedBreaksPx=sortedBreaksCss.map(b=>Math.round(b*canvasScale));
+
+    pdf.setFontSize(14); pdf.setFont(undefined,'bold');
+    pdf.text('NEXUS IQ — Reporte de Scrap Valorizado',margin,margin+10);
+    pdf.setFontSize(10); pdf.setFont(undefined,'normal');
+    pdf.text('Periodo: '+(from||'--')+' a '+(to||'--')+'   |   Generado: '+new Date().toLocaleDateString('es-MX'),margin,margin+26);
+
+    const usablePtFirst=pageH-margin-(margin+headerH);
+    const usablePtRest=pageH-margin*2;
+    const sliceHeightPxFirst=Math.floor(usablePtFirst/scaleFactor);
+    const sliceHeightPxRest=Math.floor(usablePtRest/scaleFactor);
+
+    function nextBreak(srcY,maxSliceH){
+      const limit=srcY+maxSliceH;
+      if(canvas.height-srcY<=maxSliceH) return canvas.height;
+      let best=null;
+      for(const b of sortedBreaksPx){ if(b>srcY&&b<=limit) best=b; else if(b>limit) break; }
+      return best||limit;
+    }
+
+    let srcY=0, page=0;
+    while(srcY<canvas.height){
+      const maxSliceH=(page===0?sliceHeightPxFirst:sliceHeightPxRest);
+      const breakY=nextBreak(srcY,maxSliceH);
+      const thisSliceH=Math.max(1,Math.min(breakY-srcY,canvas.height-srcY));
+      const sliceCanvas=document.createElement('canvas');
+      sliceCanvas.width=canvas.width;
+      sliceCanvas.height=thisSliceH;
+      sliceCanvas.getContext('2d').drawImage(canvas,0,srcY,canvas.width,thisSliceH,0,0,canvas.width,thisSliceH);
+      const sliceImg=sliceCanvas.toDataURL('image/png');
+      const sliceImgH=thisSliceH*scaleFactor;
+      if(page>0) pdf.addPage();
+      pdf.addImage(sliceImg,'PNG',margin,page===0?(margin+headerH):margin,imgW,sliceImgH);
+      srcY+=thisSliceH;
+      page++;
+    }
+    pdf.save('NEXUS_IQ_Reporte_Scrap_'+(new Date().toISOString().slice(0,10))+'.pdf');
+    hideLoading();
+  }catch(e){
+    hideLoading();
+    alert('Error generando el PDF: '+e.message);
+  }
+}
+window.exportScrapReportPDF=exportScrapReportPDF;
 
 // ── Detalle de OT ──
 async function showInfoOTDetail(otId){
