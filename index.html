@@ -9183,20 +9183,32 @@ function renderOpReport(){
     (!opFilter||s.operator_name===opFilter) &&
     inRange(s.date_label, from, to)
   );
+  // Fix #21 — Scrap por operador (Montaje + Producción sumados en una sola columna;
+  // el detalle por fase ya vive en Reporte de Paros/Scrap). otScrap trae operator_name
+  // y date_label propios, así que se filtra igual que pieces/setups.
+  const scraps=(otScrap||[]).filter(s=>
+    (!opFilter||s.operator_name===opFilter) &&
+    inRange(s.date_label, from, to)
+  );
 
-  if(!pieces.length && !setups.length){ noData(body); return; }
+  if(!pieces.length && !setups.length && !scraps.length){ noData(body); return; }
 
   // Agrupar por operador
   const byOp={};
   pieces.forEach(s=>{
     const k=s.operator_name||'Desconocido';
-    if(!byOp[k]) byOp[k]={name:k,pieces:[],setups:[]};
+    if(!byOp[k]) byOp[k]={name:k,pieces:[],setups:[],scraps:[]};
     byOp[k].pieces.push(s);
   });
   setups.forEach(s=>{
     const k=s.operator_name||'Desconocido';
-    if(!byOp[k]) byOp[k]={name:k,pieces:[],setups:[]};
+    if(!byOp[k]) byOp[k]={name:k,pieces:[],setups:[],scraps:[]};
     byOp[k].setups.push(s);
+  });
+  scraps.forEach(s=>{
+    const k=s.operator_name||'Desconocido';
+    if(!byOp[k]) byOp[k]={name:k,pieces:[],setups:[],scraps:[]};
+    byOp[k].scraps.push(s);
   });
 
   let html='';
@@ -9212,6 +9224,9 @@ function renderOpReport(){
     const mActTotal=op.setups.reduce((a,s)=>a+(parseInt(s.actual_sec)||0),0);
     const pStdTotal=op.pieces.reduce((a,s)=>a+((parseFloat(s.std_time)||0)*60),0);
     const pActTotal=op.pieces.reduce((a,s)=>a+(parseInt(s.actual_sec)||0),0);
+    // Fix #21 — Acumulado de scrap (piezas y costo), Montaje + Producción sumados
+    const totalScrapQty=op.scraps.reduce((a,s)=>a+(parseInt(s.qty)||0),0);
+    const totalScrapCost=op.scraps.reduce((a,s)=>a+((parseInt(s.qty)||0)*(parseFloat(s.costo_unitario_snapshot)||0)),0);
 
     // ── Agrupar por Fecha + OT + Operación (una fila = una sesión de trabajo real) ──
     // Fix #20 — dateK se normaliza siempre a ISO (yyyy-mm-dd). date_label viene en
@@ -9230,7 +9245,8 @@ function renderOpReport(){
       const k=dateK+'||'+(s.ot_number||'--')+'||'+(s.operation_name||'--');
       if(!byGroup[k]) byGroup[k]={
         date:dateK, ot:s.ot_number||'--', prod:s.product_name||'--', code:s.product_code||'--',
-        opName:s.operation_name||'--', pzas:0, mStd:0, mAct:0, hasM:false, pStd:0, pAct:0, hasP:false
+        opName:s.operation_name||'--', pzas:0, mStd:0, mAct:0, hasM:false, pStd:0, pAct:0, hasP:false,
+        scrapQty:0, scrapCost:0, hasScrap:false
       };
       const g=byGroup[k];
       if(isPieza){
@@ -9241,6 +9257,21 @@ function renderOpReport(){
     }
     op.pieces.forEach(s=>addToGroup(s,true));
     op.setups.forEach(s=>addToGroup(s,false));
+    // Fix #21 — El scrap (montaje + producción) cae en la misma fila fecha+OT+operación.
+    // Si por algún motivo no existiera ya una fila para esa combinación (caso raro), se crea.
+    op.scraps.forEach(s=>{
+      const dateK=toISODate(s.date_label)||(s.recorded_at?s.recorded_at.slice(0,10):'--');
+      const k=dateK+'||'+(s.ot_number||'--')+'||'+(s.operation_name||'--');
+      if(!byGroup[k]) byGroup[k]={
+        date:dateK, ot:s.ot_number||'--', prod:s.product_name||'--', code:s.product_code||'--',
+        opName:s.operation_name||'--', pzas:0, mStd:0, mAct:0, hasM:false, pStd:0, pAct:0, hasP:false,
+        scrapQty:0, scrapCost:0, hasScrap:false
+      };
+      const g=byGroup[k];
+      g.scrapQty+=parseInt(s.qty)||0;
+      g.scrapCost+=(parseInt(s.qty)||0)*(parseFloat(s.costo_unitario_snapshot)||0);
+      g.hasScrap=true;
+    });
 
     const rows=Object.values(byGroup).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(g=>{
       const mEff=g.hasM&&g.mAct>0?Math.round(g.mStd/g.mAct*100):null;
@@ -9260,6 +9291,8 @@ function renderOpReport(){
           <td style="padding:8px 6px;text-align:center;font-family:'DM Mono',monospace;color:#1F2937">${g.hasP?Math.round(g.pStd/60):'--'}</td>
           <td style="padding:8px 6px;text-align:center;font-family:'DM Mono',monospace;color:#1F2937">${g.hasP?Math.round(g.pAct/60):'--'}</td>
           <td style="padding:8px 6px;text-align:center">${pEff!==null?effBadge(pEff):'<span style="color:var(--muted)">--</span>'}</td>
+          <td style="padding:8px 6px;text-align:center;font-family:'DM Mono',monospace;font-weight:700;color:var(--danger);background:rgba(239,68,68,.04)">${g.hasScrap?g.scrapQty:'--'}</td>
+          <td style="padding:8px 6px;text-align:center;font-family:'DM Mono',monospace;color:var(--danger);background:rgba(239,68,68,.04)">${g.hasScrap?'$'+g.scrapCost.toFixed(2):'--'}</td>
         </tr>`;
     }).join('');
 
@@ -9283,6 +9316,8 @@ function renderOpReport(){
         <span class="tag" style="background:rgba(0,212,255,.1);color:var(--accent);border:1px solid rgba(0,212,255,.2);font-weight:700">&Sigma; ${totalPcs} piezas totales</span>
         ${avgSetupEff!==null?`<span class="tag" style="background:rgba(245,158,11,.1);color:var(--warn);border:1px solid rgba(245,158,11,.2)">Ef. Montaje: ${effBadge(avgSetupEff)}</span>`:''}
         <span class="tag" style="background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.2)">Ef. Producción: ${effBadge(avgEff)}</span>
+        ${totalScrapQty>0?`<span class="tag" style="background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2);font-weight:700">Scrap: ${totalScrapQty} pzas</span>
+        <span class="tag" style="background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2);font-weight:700">Costo Scrap: $${totalScrapCost.toFixed(2)}</span>`:''}
         <span style="color:#1F2937;font-size:13px;margin-left:auto">Tiempo neto total: <b style="color:var(--text)">${fmtSec(totalNetSec)}</b></span>
       </div>
       <table style="width:100%;border-collapse:collapse;font-size:13px">
@@ -9293,6 +9328,7 @@ function renderOpReport(){
             <th style="padding:6px 6px;text-align:center">Pzas</th>
             <th style="padding:6px 6px;text-align:center" colspan="3">Montaje</th>
             <th style="padding:6px 6px;text-align:center" colspan="3">Producción</th>
+            <th style="padding:6px 6px;text-align:center;background:rgba(239,68,68,.06)" colspan="2">Scrap</th>
           </tr>
           <tr style="border-bottom:1px solid var(--border);color:var(--muted);font-size:13px">
             <th></th><th></th><th></th>
@@ -9302,11 +9338,13 @@ function renderOpReport(){
             <th style="padding:4px 6px;text-align:center">Estd.</th>
             <th style="padding:4px 6px;text-align:center">Real</th>
             <th style="padding:4px 6px;text-align:center">Ef.</th>
+            <th style="padding:4px 6px;text-align:center;background:rgba(239,68,68,.06)">Cant.</th>
+            <th style="padding:4px 6px;text-align:center;background:rgba(239,68,68,.06)">Costo</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
       </table>
-      <div style="font-size:13px;color:var(--muted);margin-top:10px;font-style:italic">T. Estándar = piezas &times; tiempo estándar por pieza (min). Eficiencia = T. Estándar &divide; T. Real (misma fórmula que Consulta/Dashboard).</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:10px;font-style:italic">T. Estándar = piezas &times; tiempo estándar por pieza (min). Eficiencia = T. Estándar &divide; T. Real (misma fórmula que Consulta/Dashboard). Costo Scrap = cantidad &times; costo unitario snapshot al momento del scrap.</div>
     </div>`;
   });
   body.innerHTML=html;
