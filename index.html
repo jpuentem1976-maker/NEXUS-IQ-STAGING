@@ -853,6 +853,9 @@ nav{background:var(--accent);border-bottom:1px solid #094A82;display:flex;align-
         <div class="field"><label>Fecha Desde</label><input type="date" id="rf-from" onchange="renderOpReport()"></div>
         <div class="field"><label>Fecha Hasta</label><input type="date" id="rf-to" onchange="renderOpReport()"></div>
       </div>
+      <div style="margin-top:10px">
+        <button class="btn btn-sm" onclick="exportOpReportPDF()" style="background:rgba(185,28,28,.1);color:var(--danger);border:1px solid rgba(185,28,28,.3)"><svg class="ic"><use href="#ic-download"/></svg> Exportar a PDF</button>
+      </div>
     </div>
     <div id="r-operator-body"></div>
   </div>
@@ -9204,73 +9207,178 @@ function renderOpReport(){
     const setupEffs=op.setups.filter(s=>s.efficiency>0);
     const avgSetupEff=setupEffs.length>0?weightedEff(setupEffs):null;
 
-    // ── Agrupar por Producto + OT ──
-    const byProdOT={};
-    op.pieces.forEach(s=>{
-      const k=(s.product_name||'--')+'||'+(s.ot_number||'--');
-      if(!byProdOT[k]) byProdOT[k]={
-        prod:s.product_name||'--',
-        code:s.product_code||'--',
-        ot:s.ot_number||'--',
-        pieces:0, stdSec:0, netSec:0, ops:{}
-      };
-      byProdOT[k].pieces++;
-      byProdOT[k].stdSec+=(parseFloat(s.std_time)||0)*60;
-      byProdOT[k].netSec+=parseInt(s.actual_sec)||0;
-      // Desglose por operación dentro del producto/OT
-      const opk=s.operation_name||'--';
-      if(!byProdOT[k].ops[opk]) byProdOT[k].ops[opk]={pieces:0,stdSec:0,netSec:0};
-      byProdOT[k].ops[opk].pieces++;
-      byProdOT[k].ops[opk].stdSec+=(parseFloat(s.std_time)||0)*60;
-      byProdOT[k].ops[opk].netSec+=parseInt(s.actual_sec)||0;
-    });
+    // Acumulados totales (Fix #8): suma bruta de tiempo estándar y real, Montaje y Producción por separado
+    const mStdTotal=op.setups.reduce((a,s)=>a+((parseFloat(s.std_time)||0)*60),0);
+    const mActTotal=op.setups.reduce((a,s)=>a+(parseInt(s.actual_sec)||0),0);
+    const pStdTotal=op.pieces.reduce((a,s)=>a+((parseFloat(s.std_time)||0)*60),0);
+    const pActTotal=op.pieces.reduce((a,s)=>a+(parseInt(s.actual_sec)||0),0);
 
-    // Filas de productos/OTs
-    const prodOTRows=Object.values(byProdOT).sort((a,b)=>a.ot.localeCompare(b.ot)).map(g=>{
-      const gAvgEff=g.netSec>0?Math.round(g.stdSec/g.netSec*100):0;
-      const opRows=Object.entries(g.ops).map(([opn,d])=>`
-        <tr style="background:var(--bg3)">
-          <td style="padding:5px 10px 5px 32px;color:#1F2937;font-size:13px">└ ${opn}</td>
-          <td style="padding:5px 10px;font-family:'DM Mono',monospace;font-size:13px;color:#1F2937">${d.pieces}</td>
-          <td style="padding:5px 10px;font-family:'DM Mono',monospace;font-size:13px;color:#1F2937">${fmtSec(d.pieces>0?Math.round(d.netSec/d.pieces):0)}</td>
-          <td style="padding:5px 10px;font-size:13px">${effBadge(d.netSec>0?Math.round(d.stdSec/d.netSec*100):0)}</td>
-        </tr>`).join('');
+    // ── Agrupar por Fecha + OT + Operación (una fila = una sesión de trabajo real) ──
+    const byGroup={};
+    function addToGroup(s,isPieza){
+      const dateK=s.date_label||(s.recorded_at?s.recorded_at.slice(0,10):'--');
+      const k=dateK+'||'+(s.ot_number||'--')+'||'+(s.operation_name||'--');
+      if(!byGroup[k]) byGroup[k]={
+        date:dateK, ot:s.ot_number||'--', prod:s.product_name||'--', code:s.product_code||'--',
+        opName:s.operation_name||'--', pzas:0, mStd:0, mAct:0, hasM:false, pStd:0, pAct:0, hasP:false
+      };
+      const g=byGroup[k];
+      if(isPieza){
+        g.pzas++; g.pStd+=(parseFloat(s.std_time)||0)*60; g.pAct+=parseInt(s.actual_sec)||0; g.hasP=true;
+      } else {
+        g.mStd+=(parseFloat(s.std_time)||0)*60; g.mAct+=parseInt(s.actual_sec)||0; g.hasM=true;
+      }
+    }
+    op.pieces.forEach(s=>addToGroup(s,true));
+    op.setups.forEach(s=>addToGroup(s,false));
+
+    const rows=Object.values(byGroup).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(g=>{
+      const mEff=g.hasM&&g.mAct>0?Math.round(g.mStd/g.mAct*100):null;
+      const pEff=g.hasP&&g.pAct>0?Math.round(g.pStd/g.pAct*100):null;
+      const dateFmt=g.date&&g.date!=='--'?new Date(g.date+'T00:00:00').toLocaleDateString('es-MX'):'--';
       return `
         <tr style="border-top:1px solid var(--border)">
-          <td style="padding:8px 10px">
+          <td style="padding:8px 6px;font-family:'DM Mono',monospace;color:#1F2937;font-size:13px">${dateFmt}</td>
+          <td style="padding:8px 6px">
             <div style="font-weight:700;color:var(--text)">${g.prod}</div>
-            <div style="font-size:13px;color:#1F2937">${g.code}</div>
+            <div style="font-size:13px;color:var(--accent);font-family:'DM Mono',monospace">${g.ot} &middot; ${g.opName}</div>
           </td>
-          <td style="padding:8px 10px;font-family:'DM Mono',monospace;font-weight:700;color:var(--accent)">${g.ot}</td>
-          <td style="padding:8px 10px;font-family:'DM Mono',monospace">${g.pieces}</td>
-          <td style="padding:8px 10px;font-family:'DM Mono',monospace;color:var(--text)">${fmtSec(g.pieces>0?Math.round(g.netSec/g.pieces):0)}</td>
-          <td style="padding:8px 10px">${effBadge(gAvgEff)}</td>
-        </tr>${opRows}`;
+          <td style="padding:8px 6px;text-align:center;font-family:'DM Mono',monospace;font-weight:700;color:var(--text)">${g.pzas||'--'}</td>
+          <td style="padding:8px 6px;text-align:center;font-family:'DM Mono',monospace;color:#1F2937">${g.hasM?Math.round(g.mStd/60):'--'}</td>
+          <td style="padding:8px 6px;text-align:center;font-family:'DM Mono',monospace;color:#1F2937">${g.hasM?Math.round(g.mAct/60):'--'}</td>
+          <td style="padding:8px 6px;text-align:center">${mEff!==null?effBadge(mEff):'<span style="color:var(--muted)">--</span>'}</td>
+          <td style="padding:8px 6px;text-align:center;font-family:'DM Mono',monospace;color:#1F2937">${g.hasP?Math.round(g.pStd/60):'--'}</td>
+          <td style="padding:8px 6px;text-align:center;font-family:'DM Mono',monospace;color:#1F2937">${g.hasP?Math.round(g.pAct/60):'--'}</td>
+          <td style="padding:8px 6px;text-align:center">${pEff!==null?effBadge(pEff):'<span style="color:var(--muted)">--</span>'}</td>
+        </tr>`;
     }).join('');
 
     html+=`<div class="card" style="margin-bottom:14px">
+      <div style="font-family:var(--font-display,sans-serif);font-size:22px;color:var(--accent2);margin-bottom:8px">${op.name}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div style="background:var(--bg3);border-radius:8px;padding:10px">
+          <div style="font-size:13px;font-weight:700;color:#1F2937;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Acumulado Montaje</div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text)">
+            <span>Estándar: <b>${Math.round(mStdTotal/60)} min</b></span><span>Real: <b>${Math.round(mActTotal/60)} min</b></span>
+          </div>
+        </div>
+        <div style="background:var(--bg3);border-radius:8px;padding:10px">
+          <div style="font-size:13px;font-weight:700;color:#1F2937;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Acumulado Producción</div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text)">
+            <span>Estándar: <b>${Math.round(pStdTotal/60)} min</b></span><span>Real: <b>${Math.round(pActTotal/60)} min</b></span>
+          </div>
+        </div>
+      </div>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap">
-        <span style="font-family:var(--font-display,sans-serif);font-size:22px;color:var(--accent2)">${op.name}</span>
-        <span class="tag" style="background:rgba(0,212,255,.1);color:var(--accent);border:1px solid rgba(0,212,255,.2)">${totalPcs} piezas</span>
-        <span class="tag" style="background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.2)">Ef. Producción: ${effBadge(avgEff)}</span>
+        <span class="tag" style="background:rgba(0,212,255,.1);color:var(--accent);border:1px solid rgba(0,212,255,.2);font-weight:700">&Sigma; ${totalPcs} piezas totales</span>
         ${avgSetupEff!==null?`<span class="tag" style="background:rgba(245,158,11,.1);color:var(--warn);border:1px solid rgba(245,158,11,.2)">Ef. Montaje: ${effBadge(avgSetupEff)}</span>`:''}
+        <span class="tag" style="background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.2)">Ef. Producción: ${effBadge(avgEff)}</span>
         <span style="color:#1F2937;font-size:13px;margin-left:auto">Tiempo neto total: <b style="color:var(--text)">${fmtSec(totalNetSec)}</b></span>
       </div>
       <table style="width:100%;border-collapse:collapse;font-size:13px">
-        <thead><tr style="border-bottom:2px solid var(--border);color:#1F2937;font-size:13px;text-transform:uppercase">
-          <th style="padding:6px 10px;text-align:left">Producto</th>
-          <th style="padding:6px 10px;text-align:left">O.T.</th>
-          <th style="padding:6px 10px;text-align:left">Piezas</th>
-          <th style="padding:6px 10px;text-align:left">T.Neto Prom.</th>
-          <th style="padding:6px 10px;text-align:left">Ef. Prom.</th>
-        </tr></thead>
-        <tbody>${prodOTRows}</tbody>
+        <thead>
+          <tr style="border-bottom:2px solid var(--border);color:#1F2937;font-size:13px;text-transform:uppercase">
+            <th style="padding:6px 6px;text-align:left">Fecha</th>
+            <th style="padding:6px 6px;text-align:left">Producto / OT / Operación</th>
+            <th style="padding:6px 6px;text-align:center">Pzas</th>
+            <th style="padding:6px 6px;text-align:center" colspan="3">Montaje</th>
+            <th style="padding:6px 6px;text-align:center" colspan="3">Producción</th>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);color:var(--muted);font-size:13px">
+            <th></th><th></th><th></th>
+            <th style="padding:4px 6px;text-align:center">Estd.</th>
+            <th style="padding:4px 6px;text-align:center">Real</th>
+            <th style="padding:4px 6px;text-align:center">Ef.</th>
+            <th style="padding:4px 6px;text-align:center">Estd.</th>
+            <th style="padding:4px 6px;text-align:center">Real</th>
+            <th style="padding:4px 6px;text-align:center">Ef.</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
       </table>
+      <div style="font-size:13px;color:var(--muted);margin-top:10px;font-style:italic">T. Estándar = piezas &times; tiempo estándar por pieza (min). Eficiencia = T. Estándar &divide; T. Real (misma fórmula que Consulta/Dashboard).</div>
     </div>`;
   });
   body.innerHTML=html;
 }
 window.renderOpReport=renderOpReport;
+
+// Fix #8 — Exportar Reportes › Por Operador a PDF, capturando el mismo HTML que se ve
+// en pantalla (misma tarjeta, mismos colores, mismos badges) para fidelidad total con NEXUS.
+async function ensurePDFExportLibs(){
+  if(typeof html2canvas==='undefined'){
+    await new Promise((resolve,reject)=>{
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      s.onload=resolve; s.onerror=()=>reject(new Error('No se pudo cargar html2canvas'));
+      document.head.appendChild(s);
+    });
+  }
+  if(typeof window.jspdf==='undefined'){
+    await new Promise((resolve,reject)=>{
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s.onload=resolve; s.onerror=()=>reject(new Error('No se pudo cargar jsPDF'));
+      document.head.appendChild(s);
+    });
+  }
+}
+
+async function exportOpReportPDF(){
+  const body=document.getElementById('r-operator-body');
+  if(!body||!body.innerHTML.trim()){ alert('No hay datos para exportar con el filtro actual.'); return; }
+  try{
+    showLoading('GENERANDO PDF...');
+    await ensurePDFExportLibs();
+    const opFilter=document.getElementById('rf-operator')?.value||'Todos';
+    const from=document.getElementById('rf-from')?.value||'';
+    const to=document.getElementById('rf-to')?.value||'';
+
+    const canvas=await html2canvas(body,{scale:2,backgroundColor:'#F3F2F1',useCORS:true});
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF('p','pt','letter');
+    const pageW=pdf.internal.pageSize.getWidth();
+    const pageH=pdf.internal.pageSize.getHeight();
+    const margin=24;
+    const headerH=40;
+    const imgW=pageW-margin*2;
+    const scaleFactor=imgW/canvas.width; // px canvas -> pt PDF
+
+    // Encabezado (solo en la primera página)
+    pdf.setFontSize(14); pdf.setFont(undefined,'bold');
+    pdf.text('NEXUS IQ — Reporte por Operador',margin,margin+10);
+    pdf.setFontSize(10); pdf.setFont(undefined,'normal');
+    pdf.text('Operador: '+opFilter+'   |   Periodo: '+(from||'--')+' a '+(to||'--')+'   |   Generado: '+new Date().toLocaleDateString('es-MX'),margin,margin+26);
+
+    // Cortar el canvas completo en fragmentos que quepan en cada página (en px del canvas fuente)
+    const usablePtFirst=pageH-margin-(margin+headerH);
+    const usablePtRest=pageH-margin*2;
+    const sliceHeightPxFirst=Math.floor(usablePtFirst/scaleFactor);
+    const sliceHeightPxRest=Math.floor(usablePtRest/scaleFactor);
+
+    let srcY=0, page=0;
+    while(srcY<canvas.height){
+      const sliceH=(page===0?sliceHeightPxFirst:sliceHeightPxRest);
+      const thisSliceH=Math.min(sliceH,canvas.height-srcY);
+      const sliceCanvas=document.createElement('canvas');
+      sliceCanvas.width=canvas.width;
+      sliceCanvas.height=thisSliceH;
+      sliceCanvas.getContext('2d').drawImage(canvas,0,srcY,canvas.width,thisSliceH,0,0,canvas.width,thisSliceH);
+      const sliceImg=sliceCanvas.toDataURL('image/png');
+      const sliceImgH=thisSliceH*scaleFactor;
+      if(page>0) pdf.addPage();
+      pdf.addImage(sliceImg,'PNG',margin,page===0?(margin+headerH):margin,imgW,sliceImgH);
+      srcY+=thisSliceH;
+      page++;
+    }
+    pdf.save('NEXUS_IQ_Reporte_Operador_'+(new Date().toISOString().slice(0,10))+'.pdf');
+    hideLoading();
+  }catch(e){
+    hideLoading();
+    alert('Error generando el PDF: '+e.message);
+  }
+}
+window.exportOpReportPDF=exportOpReportPDF;
 
 // ══════════════════════════════════
 //  REPORTE POR O.T.
